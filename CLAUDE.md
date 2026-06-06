@@ -2,7 +2,14 @@
 
 ## Project
 
-This is a solo-developed app project (homework-platform).
+**homework-platform** — 부모와 자녀가 함께 숙제 일정을 캘린더로 관리하고 리워드를 받는 패밀리 플랫폼.
+
+## Stack
+
+- Frontend: Next.js 15 (App Router) + Tailwind CSS
+- Backend/DB/Auth: Supabase (Google OAuth + PostgreSQL + RLS)
+- AI: Anthropic Claude API (`claude-sonnet-4-6`)
+- Hosting: Vercel / GitHub Actions CI
 
 ## Role
 
@@ -11,6 +18,7 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 ## Development Rules
 
 - Always read `docs/00-product-brief.md` before making product-level decisions.
+- Always read `docs/04-architecture.md` before changing tech structure.
 - Do not introduce new libraries without explaining why.
 - Prefer simple, maintainable architecture over premature optimization.
 - Write tests for business-critical logic.
@@ -25,9 +33,23 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 - Keep functions small and readable.
 - Use clear naming.
 - Avoid overengineering.
+- Server Actions over API Routes when possible.
+- RLS is the primary security layer — never bypass it.
+
+## AI 파싱 규칙
+
+- 숙제 파싱 로직: `src/lib/parse-homework.ts` (homework-alert의 claude.ts 기반)
+- 자연어 입력 → `parseHomeworkText()`, 이미지 입력 → `parseHomeworkImage()`
+- 과목별 규칙은 `subject_rules` 테이블에서 로드 → 프롬프트에 주입
+- Prompt caching 적용 (system prompt에 `cache_control: ephemeral`)
 
 ## Documentation Rules
 
-- When a major decision is made, update `docs/08-decision-log.md`.
-- When a feature is added, update `docs/02-requirements.md` or `docs/03-user-stories.md` if needed.
-- Keep `backlog/backlog.md` up to date with prioritized tasks.
+- 주요 의사결정 시 `docs/08-decision-log.md` 업데이트.
+- 기능 추가 시 `docs/02-requirements.md` 또는 `docs/03-user-stories.md` 업데이트.
+- `backlog/backlog.md` 항상 최신 상태 유지.
+
+## DB 변경 규칙
+
+- 스키마 변경은 `supabase/migrations/` 에 SQL 파일로 추가.
+- RLS 정책 항상 함께 작성.
