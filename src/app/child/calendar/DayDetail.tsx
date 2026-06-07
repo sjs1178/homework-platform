@@ -10,6 +10,7 @@ interface Homework {
   due_time: string | null;
   is_completed: boolean;
   reward_amount: number;
+  hasCheck?: boolean;
 }
 
 interface Props {
@@ -68,17 +69,29 @@ export default function DayDetail({ date, homeworks, childId, onComplete }: Prop
                   <p className="text-xs text-gray-400 mt-0.5">{hw.due_time.slice(0, 5)}</p>
                 )}
               </div>
-              {hw.is_completed ? (
-                <span className="text-green-500 text-sm font-semibold">완료✓</span>
-              ) : (
-                <button
-                  onClick={() => handleComplete(hw)}
-                  disabled={completing === hw.id}
-                  className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 disabled:opacity-50"
-                >
-                  {completing === hw.id ? "..." : "완료"}
-                </button>
-              )}
+              <div className="flex flex-col items-end gap-1">
+                {hw.is_completed ? (
+                  <>
+                    <span className="text-green-500 text-sm font-semibold">완료✓</span>
+                    {hw.hasCheck && (
+                      <a
+                        href={`/child/results?id=${hw.id}`}
+                        className="text-xs text-blue-500 hover:underline"
+                      >
+                        결과보기 →
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    onClick={() => handleComplete(hw)}
+                    disabled={completing === hw.id}
+                    className="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 disabled:opacity-50"
+                  >
+                    {completing === hw.id ? "..." : "완료"}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CalendarView from "./CalendarView";
+import NotificationSetup from "@/components/NotificationSetup";
 
 export default async function ChildCalendarPage() {
   const supabase = await createClient();
@@ -29,6 +30,22 @@ export default async function ChildCalendarPage() {
     .lte("due_date", to)
     .order("due_date");
 
+  // 채점 완료된 숙제 ID 조회
+  const hwIds = (homeworks ?? []).map((h) => h.id);
+  let checkedIds = new Set<string>();
+  if (hwIds.length) {
+    const { data: checks } = await supabase
+      .from("homework_checks")
+      .select("homework_id")
+      .in("homework_id", hwIds);
+    checkedIds = new Set(checks?.map((c) => c.homework_id) ?? []);
+  }
+
+  const homeworksWithCheck = (homeworks ?? []).map((h) => ({
+    ...h,
+    hasCheck: checkedIds.has(h.id),
+  }));
+
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-lg mx-auto">
@@ -36,10 +53,11 @@ export default async function ChildCalendarPage() {
           <a href="/child/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
           <h1 className="text-xl font-bold">{year}년 {month}월 숙제</h1>
         </div>
+        <NotificationSetup homeworks={homeworksWithCheck} />
         <CalendarView
           year={year}
           month={month}
-          homeworks={homeworks ?? []}
+          homeworks={homeworksWithCheck}
           childId={user.id}
         />
       </div>
