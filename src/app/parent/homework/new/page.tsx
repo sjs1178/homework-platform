@@ -15,10 +15,15 @@ export default async function NewHomeworkPage() {
 
   if (!profile?.pair_id) redirect("/parent/dashboard");
 
-  const { data: rules } = await supabase
+  const { data: rulesRaw } = await supabase
     .from("subject_rules")
     .select("subject, rule_content")
     .eq("pair_id", profile.pair_id);
+
+  const rules = (rulesRaw ?? []).map((r) => ({
+    subject: r.subject,
+    ruleContent: r.rule_content,
+  }));
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
@@ -27,7 +32,7 @@ export default async function NewHomeworkPage() {
           <a href="/parent/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
           <h1 className="text-xl font-bold">숙제 입력</h1>
         </div>
-        <HomeworkInputForm pairId={profile.pair_id} rules={rules ?? []} />
+        <HomeworkInputForm pairId={profile.pair_id} rules={rules} />
       </div>
     </main>
   );
