@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import PairingSection from "./PairingSection";
 import { getAvatar } from "@/lib/avatars";
+import { getEffectiveGradeLabel } from "@/lib/grade";
 
 export default async function ParentDashboard() {
   const supabase = await createClient();
@@ -29,7 +30,7 @@ export default async function ParentDashboard() {
     if (pair?.child_id) {
       const { data: cp } = await supabase
         .from("user_profiles")
-        .select("display_name, avatar_id")
+        .select("display_name, avatar_id, grade, grade_school_year")
         .eq("id", pair.child_id)
         .single();
       childProfile = cp;
@@ -54,6 +55,8 @@ export default async function ParentDashboard() {
     }
   }
 
+  const cp = childProfile as { display_name?: string; avatar_id?: string; grade?: number; grade_school_year?: number } | null;
+
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-lg mx-auto">
@@ -64,8 +67,9 @@ export default async function ParentDashboard() {
         <PairingSection
           userId={user.id}
           pair={pair}
-          childName={childProfile?.display_name ?? null}
-          childAvatar={getAvatar((childProfile as { avatar_id?: string } | null)?.avatar_id).emoji}
+          childName={cp?.display_name ?? null}
+          childAvatar={getAvatar(cp?.avatar_id).emoji}
+          childGrade={getEffectiveGradeLabel(cp?.grade ?? null, cp?.grade_school_year ?? null)}
         />
 
         {pair?.child_id && (

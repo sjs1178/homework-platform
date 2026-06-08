@@ -10,6 +10,7 @@ interface Pair {
   child_id: string | null;
   childName: string | null;
   childAvatar: string | null;
+  childGrade: string;
 }
 
 interface Props {
@@ -31,7 +32,7 @@ export default function FamilyManager({ parentId, pairs: initialPairs }: Props) 
       body: JSON.stringify({ action: "create", parentId }),
     });
     const json = await res.json();
-    if (json.pair) setPairs((prev) => [...prev, { ...json.pair, childName: null, childAvatar: null }]);
+    if (json.pair) setPairs((prev) => [...prev, { ...json.pair, childName: null, childAvatar: null, childGrade: "" }]);
     setLoading(false);
   }
 
@@ -77,12 +78,18 @@ export default function FamilyManager({ parentId, pairs: initialPairs }: Props) 
       {pairs.map((pair) => (
         <div key={pair.id} className="bg-white rounded-2xl shadow-sm p-4">
           {pair.child_id ? (
-            // 연결된 자녀
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{pair.childAvatar ?? "🧒"}</span>
                 <div>
-                  <p className="font-semibold">{pair.childName ?? "자녀"}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">{pair.childName ?? "자녀"}</p>
+                    {pair.childGrade && (
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                        {pair.childGrade}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-green-500">연결됨</p>
                 </div>
               </div>
@@ -95,7 +102,6 @@ export default function FamilyManager({ parentId, pairs: initialPairs }: Props) 
               </button>
             </div>
           ) : (
-            // 대기 중인 초대 코드
             <div>
               <p className="text-xs text-gray-400 mb-2">자녀 대기 중 — 초대 코드를 공유하세요</p>
               <div className="flex items-center gap-2">

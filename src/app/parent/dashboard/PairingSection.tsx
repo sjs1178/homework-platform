@@ -9,9 +9,10 @@ interface Props {
   pair: { id: string; invite_code: string; child_id: string | null } | null;
   childName: string | null;
   childAvatar: string;
+  childGrade: string;
 }
 
-export default function PairingSection({ userId, pair, childName, childAvatar }: Props) {
+export default function PairingSection({ userId, pair, childName, childAvatar, childGrade }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -84,7 +85,14 @@ export default function PairingSection({ userId, pair, childName, childAvatar }:
       <div className="flex items-center gap-3">
         <span className="text-4xl">{childAvatar}</span>
         <div>
-          <p className="text-green-700 font-semibold">{childName ?? "자녀"}와 연결되었어요!</p>
+          <div className="flex items-center gap-2">
+            <p className="text-green-700 font-semibold">{childName ?? "자녀"}와 연결되었어요!</p>
+            {childGrade && (
+              <span className="px-2 py-0.5 bg-green-200 text-green-800 rounded-full text-xs font-semibold">
+                {childGrade}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-green-500">✅ 연결됨</p>
         </div>
       </div>

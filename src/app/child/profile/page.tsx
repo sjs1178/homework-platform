@@ -9,7 +9,7 @@ export default async function ChildProfilePage() {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("display_name, avatar_id")
+    .select("display_name, avatar_id, grade, grade_school_year")
     .eq("id", user.id)
     .single();
 
@@ -24,6 +24,8 @@ export default async function ChildProfilePage() {
           userId={user.id}
           displayName={profile?.display_name ?? ""}
           avatarId={profile?.avatar_id ?? null}
+          grade={(profile?.grade as number | null) ?? null}
+          gradeSchoolYear={(profile?.grade_school_year as number | null) ?? null}
         />
       </div>
     </main>

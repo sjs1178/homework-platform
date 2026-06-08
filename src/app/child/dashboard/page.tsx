@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import PairInput from "./PairInput";
 import { getAvatar } from "@/lib/avatars";
+import { getEffectiveGradeLabel } from "@/lib/grade";
 
 export default async function ChildDashboard() {
   const supabase = await createClient();
@@ -10,7 +11,7 @@ export default async function ChildDashboard() {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("pair_id, display_name, avatar_id")
+    .select("pair_id, display_name, avatar_id, grade, grade_school_year")
     .eq("id", user.id)
     .single();
 
@@ -32,6 +33,10 @@ export default async function ChildDashboard() {
   }
 
   const avatar = getAvatar(profile?.avatar_id);
+  const gradeLabel = getEffectiveGradeLabel(
+    profile?.grade as number | null,
+    profile?.grade_school_year as number | null
+  );
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
@@ -41,7 +46,14 @@ export default async function ChildDashboard() {
           <div className="flex items-center gap-3">
             <span className="text-5xl">{avatar.emoji}</span>
             <div>
-              <h1 className="text-xl font-bold">{profile?.display_name ?? "자녀"}님 안녕!</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold">{profile?.display_name ?? "자녀"}님 안녕!</h1>
+                {gradeLabel && (
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                    {gradeLabel}
+                  </span>
+                )}
+              </div>
               {profile?.pair_id && (
                 <p className="text-xs text-gray-400">{parentName ?? "부모"}와 연결됨</p>
               )}
