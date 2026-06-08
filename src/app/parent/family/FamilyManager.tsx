@@ -9,6 +9,7 @@ interface Pair {
   pair_name: string | null;
   child_id: string | null;
   childName: string | null;
+  childAvatar: string | null;
 }
 
 interface Props {
@@ -30,7 +31,7 @@ export default function FamilyManager({ parentId, pairs: initialPairs }: Props) 
       body: JSON.stringify({ action: "create", parentId }),
     });
     const json = await res.json();
-    if (json.pair) setPairs((prev) => [...prev, { ...json.pair, childName: null }]);
+    if (json.pair) setPairs((prev) => [...prev, { ...json.pair, childName: null, childAvatar: null }]);
     setLoading(false);
   }
 
@@ -79,7 +80,7 @@ export default function FamilyManager({ parentId, pairs: initialPairs }: Props) 
             // 연결된 자녀
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-3xl">🧒</span>
+                <span className="text-3xl">{pair.childAvatar ?? "🧒"}</span>
                 <div>
                   <p className="font-semibold">{pair.childName ?? "자녀"}</p>
                   <p className="text-xs text-green-500">연결됨</p>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import PairingSection from "./PairingSection";
+import { getAvatar } from "@/lib/avatars";
 
 export default async function ParentDashboard() {
   const supabase = await createClient();
@@ -28,7 +29,7 @@ export default async function ParentDashboard() {
     if (pair?.child_id) {
       const { data: cp } = await supabase
         .from("user_profiles")
-        .select("display_name")
+        .select("display_name, avatar_id")
         .eq("id", pair.child_id)
         .single();
       childProfile = cp;
@@ -64,6 +65,7 @@ export default async function ParentDashboard() {
           userId={user.id}
           pair={pair}
           childName={childProfile?.display_name ?? null}
+          childAvatar={getAvatar((childProfile as { avatar_id?: string } | null)?.avatar_id).emoji}
         />
 
         {pair?.child_id && (

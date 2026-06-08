@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import FamilyManager from "./FamilyManager";
+import { getAvatar } from "@/lib/avatars";
 
 export default async function FamilyPage() {
   const supabase = await createClient();
@@ -24,18 +25,24 @@ export default async function FamilyPage() {
 
   // 자녀 프로필 조회
   const childIds = (pairs ?? []).map((p) => p.child_id).filter(Boolean) as string[];
-  let childProfiles: Record<string, string> = {};
+  let childProfiles: Record<string, { name: string; avatarEmoji: string }> = {};
   if (childIds.length) {
     const { data: profiles } = await supabase
       .from("user_profiles")
-      .select("id, display_name")
+      .select("id, display_name, avatar_id")
       .in("id", childIds);
-    childProfiles = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.display_name]));
+    childProfiles = Object.fromEntries(
+      (profiles ?? []).map((p) => [
+        p.id,
+        { name: p.display_name, avatarEmoji: getAvatar(p.avatar_id as string | null).emoji },
+      ])
+    );
   }
 
   const pairsWithChild = (pairs ?? []).map((p) => ({
     ...p,
-    childName: p.child_id ? (childProfiles[p.child_id] ?? "자녀") : null,
+    childName: p.child_id ? (childProfiles[p.child_id]?.name ?? "자녀") : null,
+    childAvatar: p.child_id ? (childProfiles[p.child_id]?.avatarEmoji ?? "🧒") : null,
   }));
 
   return (
