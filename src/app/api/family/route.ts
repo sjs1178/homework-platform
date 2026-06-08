@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const { action, parentId, pairId } = await req.json();
+  const { action, parentId, pairId, childId, grade, gradeSchoolYear } = await req.json();
   const db = admin();
 
   if (action === "create") {
@@ -40,6 +40,13 @@ export async function POST(req: NextRequest) {
 
   if (action === "delete") {
     await db.from("pairs").delete().eq("id", pairId);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === "setGrade") {
+    await db.from("user_profiles")
+      .update({ grade, grade_school_year: gradeSchoolYear })
+      .eq("id", childId);
     return NextResponse.json({ ok: true });
   }
 
