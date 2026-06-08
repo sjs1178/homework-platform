@@ -79,6 +79,10 @@ export default async function ChildDashboard() {
               <span className="text-3xl">⭐</span>
               <span className="font-semibold">내 리워드</span>
             </a>
+            <a href="/child/stats" className="col-span-2 flex items-center justify-center gap-2 p-4 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600">
+              <span className="text-2xl">📊</span>
+              <span className="font-semibold">내 학습 통계 · 직업군 가이드</span>
+            </a>
           </div>
         )}
       </div>

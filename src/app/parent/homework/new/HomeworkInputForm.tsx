@@ -4,13 +4,15 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { HomeworkItem, SubjectRule } from "@/lib/types";
+import { tagCurriculum } from "@/lib/curriculum";
 
 interface Props {
   pairId: string;
   rules: SubjectRule[];
+  childGrade: number | null;
 }
 
-export default function HomeworkInputForm({ pairId, rules }: Props) {
+export default function HomeworkInputForm({ pairId, rules, childGrade }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
@@ -86,6 +88,7 @@ export default function HomeworkInputForm({ pairId, rules }: Props) {
       end_time: item.endTime ?? null,
       reward_amount: 0,
       created_by: user.id,
+      curriculum_meta: tagCurriculum(item.subject, item.description, childGrade),
     }));
 
     await supabase.from("homeworks").insert(insertRows);
@@ -103,7 +106,6 @@ export default function HomeworkInputForm({ pairId, rules }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* 텍스트 입력 */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
         <p className="text-sm text-gray-500 mb-2">자연어로 입력하세요</p>
         <textarea
@@ -122,16 +124,9 @@ export default function HomeworkInputForm({ pairId, rules }: Props) {
         </button>
       </div>
 
-      {/* 이미지 입력 */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
         <p className="text-sm text-gray-500 mb-2">또는 숙제 사진을 업로드하세요</p>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
         <button
           onClick={() => fileRef.current?.click()}
           disabled={parsing}
@@ -143,7 +138,6 @@ export default function HomeworkInputForm({ pairId, rules }: Props) {
 
       {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-      {/* 파싱 결과 */}
       {parsed && parsed.length > 0 && (
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="text-sm font-semibold text-gray-700 mb-3">분석 결과 ({parsed.length}개) — 수정 후 저장하세요</p>
@@ -177,6 +171,11 @@ export default function HomeworkInputForm({ pairId, rules }: Props) {
                     placeholder="시간(선택)"
                   />
                 </div>
+                {childGrade && tagCurriculum(item.subject, item.description, childGrade) && (
+                  <p className="text-xs text-indigo-400">
+                    📚 {tagCurriculum(item.subject, item.description, childGrade)!.subject} · {tagCurriculum(item.subject, item.description, childGrade)!.area}
+                  </p>
+                )}
               </div>
             ))}
           </div>

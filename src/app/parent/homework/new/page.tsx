@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import HomeworkInputForm from "./HomeworkInputForm";
+import { getEffectiveGrade } from "@/lib/grade";
 
 export default async function NewHomeworkPage() {
   const supabase = await createClient();
@@ -25,6 +26,26 @@ export default async function NewHomeworkPage() {
     ruleContent: r.rule_content,
   }));
 
+  // 자녀 학년 조회 (curriculum 태깅용)
+  const { data: pair } = await supabase
+    .from("pairs")
+    .select("child_id")
+    .eq("id", profile.pair_id)
+    .single();
+
+  let childGrade: number | null = null;
+  if (pair?.child_id) {
+    const { data: childProfile } = await supabase
+      .from("user_profiles")
+      .select("grade, grade_school_year")
+      .eq("id", pair.child_id)
+      .single();
+    childGrade = getEffectiveGrade(
+      childProfile?.grade as number | null,
+      childProfile?.grade_school_year as number | null
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-lg mx-auto">
@@ -32,7 +53,7 @@ export default async function NewHomeworkPage() {
           <a href="/parent/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
           <h1 className="text-xl font-bold">숙제 입력</h1>
         </div>
-        <HomeworkInputForm pairId={profile.pair_id} rules={rules} />
+        <HomeworkInputForm pairId={profile.pair_id} rules={rules} childGrade={childGrade} />
       </div>
     </main>
   );

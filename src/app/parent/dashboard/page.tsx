@@ -88,6 +88,10 @@ export default async function ParentDashboard() {
                 <span className="text-sm font-semibold">패밀리</span>
               </a>
             </div>
+            <a href="/parent/stats" className="mt-3 flex items-center justify-center gap-2 p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700">
+              <span className="text-xl">📊</span>
+              <span className="text-sm font-semibold">자녀 학습 통계 · 직업군 가이드</span>
+            </a>
 
             {completedHomeworks.length > 0 && (
               <div className="mt-6 bg-white rounded-2xl shadow-sm p-4">
