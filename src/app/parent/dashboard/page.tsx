@@ -68,20 +68,18 @@ export default async function ParentDashboard() {
 
         {pair?.child_id && (
           <>
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <a
-                href="/parent/homework/new"
-                className="flex flex-col items-center justify-center gap-2 p-6 bg-blue-600 text-white rounded-2xl hover:bg-blue-700"
-              >
-                <span className="text-3xl">✏️</span>
-                <span className="font-semibold">숙제 입력</span>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <a href="/parent/homework/new" className="flex flex-col items-center justify-center gap-2 p-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700">
+                <span className="text-2xl">✏️</span>
+                <span className="text-sm font-semibold">숙제 입력</span>
               </a>
-              <a
-                href="/parent/rewards"
-                className="flex flex-col items-center justify-center gap-2 p-6 bg-purple-600 text-white rounded-2xl hover:bg-purple-700"
-              >
-                <span className="text-3xl">🎁</span>
-                <span className="font-semibold">리워드 설정</span>
+              <a href="/parent/rewards" className="flex flex-col items-center justify-center gap-2 p-4 bg-purple-600 text-white rounded-2xl hover:bg-purple-700">
+                <span className="text-2xl">🎁</span>
+                <span className="text-sm font-semibold">리워드</span>
+              </a>
+              <a href="/parent/family" className="flex flex-col items-center justify-center gap-2 p-4 bg-gray-600 text-white rounded-2xl hover:bg-gray-700">
+                <span className="text-2xl">👨‍👩‍👧</span>
+                <span className="text-sm font-semibold">패밀리</span>
               </a>
             </div>
 

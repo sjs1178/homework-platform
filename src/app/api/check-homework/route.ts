@@ -32,13 +32,14 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  await admin.from("homework_checks").upsert({
+  const { data: checkRow } = await admin.from("homework_checks").upsert({
     homework_id: homeworkId,
     pair_id: hw.pair_id,
     results: result,
     score: result.score,
     total_problems: result.total,
-  }, { onConflict: "homework_id" });
+    is_reviewed: false,
+  }, { onConflict: "homework_id" }).select("id").single();
 
   // 점수 기반 리워드 처리
   const { data: settings } = await admin
@@ -70,5 +71,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, result });
+  return NextResponse.json({ ok: true, result, checkId: checkRow?.id ?? null });
 }

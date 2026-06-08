@@ -40,8 +40,10 @@ export default async function ParentHomeworkCheckPage({
         </div>
         <HomeworkCheckForm
           homeworkId={homeworkId}
+          checkId={existing?.id ?? null}
           existingResult={existing?.results ?? null}
           existingScore={existing ? { score: existing.score, total: existing.total_problems } : null}
+          isReviewed={existing?.is_reviewed ?? false}
         />
       </div>
     </main>
