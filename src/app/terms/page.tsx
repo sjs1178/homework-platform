@@ -1,0 +1,63 @@
+import { createClient as createAdmin } from "@supabase/supabase-js";
+import Link from "next/link";
+
+export const revalidate = 300;
+
+export default async function TermsPage() {
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data: doc } = await admin
+    .from("legal_documents")
+    .select("version, content, created_at")
+    .eq("doc_type", "terms")
+    .eq("is_current", true)
+    .single();
+
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 20px 60px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        <Link
+          href="/parent/settings"
+          style={{ fontSize: 13, color: "var(--green-d, #15803D)", textDecoration: "none", fontWeight: 700 }}
+        >
+          ← 뒤로
+        </Link>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0F172A" }}>이용약관</h1>
+      </div>
+
+      {doc ? (
+        <>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20, alignItems: "center" }}>
+            <span style={{ fontSize: 12, background: "#DCFCE7", color: "#15803D", padding: "3px 10px", borderRadius: 99, fontWeight: 700 }}>
+              {doc.version}
+            </span>
+            <span style={{ fontSize: 12, color: "#94A3B8" }}>
+              최종 수정: {new Date(doc.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
+            </span>
+          </div>
+          <div
+            style={{
+              background: "#fff", borderRadius: 14, padding: "22px 24px",
+              boxShadow: "0 1px 6px rgba(0,0,0,.06)",
+              fontSize: 14, color: "#334155", lineHeight: 1.9, whiteSpace: "pre-wrap",
+            }}
+          >
+            {doc.content}
+          </div>
+        </>
+      ) : (
+        <div
+          style={{
+            background: "#fff", borderRadius: 14, padding: "48px 24px",
+            boxShadow: "0 1px 6px rgba(0,0,0,.06)", textAlign: "center",
+            color: "#94A3B8", fontSize: 14,
+          }}
+        >
+          이용약관을 준비 중입니다.
+        </div>
+      )}
+    </div>
+  );
+}

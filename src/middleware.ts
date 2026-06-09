@@ -1,7 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ADMIN_COOKIE, ADMIN_TOKEN } from "@/lib/admin-auth";
+
+const PUBLIC_PATHS = ["/notices", "/terms", "/privacy"];
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // ── Admin routes ──────────────────────────────────────
+  if (pathname.startsWith("/admin")) {
+    if (pathname === "/admin/login") return NextResponse.next();
+
+    const adminCookie = request.cookies.get(ADMIN_COOKIE)?.value;
+    if (adminCookie !== ADMIN_TOKEN) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // ── Public content pages ──────────────────────────────
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // ── Supabase session refresh (existing logic) ─────────
   const response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -10,7 +32,9 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet: { name: string; value: string; options?: object }[]) => {
+        setAll: (
+          cookiesToSet: { name: string; value: string; options?: object }[]
+        ) => {
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -19,9 +43,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
   const isAuthPage = pathname.startsWith("/auth");
   const isPublicPage = pathname === "/";
 

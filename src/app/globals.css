@@ -1,3 +1,49 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg: #F4F8F5;
+  --surface: #FFFFFF;
+  --surface-2: #F7FAF8;
+  --text: #13241B;
+  --text-soft: #3C4A42;
+  --muted: #6B7B72;
+  --faint: #9AA8A0;
+  --line: #E6EEE9;
+  --line-strong: #D6E2DB;
+
+  --green: #16A34A;
+  --green-d: #15803D;
+  --green-dd: #116539;
+  --green-50: #F0FDF4;
+  --green-100: #DCFCE7;
+  --green-200: #BBF7D0;
+
+  --amber: #F59E0B;
+  --amber-d: #D97706;
+  --amber-50: #FFFBEB;
+  --amber-100: #FEF3C7;
+  --amber-200: #FDE68A;
+
+  --red: #EF4444;
+  --red-50: #FEF2F2;
+
+  --r-card: 22px;
+  --r-md: 16px;
+  --r-sm: 12px;
+  --sh-sm: 0 1px 2px rgba(16,40,28,.05);
+  --sh-md: 0 2px 4px rgba(16,40,28,.04), 0 10px 26px -8px rgba(16,40,28,.10);
+  --sh-green: 0 6px 16px -6px rgba(22,163,74,.6);
+  --sh-hero-green: 0 14px 30px -12px rgba(21,128,61,.7);
+  --sh-hero-gold: 0 14px 30px -12px rgba(217,119,6,.7);
+}
+
+body {
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  background: var(--bg);
+  color: var(--text);
+}

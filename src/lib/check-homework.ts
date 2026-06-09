@@ -57,6 +57,26 @@ Rules:
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
+// 사진 없이 텍스트만으로 채점
+export async function checkHomeworkByText(text: string): Promise<CheckResult> {
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 4096,
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content: `다음 숙제 내용을 검사해줘:\n\n${text}` }],
+  });
+
+  const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
+  const match = raw.match(/\{[\s\S]*\}/);
+  try {
+    return JSON.parse(match ? match[0] : raw) as CheckResult;
+  } catch {
+    console.error("Check homework returned invalid JSON:", raw);
+    throw new Error("채점 결과를 파싱할 수 없습니다.");
+  }
+}
+
+// 사진으로 채점
 export async function checkHomework(
   images: { base64: string; mediaType: MediaType }[]
 ): Promise<CheckResult> {

@@ -19,12 +19,11 @@ export async function GET(req: NextRequest) {
   const effectiveGrade = parseInt(searchParams.get("effectiveGrade") ?? "0");
   if (!pairId) return NextResponse.json({ error: "pairId 필요" }, { status: 400 });
 
-  // 이 pair의 숙제 전체
+  // 이 pair의 숙제 전체 (curriculum_meta 없는 숙제도 포함)
   const { data: homeworks } = await supabase
     .from("homeworks")
     .select("id, subject, is_completed, curriculum_meta")
-    .eq("pair_id", pairId)
-    .not("curriculum_meta", "is", null);
+    .eq("pair_id", pairId);
 
   // 해당 숙제의 검사 결과
   const hwIds = (homeworks ?? []).map((h) => h.id);
@@ -50,9 +49,10 @@ export async function GET(req: NextRequest) {
 
   for (const hw of homeworks ?? []) {
     const meta = hw.curriculum_meta as { subject?: string; area?: string } | null;
-    if (!meta?.subject) continue;
-    const subj = meta.subject;
-    const area = meta.area ?? "기타";
+    // curriculum_meta 없으면 숙제 자체의 subject로 폴백
+    const subj = meta?.subject ?? hw.subject;
+    if (!subj) continue;
+    const area = meta?.area ?? "기타";
     if (!subjectMap[subj]) subjectMap[subj] = { total: 0, completed: 0, scores: [], areas: {} };
     if (!subjectMap[subj].areas[area]) subjectMap[subj].areas[area] = { total: 0, completed: 0, scores: [] };
 
@@ -113,8 +113,7 @@ export async function GET(req: NextRequest) {
       const { data: peerHws } = await db
         .from("homeworks")
         .select("id, subject, is_completed, curriculum_meta")
-        .in("pair_id", sameGradePairIds)
-        .not("curriculum_meta", "is", null);
+        .in("pair_id", sameGradePairIds);
 
       const peerHwIds = (peerHws ?? []).map((h) => h.id);
       let peerCheckMap: Record<string, number> = {};
@@ -132,8 +131,8 @@ export async function GET(req: NextRequest) {
       const peerMap: Record<string, { total: number; completed: number; scores: number[] }> = {};
       for (const hw of peerHws ?? []) {
         const meta = hw.curriculum_meta as { subject?: string } | null;
-        if (!meta?.subject) continue;
-        const subj = meta.subject;
+        const subj = meta?.subject ?? hw.subject;
+        if (!subj) continue;
         if (!peerMap[subj]) peerMap[subj] = { total: 0, completed: 0, scores: [] };
         peerMap[subj].total++;
         if (hw.is_completed) peerMap[subj].completed++;

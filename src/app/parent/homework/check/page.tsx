@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import HomeworkCheckForm from "./HomeworkCheckForm";
+import Icon from "@/components/ui/Icon";
 
 export default async function ParentHomeworkCheckPage({
   searchParams,
@@ -29,15 +30,48 @@ export default async function ParentHomeworkCheckPage({
     .single();
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-lg mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <a href="/parent/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
-          <div>
-            <h1 className="text-xl font-bold">숙제 검사</h1>
-            <p className="text-sm text-gray-500">{hw.subject} — {hw.description}</p>
+    <div
+      style={{
+        minHeight: "100svh",
+        background: "var(--bg)",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 430,
+        margin: "0 auto",
+      }}
+    >
+      {/* 헤더 */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexShrink: 0,
+          padding: "4px 18px 14px",
+          gap: 8,
+        }}
+      >
+        <a
+          href="/parent/dashboard"
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            textDecoration: "none",
+          }}
+        >
+          <Icon name="arrow-left" size={23} color="var(--text)" stroke={2.2} />
+        </a>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>
+            숙제 검사
+          </h1>
+          <div style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, marginTop: 2, whiteSpace: "nowrap" }}>
+            {hw.subject} · {hw.description}
           </div>
         </div>
+      </div>
+
+      {/* 폼 */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "4px 20px 26px" }}>
         <HomeworkCheckForm
           homeworkId={homeworkId}
           checkId={existing?.id ?? null}
@@ -46,6 +80,6 @@ export default async function ParentHomeworkCheckPage({
           isReviewed={existing?.is_reviewed ?? false}
         />
       </div>
-    </main>
+    </div>
   );
 }

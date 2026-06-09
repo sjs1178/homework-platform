@@ -18,14 +18,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "이미 완료됐거나 존재하지 않음" }, { status: 400 });
   }
 
-  // 완료 처리
   await supabase
     .from("homeworks")
     .update({ is_completed: true, completed_at: new Date().toISOString() })
     .eq("id", homeworkId);
 
-  // 리워드 적립
-  if (hw.reward_amount > 0) {
+  // 완료 시 지급 설정일 때만 바로 적립
+  if (hw.reward_trigger !== "score" && hw.reward_amount > 0) {
     await supabase.from("reward_logs").insert({
       pair_id: hw.pair_id,
       child_id: user.id,
