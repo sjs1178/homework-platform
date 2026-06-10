@@ -18,7 +18,7 @@ interface Props {
 }
 
 export default function DashboardHero({
-  childName, childInitial, gradeLabel, streak, weeklyDone, weeklyDots, balance, unit,
+  childName, childInitial, childAvatar, gradeLabel, streak, weeklyDone, weeklyDots, balance, unit,
 }: Props) {
   const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0
 
@@ -60,14 +60,14 @@ export default function DashboardHero({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              fontSize: childAvatar && childAvatar.length > 1 ? 26 : 18,
               fontWeight: 800,
-              fontSize: 18,
               border: "2px solid rgba(255,255,255,.5)",
               flexShrink: 0,
               whiteSpace: "nowrap",
             }}
           >
-            {childInitial}
+            {childAvatar || childInitial}
           </div>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800 }}>{childName}</div>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CalendarView from "./CalendarView";
+import BackButton from "@/components/ui/BackButton";
 import NotificationSetup from "@/components/NotificationSetup";
 
 export default async function ChildCalendarPage() {
@@ -30,7 +31,6 @@ export default async function ChildCalendarPage() {
     .lte("due_date", to)
     .order("due_date");
 
-  // 채점 완료된 숙제 ID 조회
   const hwIds = (homeworks ?? []).map((h) => h.id);
   let checkedIds = new Set<string>();
   if (hwIds.length) {
@@ -47,20 +47,37 @@ export default async function ChildCalendarPage() {
   }));
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-lg mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <a href="/child/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
-          <h1 className="text-xl font-bold">{year}년 {month}월 숙제</h1>
-        </div>
+    <div
+      style={{
+        minHeight: "100svh",
+        background: "#F1F7F3",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 430,
+        margin: "0 auto",
+      }}
+    >
+      {/* 헤더 */}
+      <div
+        style={{
+          display: "flex", alignItems: "center",
+          padding: "4px 18px 12px", gap: 6, flexShrink: 0,
+        }}
+      >
+        <BackButton />
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>숙제 캘린더</h1>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 24px" }}>
         <NotificationSetup homeworks={homeworksWithCheck} />
         <CalendarView
           year={year}
           month={month}
           homeworks={homeworksWithCheck}
           childId={user.id}
+          pairId={profile.pair_id}
         />
       </div>
-    </main>
+    </div>
   );
 }

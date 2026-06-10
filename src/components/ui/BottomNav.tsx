@@ -4,14 +4,19 @@ import Icon from "./Icon";
 
 type Tab = "홈" | "캘린더" | "리워드" | "내정보";
 
-const TABS: [string, Tab, string][] = [
-  ["home", "홈", "/parent/dashboard"],
-  ["calendar", "캘린더", "/child/calendar"],
-  ["gift", "리워드", "/child/rewards"],
-  ["user", "내정보", "/child/profile"],
-];
+interface Props {
+  active: Tab;
+  role?: "parent" | "child";
+}
 
-export default function BottomNav({ active }: { active: Tab }) {
+export default function BottomNav({ active, role = "child" }: Props) {
+  const TABS: [string, Tab, string][] = [
+    ["home", "홈", role === "parent" ? "/parent/dashboard" : "/child/dashboard"],
+    ["calendar", "캘린더", "/child/calendar"],
+    ["gift", "리워드", role === "parent" ? "/parent/rewards" : "/child/rewards"],
+    ["user", "내정보", role === "parent" ? "/parent/settings" : "/child/profile"],
+  ];
+
   return (
     <div
       style={{

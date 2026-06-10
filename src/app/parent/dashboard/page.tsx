@@ -401,7 +401,7 @@ export default async function ParentDashboard() {
         )}
       </div>
 
-      <BottomNav active="홈" />
+      <BottomNav active="홈" role="parent" />
     </div>
   );
 }
