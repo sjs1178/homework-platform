@@ -1,0 +1,14 @@
+{
+  "name": "kiddoloop",
+  "short_name": "kiddoloop",
+  "description": "아이가 스스로 만드는 숙제 루틴",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F8F5",
+  "theme_color": "#16A34A",
+  "icons": [
+    { "src": "/appicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/appicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/appicon-180.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

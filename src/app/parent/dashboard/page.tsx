@@ -5,6 +5,7 @@ import { getEffectiveGradeLabel } from "@/lib/grade";
 import DashboardHero from "./DashboardHero";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
+import { LogoLockup } from "@/components/ui/Logo";
 
 function getWeekRange() {
   const now = new Date();
@@ -149,9 +150,7 @@ export default async function ParentDashboard() {
             padding: "16px 2px",
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 800, whiteSpace: "nowrap", color: "var(--text)" }}>
-            안녕하세요, {profile?.display_name ?? ""}님 👋
-          </div>
+          <LogoLockup height={26} />
           <div style={{ display: "flex", gap: 8 }}>
             <a
               href="/parent/notifications"

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import Icon from "@/components/ui/Icon";
+import { KiddoloopAppicon } from "@/components/ui/Logo";
 
 function GoogleG() {
   return (
@@ -45,42 +46,30 @@ export default function LoginPage() {
           flexShrink: 0,
         }}
       >
+        <KiddoloopAppicon size={78} />
         <div
           style={{
-            width: 78,
-            height: 78,
-            borderRadius: 24,
-            background: "linear-gradient(150deg,#22C55E,#15803D)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 14px 30px -10px rgba(21,128,61,.65)",
-          }}
-        >
-          <Icon name="clipboard-check" size={38} color="#fff" stroke={2.1} />
-        </div>
-        <div
-          style={{
-            fontSize: 25,
-            fontWeight: 800,
-            marginTop: 20,
-            letterSpacing: "-0.02em",
+            fontFamily: "'Fredoka', sans-serif",
+            fontWeight: 600,
+            fontSize: 28,
+            marginTop: 18,
+            letterSpacing: "0em",
             whiteSpace: "nowrap",
-            color: "var(--text)",
+            color: "var(--ink)",
           }}
         >
           kiddoloop
         </div>
         <div
           style={{
-            fontSize: 14.5,
+            fontSize: 14,
             color: "var(--muted)",
             fontWeight: 600,
-            marginTop: 7,
+            marginTop: 6,
             whiteSpace: "nowrap",
           }}
         >
-          부모와 자녀가 함께하는 숙제 캘린더
+          아이가 스스로 만드는 숙제 루틴
         </div>
       </div>
 

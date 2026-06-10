@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { KiddoloopMark } from "@/components/ui/Logo";
 
 const NAV_ITEMS = [
   { href: "/admin/users", label: "회원 관리" },
@@ -31,8 +32,24 @@ export default function AdminNav() {
       }}
     >
       <div style={{ padding: "0 20px 28px" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", letterSpacing: "0.1em" }}>KIDDOLOOP</div>
-        <div style={{ fontSize: 16, fontWeight: 800, color: "#F8FAFC", marginTop: 4 }}>Admin</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 6 }}>
+          <KiddoloopMark size={26} variant="white" />
+          <span
+            style={{
+              fontFamily: "'Fredoka', sans-serif",
+              fontWeight: 600,
+              fontSize: 18,
+              color: "#F8FAFC",
+              letterSpacing: "0em",
+              lineHeight: 1,
+            }}
+          >
+            kiddoloop
+          </span>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#475569", letterSpacing: "0.06em", paddingLeft: 2 }}>
+          Admin
+        </div>
       </div>
 
       <div style={{ flex: 1 }}>

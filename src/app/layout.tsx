@@ -1,9 +1,37 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "homework-platform",
-  description: "부모와 자녀가 함께하는 숙제 캘린더",
+  title: "kiddoloop",
+  description: "아이가 스스로 만드는 숙제 루틴",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-64.png", sizes: "64x64", type: "image/png" },
+    ],
+    apple: [{ url: "/appicon-180.png", sizes: "180x180" }],
+    shortcut: "/favicon-32.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "kiddoloop",
+  },
+  openGraph: {
+    title: "kiddoloop",
+    description: "아이가 스스로 만드는 숙제 루틴",
+    siteName: "kiddoloop",
+    locale: "ko_KR",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#16A34A",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
