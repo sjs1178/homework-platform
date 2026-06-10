@@ -21,7 +21,7 @@ interface Props {
   month: number;
   homeworks: Homework[];
   childId: string;
-  pairId: string;
+  pairIds: string[];
 }
 
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -30,7 +30,7 @@ const SUBJECT_COLORS: Record<string, string> = {
   수학: "#4F46E5", 국어: "#E11D48", 영어: "#0891B2",
 };
 
-export default function CalendarView({ year: initYear, month: initMonth, homeworks: initHomeworks, childId, pairId }: Props) {
+export default function CalendarView({ year: initYear, month: initMonth, homeworks: initHomeworks, childId, pairIds }: Props) {
   const [year, setYear] = useState(initYear);
   const [month, setMonth] = useState(initMonth);
   const [homeworks, setHomeworks] = useState(initHomeworks);
@@ -58,7 +58,7 @@ export default function CalendarView({ year: initYear, month: initMonth, homewor
     const { data: hws } = await supabase
       .from("homeworks")
       .select("*")
-      .eq("pair_id", pairId)
+      .in("pair_id", pairIds)
       .gte("due_date", from)
       .lte("due_date", to)
       .order("due_date");

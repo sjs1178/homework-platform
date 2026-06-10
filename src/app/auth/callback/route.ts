@@ -14,12 +14,13 @@ export async function GET(request: NextRequest) {
       if (user) {
         const { data: profile } = await supabase
           .from("user_profiles")
-          .select("role")
+          .select("role, consent_at")
           .eq("id", user.id)
           .single();
 
-        if (!profile?.role) {
-          return NextResponse.redirect(`${origin}/auth/select-role`);
+        // 프로필 없거나 온보딩 미완료(consent_at 없음) → 온보딩으로
+        if (!profile?.role || !profile?.consent_at) {
+          return NextResponse.redirect(`${origin}/onboarding`);
         }
         return NextResponse.redirect(`${origin}/${profile.role}/dashboard`);
       }

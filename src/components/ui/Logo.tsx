@@ -69,24 +69,34 @@ export function KiddoloopAppicon({ size = 78 }: { size?: number }) {
   );
 }
 
-/** 가로 조합 로고 (심볼 + "kiddoloop" 워드마크) */
+/** 가로 조합 로고 (심볼 + "kiddoloop" 워드마크 + 선택적 역할 뱃지) */
 export function LogoLockup({
   height = 32,
   variant = "color",
+  badge,
 }: {
   height?: number;
   variant?: Variant;
+  badge?: "parent" | "child";
 }) {
   const textColor =
     variant === "white" ? "#FFFFFF" : variant === "mono" ? "#13241B" : "#13241B";
+
+  const badgeStyles: Record<string, React.CSSProperties> = {
+    parent: {
+      background: "#EFF6FF",
+      color: "#2563EB",
+      border: "1px solid #BFDBFE",
+    },
+    child: {
+      background: "#ECFDF5",
+      color: "#16A34A",
+      border: "1px solid #BBF7D0",
+    },
+  };
+
   return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: Math.round(height * 0.3),
-      }}
-    >
+    <div style={{ display: "inline-flex", alignItems: "center", gap: Math.round(height * 0.3) }}>
       <KiddoloopMark size={height} variant={variant} />
       <span
         style={{
@@ -101,6 +111,21 @@ export function LogoLockup({
       >
         kiddoloop
       </span>
+      {badge && (
+        <span
+          style={{
+            fontSize: Math.round(height * 0.46),
+            fontWeight: 700,
+            padding: `${Math.round(height * 0.1)}px ${Math.round(height * 0.25)}px`,
+            borderRadius: 999,
+            lineHeight: 1,
+            whiteSpace: "nowrap",
+            ...badgeStyles[badge],
+          }}
+        >
+          {badge === "parent" ? "부모" : "자녀"}
+        </span>
+      )}
     </div>
   );
 }

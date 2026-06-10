@@ -9,13 +9,15 @@ export default async function ChildCalendarPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("pair_id")
-    .eq("id", user.id)
-    .single();
+  // 다:다 지원: 자녀가 연결된 모든 페어 조회
+  const { data: pairs } = await supabase
+    .from("pairs")
+    .select("id")
+    .eq("child_id", user.id)
+    .eq("status", "active");
 
-  if (!profile?.pair_id) redirect("/child/dashboard");
+  const allPairIds = (pairs ?? []).map((p) => p.id);
+  if (allPairIds.length === 0) redirect("/child/dashboard");
 
   const now = new Date();
   const year = now.getFullYear();
@@ -26,7 +28,7 @@ export default async function ChildCalendarPage() {
   const { data: homeworks } = await supabase
     .from("homeworks")
     .select("*")
-    .eq("pair_id", profile.pair_id)
+    .in("pair_id", allPairIds)
     .gte("due_date", from)
     .lte("due_date", to)
     .order("due_date");
@@ -75,7 +77,7 @@ export default async function ChildCalendarPage() {
           month={month}
           homeworks={homeworksWithCheck}
           childId={user.id}
-          pairId={profile.pair_id}
+          pairIds={allPairIds}
         />
       </div>
     </div>

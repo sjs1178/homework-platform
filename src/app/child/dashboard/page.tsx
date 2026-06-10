@@ -31,11 +31,22 @@ export default async function ChildDashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("pair_id, display_name, avatar_id, grade, grade_school_year")
-    .eq("id", user.id)
-    .single();
+  const [profileRes, pairsRes] = await Promise.all([
+    supabase
+      .from("user_profiles")
+      .select("pair_id, display_name, avatar_id, grade, grade_school_year")
+      .eq("id", user.id)
+      .single(),
+    // 다:다 지원: 자녀가 연결된 모든 페어 조회
+    supabase
+      .from("pairs")
+      .select("id")
+      .eq("child_id", user.id)
+      .eq("status", "active"),
+  ]);
+  const profile = profileRes.data;
+  const allPairIds = (pairsRes.data ?? []).map((p) => p.id);
+  const hasPair = allPairIds.length > 0;
 
   const avatar = getAvatar(profile?.avatar_id);
   const gradeLabel = getEffectiveGradeLabel(
@@ -53,22 +64,24 @@ export default async function ChildDashboard() {
   let rewardUnit = "P";
   let nextHw: { id: string; subject: string; description: string; due_date: string; due_time: string | null } | null = null;
 
-  if (profile?.pair_id) {
+  if (hasPair) {
     const { monday, sunday } = getWeekRange();
     const mondayStr = monday.toISOString().split("T")[0];
     const sundayStr = sunday.toISOString().split("T")[0];
+    // primary pair_id (리워드 설정용)
+    const primaryPairId = profile?.pair_id ?? allPairIds[0];
 
     const [weekRes, nextRes, logsRes, settingsRes] = await Promise.all([
       supabase
         .from("homeworks")
         .select("due_date, is_completed")
-        .eq("pair_id", profile.pair_id)
+        .in("pair_id", allPairIds)
         .gte("due_date", mondayStr)
         .lte("due_date", sundayStr),
       supabase
         .from("homeworks")
         .select("id, subject, description, due_date, due_time")
-        .eq("pair_id", profile.pair_id)
+        .in("pair_id", allPairIds)
         .eq("is_completed", false)
         .gte("due_date", todayStr)
         .order("due_date")
@@ -77,12 +90,12 @@ export default async function ChildDashboard() {
       supabase
         .from("reward_logs")
         .select("type, amount")
-        .eq("pair_id", profile.pair_id)
+        .in("pair_id", allPairIds)
         .eq("child_id", user.id),
       supabase
         .from("reward_settings")
         .select("point_reward_unit")
-        .eq("pair_id", profile.pair_id)
+        .eq("pair_id", primaryPairId)
         .single(),
     ]);
 
@@ -123,7 +136,7 @@ export default async function ChildDashboard() {
             padding: "16px 2px",
           }}
         >
-          <LogoLockup height={26} />
+          <LogoLockup height={26} badge="child" />
           <a
             href="/child/profile"
             style={{
@@ -137,7 +150,7 @@ export default async function ChildDashboard() {
           </a>
         </div>
 
-        {!profile?.pair_id ? (
+        {!hasPair ? (
           /* ── 페어링 전 ── */
           <div>
             <div style={{ textAlign: "center", padding: "32px 0 24px" }}>

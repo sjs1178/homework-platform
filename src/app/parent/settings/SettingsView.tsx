@@ -24,6 +24,15 @@ interface Pair {
   childGrade: string;
 }
 
+interface PendingApproval {
+  id: string;
+  child_name: string;
+  child_birthday: string;
+  approval_code: string;
+  created_at: string;
+  expires_at: string;
+}
+
 interface Props {
   parentId: string;
   displayName: string;
@@ -31,6 +40,7 @@ interface Props {
   pairId: string | null;
   rewardName: string;
   rewardUnit: string;
+  pendingApprovals: PendingApproval[];
 }
 
 const SCHOOL_LEVELS = ["초등", "중등", "고등"] as const;
@@ -90,6 +100,7 @@ function SettingRow({
 export default function SettingsView({
   parentId, displayName, pairs: initialPairs, pairId: initialPairId,
   rewardName: initRewardName, rewardUnit: initRewardUnit,
+  pendingApprovals: initialPendingApprovals,
 }: Props) {
   const router = useRouter();
   const supabase = createClient();
@@ -101,6 +112,10 @@ export default function SettingsView({
   const [gradeEditingPairId, setGradeEditingPairId] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [gradeSaving, setGradeSaving] = useState(false);
+
+  // ── 가입 승인 대기 ─────────────────────────────────────
+  const [pendingApprovals, setPendingApprovals] = useState(initialPendingApprovals);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   // ── AI 설정 (localStorage only, DB에 저장 안 함) ───────────
   const [aiProvider, setAiProvider] = useState<AiProvider>("claude");
@@ -217,6 +232,32 @@ export default function SettingsView({
     router.refresh();
   }
 
+  // ── 자녀 가입 승인 ────────────────────────────────────
+  async function approveChild(approvalId: string) {
+    if (!confirm("자녀의 가입을 승인하시겠습니까?\n이용약관 및 개인정보처리방침에 법정대리인으로 동의합니다.")) return;
+    setApprovingId(approvalId);
+    const res = await fetch("/api/onboarding/approve-child", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approvalId }),
+    });
+    const json = await res.json();
+    setApprovingId(null);
+    if (res.ok) {
+      setPendingApprovals((prev) => prev.filter((a) => a.id !== approvalId));
+      router.refresh();
+      alert("승인 완료! 자녀와 자동으로 연결되었습니다.");
+    } else {
+      alert(json.error ?? "승인 처리 중 오류가 발생했습니다.");
+    }
+  }
+
+  async function rejectApproval(approvalId: string) {
+    if (!confirm("가입 요청을 거절하시겠습니까?")) return;
+    await supabase.from("pending_approvals").update({ status: "rejected" }).eq("id", approvalId);
+    setPendingApprovals((prev) => prev.filter((a) => a.id !== approvalId));
+  }
+
   // ── 로그아웃 ─────────────────────────────────────────
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -225,6 +266,81 @@ export default function SettingsView({
 
   return (
     <div>
+      {/* ── 자녀 가입 승인 대기 ──────────────────────── */}
+      {pendingApprovals.length > 0 && (
+        <>
+          <SectionHeader>가입 승인 대기</SectionHeader>
+          <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>
+            {pendingApprovals.map((approval, idx) => {
+              const bday = new Date(approval.child_birthday);
+              const age = new Date().getFullYear() - bday.getFullYear();
+              const expiresAt = new Date(approval.expires_at);
+              const isExpired = expiresAt < new Date();
+              return (
+                <div
+                  key={approval.id}
+                  style={{
+                    padding: "16px",
+                    borderBottom: idx < pendingApprovals.length - 1 ? "1px solid var(--line)" : "none",
+                    background: isExpired ? "#FFF1F2" : "#FFFBEB",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                    <span style={{ fontSize: 28 }}>🧒</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text)" }}>{approval.child_name}</div>
+                      <div style={{ fontSize: 12.5, color: "var(--muted)", fontWeight: 600, marginTop: 2 }}>
+                        만 {age}세 · {bday.toLocaleDateString("ko-KR")}생
+                      </div>
+                    </div>
+                    {isExpired && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#E11D48", background: "#FFF1F2", border: "1px solid #FECDD3", padding: "3px 8px", borderRadius: 999 }}>
+                        만료됨
+                      </span>
+                    )}
+                  </div>
+                  <div style={{
+                    padding: "10px 12px", borderRadius: 10,
+                    background: "rgba(255,193,7,.12)", border: "1px solid #FDE68A",
+                    fontSize: 12.5, color: "#92400E", fontWeight: 600, lineHeight: 1.6,
+                    marginBottom: 12,
+                  }}>
+                    승인하면 이용약관 및 개인정보처리방침에 법정대리인으로 동의하게 됩니다.
+                    {age < 14 && " (만 14세 미만: 법정대리인 동의 필수)"}
+                  </div>
+                  {!isExpired && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <button
+                        onClick={() => rejectApproval(approval.id)}
+                        style={{
+                          height: 40, borderRadius: 12, border: "1.5px solid #FECDD3",
+                          background: "#FFF1F2", color: "#E11D48",
+                          fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+                        }}
+                      >
+                        거절
+                      </button>
+                      <button
+                        onClick={() => approveChild(approval.id)}
+                        disabled={approvingId === approval.id}
+                        style={{
+                          height: 40, borderRadius: 12, border: "none",
+                          background: "var(--green)", color: "#fff",
+                          fontWeight: 800, fontSize: 13.5, cursor: "pointer",
+                          opacity: approvingId === approval.id ? 0.6 : 1,
+                        }}
+                      >
+                        {approvingId === approval.id ? "처리 중..." : "승인하기"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
       {/* ── 자녀 관리 ───────────────────────────────── */}
       <SectionHeader>자녀 관리</SectionHeader>
       <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>

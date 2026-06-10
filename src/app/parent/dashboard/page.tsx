@@ -150,7 +150,7 @@ export default async function ParentDashboard() {
             padding: "16px 2px",
           }}
         >
-          <LogoLockup height={26} />
+          <LogoLockup height={26} badge="parent" />
           <div style={{ display: "flex", gap: 8 }}>
             <a
               href="/parent/notifications"

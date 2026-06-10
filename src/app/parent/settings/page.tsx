@@ -74,6 +74,18 @@ export default async function SettingsPage() {
         .single()
     : { data: null };
 
+  // 자녀 가입 승인 대기 목록 (service role로 이메일 기반 조회)
+  const pendingAdminClient = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data: pendingApprovals } = await pendingAdminClient
+    .from("pending_approvals")
+    .select("id, child_name, child_birthday, approval_code, created_at, expires_at")
+    .eq("parent_email", user.email?.toLowerCase() ?? "")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
   return (
     <div
       style={{
@@ -107,6 +119,7 @@ export default async function SettingsPage() {
           pairId={pairId}
           rewardName={rwSettings?.point_reward_name ?? "리워드"}
           rewardUnit={rwSettings?.point_reward_unit ?? "P"}
+          pendingApprovals={pendingApprovals ?? []}
         />
       </div>
     </div>
