@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
+import type { AiProvider } from "./ai-token";
+import { callCheckHomework } from "./ai-caller";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const systemClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export interface Problem {
   number: number;
@@ -57,45 +59,54 @@ Rules:
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
-// 사진 없이 텍스트만으로 채점
-export async function checkHomeworkByText(text: string): Promise<CheckResult> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: `다음 숙제 내용을 검사해줘:\n\n${text}` }],
-  });
-
-  const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
-  const match = raw.match(/\{[\s\S]*\}/);
-  try {
-    return JSON.parse(match ? match[0] : raw) as CheckResult;
-  } catch {
-    console.error("Check homework returned invalid JSON:", raw);
-    throw new Error("채점 결과를 파싱할 수 없습니다.");
+export async function checkHomeworkByText(
+  text: string,
+  userApiKey?: string,
+  userProvider?: AiProvider
+): Promise<CheckResult> {
+  let raw: string;
+  if (userApiKey && userProvider) {
+    raw = await callCheckHomework(SYSTEM_PROMPT, { type: "text", text }, userProvider, userApiKey);
+  } else {
+    const response = await systemClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: `다음 숙제 내용을 검사해줘:\n\n${text}` }],
+    });
+    raw = (response.content[0] as Anthropic.TextBlock).text.trim();
   }
+  return parseCheckResult(raw);
 }
 
-// 사진으로 채점
 export async function checkHomework(
-  images: { base64: string; mediaType: MediaType }[]
+  images: { base64: string; mediaType: MediaType }[],
+  userApiKey?: string,
+  userProvider?: AiProvider
 ): Promise<CheckResult> {
-  const content: Anthropic.MessageParam["content"] = [
-    ...images.map((img) => ({
-      type: "image" as const,
-      source: { type: "base64" as const, media_type: img.mediaType, data: img.base64 },
-    })),
-    { type: "text" as const, text: "이 숙제 이미지들을 검사해줘. 모든 문제를 찾아서 채점해줘." },
-  ];
+  let raw: string;
+  if (userApiKey && userProvider) {
+    raw = await callCheckHomework(SYSTEM_PROMPT, { type: "images", images }, userProvider, userApiKey);
+  } else {
+    const content: Anthropic.MessageParam["content"] = [
+      ...images.map((img) => ({
+        type: "image" as const,
+        source: { type: "base64" as const, media_type: img.mediaType, data: img.base64 },
+      })),
+      { type: "text" as const, text: "이 숙제 이미지들을 검사해줘. 모든 문제를 찾아서 채점해줘." },
+    ];
+    const response = await systemClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content }],
+    });
+    raw = (response.content[0] as Anthropic.TextBlock).text.trim();
+  }
+  return parseCheckResult(raw);
+}
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content }],
-  });
-
-  const raw = (response.content[0] as Anthropic.TextBlock).text.trim();
+function parseCheckResult(raw: string): CheckResult {
   const match = raw.match(/\{[\s\S]*\}/);
   try {
     return JSON.parse(match ? match[0] : raw) as CheckResult;

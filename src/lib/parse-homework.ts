@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { HomeworkItem, SubjectRule } from "./types";
+import type { AiProvider } from "./ai-token";
+import { callParseText, callParseImage } from "./ai-caller";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const systemClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 function buildSystemPrompt(rules: SubjectRule[]): string {
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
@@ -40,41 +42,59 @@ IMPORTANT: Output ONLY the raw JSON array. No explanation, no markdown, no code 
 
 export async function parseHomeworkText(
   text: string,
-  rules: SubjectRule[] = []
+  rules: SubjectRule[] = [],
+  userApiKey?: string,
+  userProvider?: AiProvider
 ): Promise<HomeworkItem[]> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2048,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    system: [{ type: "text", text: buildSystemPrompt(rules), cache_control: { type: "ephemeral" } }] as any,
-    messages: [{ role: "user", content: text }],
-  });
+  const prompt = buildSystemPrompt(rules);
+  let raw: string;
 
-  return parseResponse((response.content[0] as Anthropic.TextBlock).text);
+  if (userApiKey && userProvider) {
+    raw = await callParseText(prompt, text, userProvider, userApiKey);
+  } else {
+    const response = await systemClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      system: [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }] as any,
+      messages: [{ role: "user", content: text }],
+    });
+    raw = (response.content[0] as Anthropic.TextBlock).text;
+  }
+
+  return parseResponse(raw);
 }
 
 export async function parseHomeworkImage(
   imageBase64: string,
   mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-  rules: SubjectRule[] = []
+  rules: SubjectRule[] = [],
+  userApiKey?: string,
+  userProvider?: AiProvider
 ): Promise<HomeworkItem[]> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2048,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    system: [{ type: "text", text: buildSystemPrompt(rules), cache_control: { type: "ephemeral" } }] as any,
-    messages: [
-      {
+  const prompt = buildSystemPrompt(rules);
+  let raw: string;
+
+  if (userApiKey && userProvider) {
+    raw = await callParseImage(prompt, imageBase64, mediaType, userProvider, userApiKey);
+  } else {
+    const response = await systemClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      system: [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }] as any,
+      messages: [{
         role: "user",
         content: [
           { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
           { type: "text", text: "이 숙제 이미지에서 숙제 일정을 추출해줘." },
         ],
-      },
-    ],
-  });
+      }],
+    });
+    raw = (response.content[0] as Anthropic.TextBlock).text;
+  }
 
-  return parseResponse((response.content[0] as Anthropic.TextBlock).text);
+  return parseResponse(raw);
 }
 
 function parseResponse(raw: string): HomeworkItem[] {
@@ -84,7 +104,7 @@ function parseResponse(raw: string): HomeworkItem[] {
   try {
     return JSON.parse(jsonStr) as HomeworkItem[];
   } catch {
-    console.error("Claude returned invalid JSON:", raw);
+    console.error("Parse homework returned invalid JSON:", raw);
     return [];
   }
 }

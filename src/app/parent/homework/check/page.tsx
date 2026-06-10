@@ -78,6 +78,7 @@ export default async function ParentHomeworkCheckPage({
           existingResult={existing?.results ?? null}
           existingScore={existing ? { score: existing.score, total: existing.total_problems } : null}
           isReviewed={existing?.is_reviewed ?? false}
+          subject={hw.subject}
         />
       </div>
     </div>

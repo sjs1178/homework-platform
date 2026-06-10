@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { GRADES, currentSchoolYear } from "@/lib/grade";
 import Icon from "@/components/ui/Icon";
+import {
+  type AiProvider,
+  AI_PROVIDER_LABELS,
+  AI_PROVIDER_PLACEHOLDERS,
+  getStoredAiToken,
+  storeAiToken,
+  clearStoredAiToken,
+} from "@/lib/ai-token";
 
 interface Pair {
   id: string;
@@ -93,6 +101,38 @@ export default function SettingsView({
   const [gradeEditingPairId, setGradeEditingPairId] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [gradeSaving, setGradeSaving] = useState(false);
+
+  // ── AI 설정 (localStorage only, DB에 저장 안 함) ───────────
+  const [aiProvider, setAiProvider] = useState<AiProvider>("claude");
+  const [aiTokenInput, setAiTokenInput] = useState("");
+  const [showToken, setShowToken] = useState(false);
+  const [savedTokenMask, setSavedTokenMask] = useState<string | null>(null);
+  const [aiSaved, setAiSaved] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredAiToken();
+    if (stored) {
+      setAiProvider(stored.provider);
+      setSavedTokenMask(`...${stored.token.slice(-6)}`);
+    }
+  }, []);
+
+  function handleSaveAiToken() {
+    const token = aiTokenInput.trim();
+    if (!token) return;
+    storeAiToken(aiProvider, token);
+    setSavedTokenMask(`...${token.slice(-6)}`);
+    setAiTokenInput("");
+    setAiSaved(true);
+    setTimeout(() => setAiSaved(false), 2500);
+  }
+
+  function handleClearAiToken() {
+    if (!confirm("저장된 AI 토큰을 삭제할까요?")) return;
+    clearStoredAiToken();
+    setSavedTokenMask(null);
+    setAiTokenInput("");
+  }
 
   // ── 리워드 설정 ────────────────────────────────────────
   const [pairId] = useState(initialPairId);
@@ -400,6 +440,116 @@ export default function SettingsView({
             자녀를 먼저 연결해주세요
           </p>
         )}
+      </div>
+
+      {/* ── AI 설정 ──────────────────────────────── */}
+      <SectionHeader>AI 설정</SectionHeader>
+      <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px" }}>
+        <p style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, marginBottom: 12, lineHeight: 1.6 }}>
+          본인의 AI API 토큰을 입력하면 AI 기능을 무제한으로 이용할 수 있어요.
+          토큰이 없으면 광고 시청 후 1회 이용이 가능합니다.
+        </p>
+
+        {/* AI 제공사 선택 */}
+        <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 8 }}>AI 제공사</p>
+        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          {(["claude", "openai", "gemini"] as AiProvider[]).map((p) => {
+            const on = aiProvider === p;
+            return (
+              <button
+                key={p}
+                onClick={() => { setAiProvider(p); setAiTokenInput(""); }}
+                style={{
+                  flex: 1, height: 38, borderRadius: 10, fontSize: 12.5, fontWeight: 700,
+                  border: `2px solid ${on ? "var(--green)" : "var(--line-strong)"}`,
+                  background: on ? "var(--green-50)" : "#fff",
+                  color: on ? "var(--green-d)" : "var(--muted)",
+                  cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                {p === "claude" ? "Claude" : p === "openai" ? "ChatGPT" : "Gemini"}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 현재 저장 상태 */}
+        {savedTokenMask && (
+          <div
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: "var(--green-50)", borderRadius: 10,
+              padding: "10px 12px", marginBottom: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Icon name="check-circle" size={16} color="var(--green)" stroke={2} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--green-d)" }}>
+                {AI_PROVIDER_LABELS[aiProvider]} 토큰 저장됨 ({savedTokenMask})
+              </span>
+            </div>
+            <button
+              onClick={handleClearAiToken}
+              style={{ fontSize: 12, color: "#E11D48", background: "none", border: "none", cursor: "pointer", fontWeight: 700 }}
+            >
+              삭제
+            </button>
+          </div>
+        )}
+
+        {/* 토큰 입력 */}
+        <div style={{ position: "relative", marginBottom: 10 }}>
+          <input
+            type={showToken ? "text" : "password"}
+            value={aiTokenInput}
+            onChange={(e) => setAiTokenInput(e.target.value)}
+            placeholder={AI_PROVIDER_PLACEHOLDERS[aiProvider]}
+            style={{
+              width: "100%", height: 44, borderRadius: 10,
+              border: "1.5px solid var(--line-strong)", padding: "0 44px 0 12px",
+              fontSize: 13, fontWeight: 500, color: "var(--text)", outline: "none",
+              boxSizing: "border-box", fontFamily: "ui-monospace, monospace",
+            }}
+          />
+          <button
+            onClick={() => setShowToken((v) => !v)}
+            style={{
+              position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+              background: "none", border: "none", cursor: "pointer", padding: 2,
+            }}
+          >
+            <Icon name={showToken ? "eye-off" : "eye"} size={17} color="var(--faint)" stroke={2} />
+          </button>
+        </div>
+        <button
+          onClick={handleSaveAiToken}
+          disabled={!aiTokenInput.trim()}
+          style={{
+            width: "100%", height: 44, borderRadius: 12, border: "none",
+            background: aiSaved ? "var(--green-50)" : aiTokenInput.trim() ? "var(--green)" : "var(--line-strong)",
+            color: aiSaved ? "var(--green-d)" : aiTokenInput.trim() ? "#fff" : "var(--faint)",
+            fontWeight: 800, fontSize: 14, cursor: aiTokenInput.trim() ? "pointer" : "default",
+          }}
+        >
+          {aiSaved ? "이 기기에 저장됐습니다 ✓" : "토큰 저장 (이 기기에만)"}
+        </button>
+
+        {/* 보안 안내 */}
+        <div
+          style={{
+            marginTop: 12, padding: "10px 12px",
+            background: "var(--surface-2)", borderRadius: 10,
+            display: "flex", gap: 8, alignItems: "flex-start",
+          }}
+        >
+          <span style={{ marginTop: 1, flexShrink: 0 }}>
+            <Icon name="lock" size={14} color="var(--faint)" stroke={2} />
+          </span>
+          <p style={{ fontSize: 11.5, color: "var(--faint)", fontWeight: 600, lineHeight: 1.6, margin: 0 }}>
+            토큰은 이 기기(브라우저)에만 저장됩니다. 서버 데이터베이스에는 기록되지 않으며,
+            AI 호출 시에만 HTTPS를 통해 전달된 뒤 즉시 폐기됩니다.
+          </p>
+        </div>
       </div>
 
       {/* ── 계정 ──────────────────────────────────── */}

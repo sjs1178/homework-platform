@@ -3,6 +3,8 @@
 import { useState, useRef } from "react";
 import type { CheckResult, Problem } from "@/lib/check-homework";
 import Icon from "@/components/ui/Icon";
+import AdGateModal from "@/components/ui/AdGateModal";
+import { getStoredAiToken } from "@/lib/ai-token";
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
@@ -12,6 +14,7 @@ interface Props {
   existingResult: CheckResult | null;
   existingScore: { score: number; total: number } | null;
   isReviewed: boolean;
+  subject?: string;
 }
 
 interface EditState {
@@ -20,12 +23,195 @@ interface EditState {
   explanation: string;
 }
 
+// ── Manual check form state ───────────────────────────────
+
+interface ManualCheckData {
+  scoreStr: string;
+  totalStr: string;
+  wrongItems: string[];
+  comments: string[];
+}
+
+function ManualCheckForm({
+  onSubmit,
+  onCancel,
+  submitting,
+}: {
+  onSubmit: (data: ManualCheckData) => void;
+  onCancel: () => void;
+  submitting: boolean;
+}) {
+  const [scoreStr, setScoreStr] = useState("");
+  const [totalStr, setTotalStr] = useState("");
+  const [wrongItems, setWrongItems] = useState<string[]>([""]);
+  const [comments, setComments] = useState<string[]>([""]);
+
+  function updateList(
+    list: string[],
+    setList: (v: string[]) => void,
+    idx: number,
+    val: string
+  ) {
+    const next = [...list];
+    next[idx] = val;
+    setList(next);
+  }
+
+  function removeFromList(list: string[], setList: (v: string[]) => void, idx: number) {
+    setList(list.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div
+      style={{
+        background: "#fff", borderRadius: "var(--r-card)",
+        padding: 18, boxShadow: "var(--sh-md)",
+        display: "flex", flexDirection: "column", gap: 18,
+      }}
+    >
+      {/* 점수 */}
+      <div>
+        <p style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
+          점수 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
+        </p>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <input
+            type="number"
+            min={0}
+            value={scoreStr}
+            onChange={(e) => setScoreStr(e.target.value)}
+            placeholder="맞은 개수"
+            style={{
+              flex: 1, height: 44, borderRadius: 10,
+              border: "1.5px solid var(--line-strong)", padding: "0 12px",
+              fontSize: 16, fontWeight: 800, color: "var(--text)", outline: "none",
+            }}
+          />
+          <span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 700 }}>/</span>
+          <input
+            type="number"
+            min={0}
+            value={totalStr}
+            onChange={(e) => setTotalStr(e.target.value)}
+            placeholder="전체 문제"
+            style={{
+              flex: 1, height: 44, borderRadius: 10,
+              border: "1.5px solid var(--line-strong)", padding: "0 12px",
+              fontSize: 16, fontWeight: 800, color: "var(--text)", outline: "none",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 틀린 부분 */}
+      <div>
+        <p style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
+          틀린 부분 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
+        </p>
+        {wrongItems.map((item, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+            <input
+              value={item}
+              onChange={(e) => updateList(wrongItems, setWrongItems, i, e.target.value)}
+              placeholder={`틀린 부분 ${i + 1}`}
+              style={{
+                flex: 1, height: 42, borderRadius: 10,
+                border: "1.5px solid var(--line-strong)", padding: "0 12px",
+                fontSize: 14, color: "var(--text)", outline: "none",
+              }}
+            />
+            {wrongItems.length > 1 && (
+              <button
+                onClick={() => removeFromList(wrongItems, setWrongItems, i)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+              >
+                <Icon name="x" size={16} color="var(--faint)" stroke={2} />
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={() => setWrongItems((p) => [...p, ""])}
+          style={{
+            display: "flex", alignItems: "center", gap: 5,
+            background: "none", border: "none", cursor: "pointer",
+            color: "var(--green-d)", fontWeight: 700, fontSize: 13,
+          }}
+        >
+          <Icon name="plus" size={14} color="var(--green-d)" stroke={2.5} />
+          추가하기
+        </button>
+      </div>
+
+      {/* 부모 코멘트 */}
+      <div>
+        <p style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
+          부모 코멘트 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
+        </p>
+        {comments.map((item, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+            <textarea
+              value={item}
+              onChange={(e) => updateList(comments, setComments, i, e.target.value)}
+              placeholder={`코멘트 ${i + 1}`}
+              rows={2}
+              style={{
+                flex: 1, borderRadius: 10,
+                border: "1.5px solid var(--line-strong)", padding: "10px 12px",
+                fontSize: 14, color: "var(--text)", outline: "none",
+                resize: "none", fontFamily: "inherit",
+              }}
+            />
+            {comments.length > 1 && (
+              <button
+                onClick={() => removeFromList(comments, setComments, i)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4, marginTop: 8 }}
+              >
+                <Icon name="x" size={16} color="var(--faint)" stroke={2} />
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={() => setComments((p) => [...p, ""])}
+          style={{
+            display: "flex", alignItems: "center", gap: 5,
+            background: "none", border: "none", cursor: "pointer",
+            color: "var(--green-d)", fontWeight: 700, fontSize: 13,
+          }}
+        >
+          <Icon name="plus" size={14} color="var(--green-d)" stroke={2.5} />
+          추가하기
+        </button>
+      </div>
+
+      {/* 버튼 */}
+      <button
+        onClick={() => onSubmit({ scoreStr, totalStr, wrongItems, comments })}
+        disabled={submitting}
+        style={{
+          width: "100%", height: 52, borderRadius: 16, border: "none",
+          background: "var(--green)", color: "#fff",
+          fontWeight: 800, fontSize: 15, cursor: submitting ? "default" : "pointer",
+          boxShadow: "var(--sh-green)", opacity: submitting ? 0.7 : 1,
+        }}
+      >
+        {submitting ? "저장 중..." : "검사 결과 저장하기"}
+      </button>
+      <button
+        onClick={onCancel}
+        style={{ fontSize: 13, color: "var(--faint)", background: "none", border: "none", cursor: "pointer", textAlign: "center" }}
+      >
+        취소
+      </button>
+    </div>
+  );
+}
+
+// ── QCard (AI 결과 카드) ──────────────────────────────────────
+
 function QCard({
-  p,
-  editing,
-  onStartEdit,
-  onCancelEdit,
-  onChangeEdit,
+  p, editing, onStartEdit, onCancelEdit, onChangeEdit,
 }: {
   p: Problem;
   editing: EditState | undefined;
@@ -39,26 +225,13 @@ function QCard({
   return (
     <div
       style={{
-        background: "#fff",
-        borderRadius: "var(--r-card)",
-        boxShadow: "var(--sh-md)",
-        marginBottom: 13,
-        overflow: "hidden",
-        display: "flex",
+        background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)",
+        marginBottom: 13, overflow: "hidden", display: "flex",
       }}
     >
       <div style={{ width: 5, flexShrink: 0, background: accent }} />
       <div style={{ flex: 1, padding: "15px 16px 16px" }}>
-        {/* 문제 헤더 */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 10,
-            marginBottom: 9,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 9 }}>
           <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
             <span
               style={{
@@ -67,12 +240,7 @@ function QCard({
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
-              <Icon
-                name={correct ? "check" : "x"}
-                size={15}
-                color={correct ? "var(--green-d)" : "#E11D48"}
-                stroke={3}
-              />
+              <Icon name={correct ? "check" : "x"} size={15} color={correct ? "var(--green-d)" : "#E11D48"} stroke={3} />
             </span>
             <div style={{ fontSize: 14.5, fontWeight: 800, lineHeight: 1.4, color: "var(--text)" }}>
               <span style={{ color: "var(--muted)" }}>{p.number}번.</span> {p.question}
@@ -91,13 +259,10 @@ function QCard({
             </button>
           )}
         </div>
-
-        {/* 답 영역 */}
         <div style={{ paddingLeft: 34 }}>
           <div style={{ fontSize: 13.5, color: "var(--text-soft)", fontWeight: 600, lineHeight: 1.5, marginBottom: 4 }}>
             <span style={{ color: "var(--muted)" }}>학생 답</span> · {p.studentAnswer}
           </div>
-
           {!editing ? (
             <>
               {!p.isCorrect && p.correctAnswer && (
@@ -106,31 +271,17 @@ function QCard({
                 </div>
               )}
               {p.explanation && (
-                <div
-                  style={{
-                    background: "var(--surface-2)", borderRadius: 13,
-                    padding: "11px 13px", marginTop: p.isCorrect ? 0 : 2,
-                  }}
-                >
+                <div style={{ background: "var(--surface-2)", borderRadius: 13, padding: "11px 13px", marginTop: p.isCorrect ? 0 : 2 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
                     <Icon name="sparkles" size={13} color="var(--green)" stroke={2} />
-                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--green-d)", whiteSpace: "nowrap" }}>
-                      AI 해설
-                    </span>
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--green-d)", whiteSpace: "nowrap" }}>AI 해설</span>
                   </div>
-                  <div style={{ fontSize: 13, color: "var(--text-soft)", fontWeight: 500, lineHeight: 1.62 }}>
-                    {p.explanation}
-                  </div>
+                  <div style={{ fontSize: 13, color: "var(--text-soft)", fontWeight: 500, lineHeight: 1.62 }}>{p.explanation}</div>
                 </div>
               )}
             </>
           ) : (
-            <div
-              style={{
-                marginTop: 8, display: "flex", flexDirection: "column", gap: 8,
-                background: "var(--amber-50)", borderRadius: 12, padding: 12,
-              }}
-            >
+            <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8, background: "var(--amber-50)", borderRadius: 12, padding: 12 }}>
               <div style={{ display: "flex", gap: 8 }}>
                 {[true, false].map((val) => (
                   <button
@@ -152,26 +303,16 @@ function QCard({
                 value={editing.correctAnswer}
                 onChange={(e) => onChangeEdit({ correctAnswer: e.target.value })}
                 placeholder="정답"
-                style={{
-                  border: "1px solid var(--line-strong)", borderRadius: 8,
-                  padding: "7px 10px", fontSize: 13.5, color: "var(--text)",
-                  outline: "none",
-                }}
+                style={{ border: "1px solid var(--line-strong)", borderRadius: 8, padding: "7px 10px", fontSize: 13.5, color: "var(--text)", outline: "none" }}
               />
               <textarea
                 value={editing.explanation}
                 onChange={(e) => onChangeEdit({ explanation: e.target.value })}
                 placeholder="풀이 설명 (선택)"
                 rows={2}
-                style={{
-                  border: "1px solid var(--line-strong)", borderRadius: 8,
-                  padding: "7px 10px", fontSize: 13, color: "var(--text)",
-                  resize: "none", outline: "none",
-                }}
+                style={{ border: "1px solid var(--line-strong)", borderRadius: 8, padding: "7px 10px", fontSize: 13, color: "var(--text)", resize: "none", outline: "none" }}
               />
-              <button onClick={onCancelEdit} style={{ fontSize: 12, color: "var(--faint)", textAlign: "right", background: "none", border: "none", cursor: "pointer" }}>
-                취소
-              </button>
+              <button onClick={onCancelEdit} style={{ fontSize: 12, color: "var(--faint)", textAlign: "right", background: "none", border: "none", cursor: "pointer" }}>취소</button>
             </div>
           )}
         </div>
@@ -180,10 +321,13 @@ function QCard({
   );
 }
 
+// ── Main component ────────────────────────────────────────────
+
 export default function HomeworkCheckForm({
-  homeworkId, checkId: initialCheckId, existingResult, existingScore, isReviewed: initialReviewed,
+  homeworkId, checkId: initialCheckId, existingResult, existingScore, isReviewed: initialReviewed, subject,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [checkMode, setCheckMode] = useState<"ai" | "manual">("ai");
   const [images, setImages] = useState<{ base64: string; mediaType: MediaType; preview: string }[]>([]);
   const [text, setText] = useState("");
   const [checking, setChecking] = useState(false);
@@ -195,6 +339,9 @@ export default function HomeworkCheckForm({
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<Record<number, EditState>>({});
   const [savedMsg, setSavedMsg] = useState("");
+
+  // Ad gate
+  const [showAdGate, setShowAdGate] = useState(false);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -213,10 +360,19 @@ export default function HomeworkCheckForm({
     e.target.value = "";
   }
 
-  async function handleCheck() {
+  function buildApiBody(extra: Record<string, unknown> = {}) {
+    const stored = getStoredAiToken();
+    return {
+      homeworkId,
+      ...extra,
+      ...(stored ? { aiToken: stored.token, aiProvider: stored.provider } : {}),
+    };
+  }
+
+  async function doAiCheck() {
     setChecking(true);
     setError("");
-    const body: Record<string, unknown> = { homeworkId };
+    const body: Record<string, unknown> = buildApiBody();
     if (images.length) body.images = images.map(({ base64, mediaType }) => ({ base64, mediaType }));
     if (text.trim()) body.text = text.trim();
 
@@ -227,7 +383,7 @@ export default function HomeworkCheckForm({
     });
     const json = await res.json();
     if (!res.ok) {
-      setError("채점 중 오류가 발생했어요.");
+      setError(json.error ?? "채점 중 오류가 발생했어요.");
     } else {
       setResult(json.result);
       setScore({ score: json.result.score, total: json.result.total });
@@ -238,6 +394,68 @@ export default function HomeworkCheckForm({
       setIsReviewed(json.result.total === 0);
     }
     setChecking(false);
+  }
+
+  function handleCheck() {
+    const stored = getStoredAiToken();
+    if (stored || (!images.length && !text.trim())) {
+      // own token or "확인 완료" path (no AI needed)
+      doAiCheck();
+    } else {
+      setShowAdGate(true);
+    }
+  }
+
+  function onAdComplete() {
+    setShowAdGate(false);
+    doAiCheck();
+  }
+
+  function onAdManual() {
+    setShowAdGate(false);
+    setCheckMode("manual");
+    setImages([]);
+    setText("");
+  }
+
+  async function handleManualSubmit(data: ManualCheckData) {
+    setSaving(true);
+    const { scoreStr, totalStr, wrongItems, comments } = data;
+    const scoreNum = parseInt(scoreStr) || 0;
+    const totalNum = parseInt(totalStr) || 0;
+
+    const manualResult: CheckResult = {
+      subject: subject ?? "-",
+      problems: wrongItems
+        .filter((w) => w.trim())
+        .map((w, i) => ({
+          number: i + 1,
+          question: w.trim(),
+          studentAnswer: "",
+          correctAnswer: "",
+          isCorrect: false,
+          explanation: null,
+        })),
+      score: scoreNum,
+      total: totalNum,
+      feedback: comments.filter((c) => c.trim()).join("\n") || "부모가 직접 확인했습니다.",
+    };
+
+    const res = await fetch("/api/check-homework", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeworkId, manualResult }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error ?? "저장 중 오류가 발생했어요.");
+    } else {
+      setResult(json.result);
+      setScore({ score: json.result.score, total: json.result.total });
+      setCheckId(json.checkId ?? null);
+      setIsReviewed(true);
+    }
+    setSaving(false);
   }
 
   async function saveCorrections() {
@@ -282,7 +500,7 @@ export default function HomeworkCheckForm({
   }
 
   const hasEdits = Object.keys(editing).length > 0;
-  const isManual = result?.total === 0;
+  const isManualResult = result?.total === 0;
 
   function checkBtnLabel() {
     if (checking) return "처리 중...";
@@ -291,261 +509,329 @@ export default function HomeworkCheckForm({
     return "확인 완료로 저장";
   }
 
-  // ── 업로드 전 ──────────────────────────────────────────
-  if (!result) {
+  // ── 결과 뷰 ─────────────────────────────────────────────
+  if (result) {
+    const pct = score && score.total > 0 ? Math.round((score.score / score.total) * 100) : 0;
+
     return (
-      <div
-        style={{
-          background: "#fff", borderRadius: "var(--r-card)",
-          padding: 16, boxShadow: "var(--sh-md)",
-          display: "flex", flexDirection: "column", gap: 16,
-        }}
-      >
-        {/* 사진 */}
-        <div>
-          <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
-            사진 첨부 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
-          <button
-            onClick={() => fileRef.current?.click()}
-            style={{
-              width: "100%", height: 96, borderRadius: 16, cursor: "pointer",
-              border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
-              display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", gap: 7,
-            }}
-          >
-            <Icon name="camera" size={24} color="var(--green-d)" stroke={1.9} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>사진 추가하기</span>
-          </button>
-          {images.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
-              {images.map((img, i) => (
-                <div key={i} style={{ position: "relative" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.preview} alt="" style={{ width: "100%", height: 80, objectFit: "cover", borderRadius: 10 }} />
-                  <button
-                    onClick={() => setImages((p) => p.filter((_, j) => j !== i))}
-                    style={{
-                      position: "absolute", top: 4, right: 4,
-                      width: 20, height: 20, borderRadius: "50%",
-                      background: "#F2607D", border: "none", color: "#fff",
-                      fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center",
-                      cursor: "pointer",
-                    }}
-                  >×</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 메모 */}
-        <div>
-          <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
-            메모 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
-          </div>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={"숙제 내용이나 학생 답을 입력하세요\n예) 1번 정답 O, 2번 틀림"}
-            rows={3}
-            style={{
-              width: "100%", border: "1.5px solid var(--line-strong)", borderRadius: 14,
-              padding: "12px 14px", fontSize: 14, color: "var(--text)",
-              resize: "none", outline: "none", fontFamily: "inherit",
-              background: "var(--surface-2)",
-            }}
-          />
-        </div>
-
-        {error && <p style={{ color: "var(--red)", fontSize: 13.5, textAlign: "center" }}>{error}</p>}
-
-        <button
-          onClick={handleCheck}
-          disabled={checking}
+      <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+        {/* 점수 히어로 */}
+        <div
           style={{
-            width: "100%", height: 54, borderRadius: 16, border: "none",
-            background: "var(--green)", color: "#fff",
-            fontWeight: 800, fontSize: 16, cursor: checking ? "default" : "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            boxShadow: "var(--sh-green)", opacity: checking ? 0.7 : 1,
+            borderRadius: 24, padding: 20,
+            background: "linear-gradient(150deg,#1FB259,#15803D)",
+            color: "#fff", boxShadow: "var(--sh-hero-green)",
+            position: "relative", overflow: "hidden",
           }}
         >
-          <Icon name="clipboard-check" size={20} color="#fff" stroke={2} />
-          {checkBtnLabel()}
+          <div style={{ position: "absolute", right: -30, top: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,.08)" }} />
+          <div style={{ display: "flex", gap: 20, position: "relative" }}>
+            {isManualResult ? (
+              <div
+                style={{
+                  width: 92, height: 92, borderRadius: "50%", flexShrink: 0,
+                  background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <Icon name="check-circle" size={42} color="#fff" stroke={2} />
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: 92, height: 92, borderRadius: "50%", flexShrink: 0,
+                  background: `conic-gradient(#fff 0% ${pct}%, rgba(255,255,255,.22) ${pct}% 100%)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    width: 70, height: 70, borderRadius: "50%", background: "#16823f",
+                    display: "flex", alignItems: "baseline", justifyContent: "center",
+                  }}
+                >
+                  <span style={{ fontSize: 24, fontWeight: 800 }}>{pct}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, marginLeft: 1 }}>점</span>
+                </div>
+              </div>
+            )}
+            <div>
+              {isManualResult ? (
+                <>
+                  <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.9 }}>검사 결과</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", margin: "4px 0" }}>확인 완료</div>
+                  {score && score.score > 0 && (
+                    <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.85 }}>{score.score}점</div>
+                  )}
+                  {isReviewed && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 4 }}>
+                      <Icon name="check-circle" size={14} color="#fff" stroke={2.4} />
+                      <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.9, whiteSpace: "nowrap" }}>검토 완료</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.9 }}>{score!.total}문제 중</div>
+                  <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", margin: "2px 0 4px" }}>{score!.score}개 정답</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="check-circle" size={14} color="#fff" stroke={2.4} />
+                    <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.92, whiteSpace: "nowrap" }}>
+                      {isReviewed ? "검토 완료" : "수정 가능"}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 총평 / 코멘트 */}
+        {result.feedback && (
+          <div style={{ background: "#fff", borderRadius: "var(--r-card)", padding: 16, boxShadow: "var(--sh-md)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 9 }}>
+              <Icon name={isManualResult ? "message-square" : "sparkles"} size={16} color="var(--green)" stroke={2} />
+              <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--green-d)" }}>
+                {isManualResult ? "부모 코멘트" : "AI 총평"}
+              </span>
+            </div>
+            <p style={{ fontSize: 13.5, color: "var(--text-soft)", fontWeight: 500, lineHeight: 1.7, whiteSpace: "pre-line" }}>
+              {result.feedback}
+            </p>
+          </div>
+        )}
+
+        {/* 문항별 결과 (AI) */}
+        {result.problems.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 4px" }}>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--text)" }}>
+              {isManualResult ? "틀린 부분" : "문항별 결과"}
+            </h2>
+            {!isManualResult && (
+              <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 700, whiteSpace: "nowrap" }}>
+                오답 {result.problems.filter((p) => !p.isCorrect).length} · 정답 {result.problems.filter((p) => p.isCorrect).length}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* 수동 모드: 틀린 항목 간단 리스트 */}
+        {isManualResult && result.problems.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {result.problems.map((p) => (
+              <div
+                key={p.number}
+                style={{
+                  background: "#fff", borderRadius: 14, padding: "13px 16px",
+                  boxShadow: "var(--sh-sm)", display: "flex", alignItems: "center", gap: 10,
+                }}
+              >
+                <span
+                  style={{
+                    width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                    background: "#FCE4EA", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <Icon name="x" size={14} color="#E11D48" stroke={3} />
+                </span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{p.question}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* AI 모드: 문항 카드 */}
+        {!isManualResult && result.problems.map((p) => (
+          <QCard
+            key={p.number}
+            p={p}
+            editing={editing[p.number]}
+            onStartEdit={() =>
+              setEditing((prev) => ({
+                ...prev,
+                [p.number]: { isCorrect: p.isCorrect, correctAnswer: p.correctAnswer ?? "", explanation: p.explanation ?? "" },
+              }))
+            }
+            onCancelEdit={() => setEditing((prev) => { const n = { ...prev }; delete n[p.number]; return n; })}
+            onChangeEdit={(patch) => setEditing((prev) => ({ ...prev, [p.number]: { ...prev[p.number], ...patch } }))}
+          />
+        ))}
+
+        {hasEdits && (
+          <button
+            onClick={saveCorrections}
+            disabled={saving}
+            style={{
+              width: "100%", height: 52, borderRadius: 16, border: "none",
+              background: "var(--amber)", color: "#fff",
+              fontWeight: 800, fontSize: 15, cursor: saving ? "default" : "pointer",
+              boxShadow: "0 6px 14px -6px rgba(245,158,11,.7)", opacity: saving ? 0.7 : 1,
+            }}
+          >
+            {saving ? "저장 중..." : "수정 내용 저장하기"}
+          </button>
+        )}
+
+        <button
+          onClick={() => { setResult(null); setScore(null); setEditing({}); setCheckMode("ai"); }}
+          style={{ padding: "8px 0", fontSize: 13.5, color: "var(--faint)", background: "none", border: "none", cursor: "pointer", textAlign: "center" }}
+        >
+          다시 채점하기
         </button>
-        {!images.length && !text.trim() && (
-          <p style={{ fontSize: 12, textAlign: "center", color: "var(--faint)" }}>
-            사진이나 메모 없이 누르면 확인 완료로만 저장됩니다
-          </p>
+
+        {savedMsg && (
+          <div
+            style={{
+              position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
+              background: "var(--text)", color: "#fff",
+              padding: "12px 20px", borderRadius: 999,
+              fontSize: 13.5, fontWeight: 700, boxShadow: "var(--sh-md)", whiteSpace: "nowrap",
+            }}
+          >
+            {savedMsg} ✓
+          </div>
         )}
       </div>
     );
   }
 
-  // ── 결과 뷰 ───────────────────────────────────────────
-  const pct = score && score.total > 0 ? Math.round((score.score / score.total) * 100) : 0;
-  const conicPct = pct;
+  // ── 입력 뷰 ─────────────────────────────────────────────
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-      {/* 점수 히어로 */}
+    <>
+      {/* 검사 방식 탭 */}
       <div
         style={{
-          borderRadius: 24, padding: 20,
-          background: "linear-gradient(150deg,#1FB259,#15803D)",
-          color: "#fff", boxShadow: "var(--sh-hero-green)",
-          position: "relative", overflow: "hidden",
+          display: "flex", gap: 8, marginBottom: 16,
+          background: "var(--surface-2)", borderRadius: 14, padding: 4,
         }}
       >
-        <div style={{ position: "absolute", right: -30, top: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,.08)" }} />
-        <div style={{ display: "flex", gap: 20, position: "relative" }}>
-          {isManual ? (
-            <div
+        {(["ai", "manual"] as const).map((m) => {
+          const on = checkMode === m;
+          return (
+            <button
+              key={m}
+              onClick={() => { setCheckMode(m); setError(""); }}
               style={{
-                width: 92, height: 92, borderRadius: "50%", flexShrink: 0,
-                background: "rgba(255,255,255,.22)", display: "flex",
-                alignItems: "center", justifyContent: "center",
+                flex: 1, height: 38, borderRadius: 10, fontWeight: 800, fontSize: 13.5,
+                border: "none",
+                background: on ? "#fff" : "transparent",
+                color: on ? "var(--text)" : "var(--muted)",
+                boxShadow: on ? "var(--sh-sm)" : "none",
+                cursor: "pointer",
               }}
             >
-              <Icon name="check-circle" size={42} color="#fff" stroke={2} />
-            </div>
-          ) : (
-            <div
-              style={{
-                width: 92, height: 92, borderRadius: "50%", flexShrink: 0,
-                background: `conic-gradient(#fff 0% ${conicPct}%, rgba(255,255,255,.22) ${conicPct}% 100%)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: 70, height: 70, borderRadius: "50%", background: "#16823f",
-                  display: "flex", alignItems: "baseline", justifyContent: "center",
-                }}
-              >
-                <span style={{ fontSize: 24, fontWeight: 800 }}>{pct}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, marginLeft: 1 }}>점</span>
-              </div>
-            </div>
-          )}
-          <div>
-            {isManual ? (
-              <>
-                <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.9 }}>검사 결과</div>
-                <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", margin: "4px 0" }}>
-                  확인 완료
-                </div>
-                {isReviewed && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <Icon name="check-circle" size={14} color="#fff" stroke={2.4} />
-                    <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.9, whiteSpace: "nowrap" }}>검토 완료</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.9 }}>
-                  {score!.total}문제 중
-                </div>
-                <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", margin: "2px 0 4px" }}>
-                  {score!.score}개 정답
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <Icon name="check-circle" size={14} color="#fff" stroke={2.4} />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, opacity: 0.92, whiteSpace: "nowrap" }}>
-                    {isReviewed ? "검토 완료" : "수정 가능"}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+              {m === "ai" ? "AI 채점" : "직접 입력"}
+            </button>
+          );
+        })}
       </div>
 
-      {/* AI 총평 */}
-      {result.feedback && (
+      {/* AI 채점 폼 */}
+      {checkMode === "ai" && (
         <div
           style={{
             background: "#fff", borderRadius: "var(--r-card)",
             padding: 16, boxShadow: "var(--sh-md)",
+            display: "flex", flexDirection: "column", gap: 16,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 9 }}>
-            <Icon name="sparkles" size={16} color="var(--green)" stroke={2} />
-            <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--green-d)" }}>AI 총평</span>
+          <div>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
+              사진 첨부 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+            <button
+              onClick={() => fileRef.current?.click()}
+              style={{
+                width: "100%", height: 96, borderRadius: 16, cursor: "pointer",
+                border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
+                display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", gap: 7,
+              }}
+            >
+              <Icon name="camera" size={24} color="var(--green-d)" stroke={1.9} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>사진 추가하기</span>
+            </button>
+            {images.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
+                {images.map((img, i) => (
+                  <div key={i} style={{ position: "relative" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.preview} alt="" style={{ width: "100%", height: 80, objectFit: "cover", borderRadius: 10 }} />
+                    <button
+                      onClick={() => setImages((p) => p.filter((_, j) => j !== i))}
+                      style={{
+                        position: "absolute", top: 4, right: 4,
+                        width: 20, height: 20, borderRadius: "50%",
+                        background: "#F2607D", border: "none", color: "#fff",
+                        fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer",
+                      }}
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <p style={{ fontSize: 13.5, color: "var(--text-soft)", fontWeight: 500, lineHeight: 1.7 }}>
-            {result.feedback}
-          </p>
+
+          <div>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-soft)", marginBottom: 8 }}>
+              메모 <span style={{ color: "var(--faint)", fontWeight: 600 }}>(선택)</span>
+            </div>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={"숙제 내용이나 학생 답을 입력하세요\n예) 1번 정답 O, 2번 틀림"}
+              rows={3}
+              style={{
+                width: "100%", border: "1.5px solid var(--line-strong)", borderRadius: 14,
+                padding: "12px 14px", fontSize: 14, color: "var(--text)",
+                resize: "none", outline: "none", fontFamily: "inherit", background: "var(--surface-2)",
+              }}
+            />
+          </div>
+
+          {error && <p style={{ color: "var(--red)", fontSize: 13.5, textAlign: "center" }}>{error}</p>}
+
+          <button
+            onClick={handleCheck}
+            disabled={checking}
+            style={{
+              width: "100%", height: 54, borderRadius: 16, border: "none",
+              background: "var(--green)", color: "#fff",
+              fontWeight: 800, fontSize: 16, cursor: checking ? "default" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              boxShadow: "var(--sh-green)", opacity: checking ? 0.7 : 1,
+            }}
+          >
+            <Icon name="clipboard-check" size={20} color="#fff" stroke={2} />
+            {checkBtnLabel()}
+          </button>
+          {!images.length && !text.trim() && (
+            <p style={{ fontSize: 12, textAlign: "center", color: "var(--faint)" }}>
+              사진이나 메모 없이 누르면 확인 완료로만 저장됩니다
+            </p>
+          )}
         </div>
       )}
 
-      {/* 문항별 결과 헤더 */}
-      {result.problems.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 4px" }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--text)" }}>문항별 결과</h2>
-          <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 700, whiteSpace: "nowrap" }}>
-            오답 {result.problems.filter((p) => !p.isCorrect).length} · 정답 {result.problems.filter((p) => p.isCorrect).length}
-          </span>
-        </div>
-      )}
-
-      {/* 문항 카드 */}
-      {result.problems.map((p) => (
-        <QCard
-          key={p.number}
-          p={p}
-          editing={editing[p.number]}
-          onStartEdit={() =>
-            setEditing((prev) => ({
-              ...prev,
-              [p.number]: { isCorrect: p.isCorrect, correctAnswer: p.correctAnswer ?? "", explanation: p.explanation ?? "" },
-            }))
-          }
-          onCancelEdit={() => setEditing((prev) => { const n = { ...prev }; delete n[p.number]; return n; })}
-          onChangeEdit={(patch) => setEditing((prev) => ({ ...prev, [p.number]: { ...prev[p.number], ...patch } }))}
+      {/* 수동 입력 폼 */}
+      {checkMode === "manual" && (
+        <ManualCheckForm
+          onSubmit={handleManualSubmit}
+          onCancel={() => setCheckMode("ai")}
+          submitting={saving}
         />
-      ))}
-
-      {hasEdits && (
-        <button
-          onClick={saveCorrections}
-          disabled={saving}
-          style={{
-            width: "100%", height: 52, borderRadius: 16, border: "none",
-            background: "var(--amber)", color: "#fff",
-            fontWeight: 800, fontSize: 15, cursor: saving ? "default" : "pointer",
-            boxShadow: "0 6px 14px -6px rgba(245,158,11,.7)",
-            opacity: saving ? 0.7 : 1,
-          }}
-        >
-          {saving ? "저장 중..." : "수정 내용 저장하기"}
-        </button>
       )}
 
-      <button
-        onClick={() => { setResult(null); setScore(null); setEditing({}); }}
-        style={{ padding: "8px 0", fontSize: 13.5, color: "var(--faint)", background: "none", border: "none", cursor: "pointer", textAlign: "center" }}
-      >
-        다시 채점하기
-      </button>
-
-      {savedMsg && (
-        <div
-          style={{
-            position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
-            background: "var(--text)", color: "#fff",
-            padding: "12px 20px", borderRadius: 999,
-            fontSize: 13.5, fontWeight: 700, boxShadow: "var(--sh-md)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {savedMsg} ✓
-        </div>
+      {/* Ad Gate Modal */}
+      {showAdGate && (
+        <AdGateModal
+          onWatchComplete={onAdComplete}
+          onManualEntry={onAdManual}
+          onClose={() => setShowAdGate(false)}
+        />
       )}
-    </div>
+    </>
   );
 }

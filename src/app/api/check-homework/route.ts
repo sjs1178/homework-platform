@@ -4,6 +4,7 @@ import { createClient as createAdmin } from "@supabase/supabase-js";
 import { checkHomework, checkHomeworkByText, CheckResult } from "@/lib/check-homework";
 import { tagCurriculum } from "@/lib/curriculum";
 import { getEffectiveGrade } from "@/lib/grade";
+import type { AiProvider } from "@/lib/ai-token";
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
@@ -20,10 +21,20 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const { homeworkId, images, text } = await req.json() as {
+  const {
+    homeworkId,
+    images,
+    text,
+    aiToken,
+    aiProvider,
+    manualResult,
+  } = await req.json() as {
     homeworkId: string;
     images?: { base64: string; mediaType: MediaType }[];
     text?: string;
+    aiToken?: string;
+    aiProvider?: AiProvider;
+    manualResult?: CheckResult;
   };
 
   const { data: hw } = await supabase
@@ -34,11 +45,12 @@ export async function POST(req: NextRequest) {
 
   if (!hw) return NextResponse.json({ error: "숙제 없음" }, { status: 404 });
 
-  // curriculum_meta 백필: 검사 시점에 없으면 채워줌
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+
+  // curriculum_meta 백필
   if (!hw.curriculum_meta) {
     const { data: pair } = await admin
       .from("pairs")
@@ -57,10 +69,7 @@ export async function POST(req: NextRequest) {
       );
       const meta = tagCurriculum(hw.subject, hw.description ?? "", effectiveGrade);
       if (meta) {
-        await admin
-          .from("homeworks")
-          .update({ curriculum_meta: meta })
-          .eq("id", homeworkId);
+        await admin.from("homeworks").update({ curriculum_meta: meta }).eq("id", homeworkId);
       }
     }
   }
@@ -68,15 +77,18 @@ export async function POST(req: NextRequest) {
   // 채점 방식 결정
   let result: CheckResult;
   try {
-    if (images?.length) {
-      result = await checkHomework(images);
+    if (manualResult) {
+      result = manualResult;
+    } else if (images?.length) {
+      result = await checkHomework(images, aiToken, aiProvider);
     } else if (text?.trim()) {
-      result = await checkHomeworkByText(text.trim());
+      result = await checkHomeworkByText(text.trim(), aiToken, aiProvider);
     } else {
       result = MANUAL_RESULT;
     }
-  } catch {
-    return NextResponse.json({ error: "채점 중 오류가 발생했어요." }, { status: 500 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "채점 중 오류가 발생했어요.";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   const { data: checkRow } = await admin.from("homework_checks").upsert({
@@ -85,17 +97,12 @@ export async function POST(req: NextRequest) {
     results: result,
     score: result.score,
     total_problems: result.total,
-    is_reviewed: result.total === 0, // 수동 확인은 즉시 검토 완료
+    is_reviewed: result.total === 0,
   }, { onConflict: "homework_id" }).select("id").single();
 
-  // 점수 기반 리워드 처리 (숙제별 trigger 사용)
+  // 점수 기반 리워드
   if (result.total > 0 && hw.reward_trigger === "score" && hw.reward_amount > 0) {
-    const { data: pair } = await admin
-      .from("pairs")
-      .select("child_id")
-      .eq("id", hw.pair_id)
-      .single();
-
+    const { data: pair } = await admin.from("pairs").select("child_id").eq("id", hw.pair_id).single();
     if (pair?.child_id) {
       const amount = result.score * hw.reward_amount;
       if (amount > 0) {
