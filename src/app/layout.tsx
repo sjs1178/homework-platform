@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -41,15 +40,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body>
-        {children}
-        <Script
+      <head>
+        {/* AdSense: 서버 렌더링 HTML에 포함되어야 크롤러가 인식 */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6623044023673047"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
-      </body>
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
