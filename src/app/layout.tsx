@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     type: "website",
   },
+  other: {
+    "google-adsense-account": "ca-pub-6623044023673047",
+  },
 };
 
 export const viewport: Viewport = {
@@ -38,15 +41,15 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <head>
+      <body>
+        {children}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6623044023673047"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-      </head>
-      <body>{children}</body>
+      </body>
     </html>
   );
 }
