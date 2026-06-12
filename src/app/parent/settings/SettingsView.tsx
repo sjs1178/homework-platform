@@ -693,6 +693,12 @@ export default function SettingsView({
           onClick={() => router.push("/help")}
         />
         <SettingRow
+          icon="mail"
+          label="문의하기"
+          value="contact@kiddoloop.com"
+          onClick={() => window.open("mailto:contact@kiddoloop.com", "_self")}
+        />
+        <SettingRow
           icon="clipboard-check"
           label="공지사항"
           onClick={() => router.push("/notices")}

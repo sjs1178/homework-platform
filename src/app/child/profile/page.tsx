@@ -26,19 +26,14 @@ export default async function ChildProfilePage() {
           avatarId={profile?.avatar_id ?? null}
         />
 
-        {/* 사용 방법 링크 */}
-        <div style={{ marginTop: 24 }}>
+        {/* 사용 방법 / 문의하기 링크 */}
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 8 }}>
           <a
             href="/help"
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "14px 16px",
-              background: "#fff",
-              borderRadius: 14,
-              boxShadow: "0 1px 4px rgba(0,0,0,.06)",
-              textDecoration: "none",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 16px", background: "#fff", borderRadius: 14,
+              boxShadow: "0 1px 4px rgba(0,0,0,.06)", textDecoration: "none",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -46,6 +41,20 @@ export default async function ChildProfilePage() {
               <span style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>사용 방법</span>
             </div>
             <span style={{ fontSize: 12, color: "#94A3B8" }}>▶</span>
+          </a>
+          <a
+            href="mailto:contact@kiddoloop.com"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 16px", background: "#fff", borderRadius: 14,
+              boxShadow: "0 1px 4px rgba(0,0,0,.06)", textDecoration: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 20 }}>✉️</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>문의하기</span>
+            </div>
+            <span style={{ fontSize: 12, color: "#94A3B8" }}>contact@kiddoloop.com</span>
           </a>
         </div>
       </div>
