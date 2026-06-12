@@ -1,0 +1,86 @@
+/* ── Design tokens ─────────────────────────────────────────────
+   Homework platform · green (growth/correct) + amber (reward/warmth)
+   Tone: lightly gamified learning app, but calm & trustworthy.
+*/
+:root{
+  --bg:#F4F8F5;
+  --surface:#FFFFFF;
+  --surface-2:#F7FAF8;
+  --text:#13241B;
+  --text-soft:#3C4A42;
+  --muted:#6B7B72;
+  --faint:#9AA8A0;
+  --line:#E6EEE9;
+  --line-strong:#D6E2DB;
+
+  --green:#16A34A;
+  --green-d:#15803D;
+  --green-dd:#116539;
+  --green-50:#F0FDF4;
+  --green-100:#DCFCE7;
+  --green-200:#BBF7D0;
+
+  --amber:#F59E0B;
+  --amber-d:#D97706;
+  --amber-50:#FFFBEB;
+  --amber-100:#FEF3C7;
+  --amber-200:#FDE68A;
+
+  --red:#EF4444;
+  --red-50:#FEF2F2;
+
+  --r-card:22px;
+  --r-md:16px;
+  --r-sm:12px;
+  --sh-sm:0 1px 2px rgba(16,40,28,.05);
+  --sh-md:0 2px 4px rgba(16,40,28,.04), 0 10px 26px -8px rgba(16,40,28,.10);
+  --sh-lg:0 8px 40px -10px rgba(16,40,28,.18);
+}
+
+*{box-sizing:border-box;}
+.dash, .dash *{
+  font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  margin:0;padding:0;
+}
+.dash{
+  width:100%;height:100%;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  letter-spacing:-0.01em;
+}
+
+/* phone status bar */
+.statusbar{
+  height:44px;flex:0 0 44px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px 0 28px;
+  font-size:15px;font-weight:700;color:var(--text);
+}
+.statusbar .sb-right{display:flex;align-items:center;gap:7px;}
+.statusbar .sb-bar{width:18px;height:11px;border:1.6px solid var(--text);border-radius:3px;position:relative;}
+.statusbar .sb-bar::after{content:"";position:absolute;inset:1.6px;width:62%;background:var(--text);border-radius:1px;}
+.statusbar .sb-dot{width:16px;height:16px;}
+
+.scroll{flex:1;overflow:hidden;padding:0 20px 22px;}
+
+/* generic */
+.card{background:var(--surface);border-radius:var(--r-card);box-shadow:var(--sh-md);}
+.tag{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:12px;
+  padding:4px 9px;border-radius:8px;letter-spacing:0;}
+.tag-math{background:#EEF2FF;color:#4F46E5;}
+.tag-kor{background:#FEF2F2;color:#E11D48;}
+.tag-eng{background:#ECFEFF;color:#0891B2;}
+
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-weight:700;}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;}
+
+.row{display:flex;align-items:center;}
+.between{justify-content:space-between;}
+
+/* prevent awkward Korean line-breaks in compact UI chrome */
+.dash button,.dash h1,.dash h2,.dash h3{white-space:nowrap;}
+.tag,.pill{white-space:nowrap;}
+.nowrap{white-space:nowrap;}

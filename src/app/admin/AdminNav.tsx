@@ -6,6 +6,8 @@ import { KiddoloopMark } from "@/components/ui/Logo";
 const NAV_ITEMS = [
   { href: "/admin/users", label: "회원 관리" },
   { href: "/admin/pairs", label: "페어링 관리" },
+  { href: "/admin/homeworks", label: "숙제 등록 데이터" },
+  { href: "/admin/homework-checks", label: "숙제 검사 데이터" },
   { href: "/admin/rewards", label: "리워드 관리" },
   { href: "/admin/content", label: "콘텐츠 관리" },
 ];

@@ -1,0 +1,60 @@
+%PDF-1.5
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 512 512] /Resources << /Shading << /Sh1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 441 >>
+stream
+q
+5.12 0 0 -5.12 0 512 cm
+23 0 m
+77 0 l
+89.7 0 100 10.3 100 23 c
+100 77 l
+100 89.7 89.7 100 77 100 c
+23 100 l
+10.3 100 0 89.7 0 77 c
+0 23 l
+0 10.3 10.3 0 23 0 c
+h
+W n
+/Sh1 sh
+Q
+q
+5.12 0 0 -5.12 0 512 cm
+13 w 1 J 1 j
+1 1 1 RG
+62.68 22.81 m
+49.48 16.66 33.78 20.87 25.43 32.79 c
+17.07 44.72 18.49 60.92 28.79 71.21 c
+39.08 81.51 55.28 82.93 67.21 74.57 c
+79.13 66.22 83.34 50.52 77.19 37.32 c
+S
+0.984 0.749 0.141 RG
+44 50 m 53 59 l 74 30 l
+S
+Q
+endstream
+endobj
+5 0 obj
+<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [15 0 85 100] /Domain [0 1] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.133 0.773 0.369] /C1 [0.082 0.502 0.239] /N 1 >> /Extend [true true] >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000245 00000 n 
+0000000737 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+951
+%%EOF

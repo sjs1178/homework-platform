@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from "react";
 
+interface Profile {
+  role: "parent" | "child" | null;
+  display_name: string | null;
+  pair_id: string | null;
+  birthday: string | null;
+  consent_at: string | null;
+  terms_version: string | null;
+}
+
 interface User {
   id: string;
   email: string;
   createdAt: string;
   lastSignIn: string | null;
-  profile: {
-    role: "parent" | "child" | null;
-    display_name: string | null;
-    pair_id: string | null;
-  } | null;
+  profile: Profile | null;
 }
 
 export default function UsersView() {
@@ -19,6 +24,7 @@ export default function UsersView() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -74,7 +80,7 @@ export default function UsersView() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0" }}>
-                {["이름", "이메일", "역할", "페어 ID", "가입일", "최근 로그인", ""].map((h) => (
+                {["이름", "이메일", "역할", "가입일", "약관동의일시", "최근 로그인", ""].map((h) => (
                   <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11.5, fontWeight: 700, color: "#64748B", whiteSpace: "nowrap" }}>
                     {h}
                   </th>
@@ -82,41 +88,70 @@ export default function UsersView() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((user, i) => (
-                <tr key={user.id} style={{ borderBottom: i < filtered.length - 1 ? "1px solid #F1F5F9" : "none" }}>
-                  <td style={{ padding: "12px 16px", fontSize: 13.5, fontWeight: 700, color: "#0F172A" }}>
-                    {user.profile?.display_name ?? "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: 13, color: "#334155" }}>{user.email}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <RoleBadge role={user.profile?.role ?? null} />
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: 12, color: "#94A3B8", fontFamily: "monospace" }}>
-                    {user.profile?.pair_id ? user.profile.pair_id.slice(0, 8) + "…" : "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: 12, color: "#64748B", whiteSpace: "nowrap" }}>
-                    {fmtDate(user.createdAt)}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: 12, color: "#64748B", whiteSpace: "nowrap" }}>
-                    {user.lastSignIn ? fmtDate(user.lastSignIn) : "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      disabled={deleting === user.id}
+              {filtered.map((user, i) => {
+                const isLast = i === filtered.length - 1;
+                const isOpen = expanded === user.id;
+                return (
+                  <>
+                    <tr
+                      key={user.id}
                       style={{
-                        padding: "6px 12px", borderRadius: 6,
-                        border: "1.5px solid #FECDD3", background: "#FFF1F2",
-                        color: "#E11D48", fontSize: 12, fontWeight: 700,
-                        cursor: "pointer", whiteSpace: "nowrap",
-                        opacity: deleting === user.id ? 0.5 : 1,
+                        borderBottom: isOpen || !isLast ? "1px solid #F1F5F9" : "none",
+                        cursor: "pointer",
+                        background: isOpen ? "#F8FAFF" : undefined,
                       }}
+                      onClick={() => setExpanded(isOpen ? null : user.id)}
                     >
-                      {deleting === user.id ? "삭제 중…" : "삭제"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      <td style={{ padding: "12px 16px", fontSize: 13.5, fontWeight: 700, color: "#0F172A" }}>
+                        <span style={{ marginRight: 6, fontSize: 10, color: "#94A3B8" }}>{isOpen ? "▼" : "▶"}</span>
+                        {user.profile?.display_name ?? "—"}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 13, color: "#334155" }}>{user.email}</td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <RoleBadge role={user.profile?.role ?? null} />
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#64748B", whiteSpace: "nowrap" }}>
+                        {fmtDate(user.createdAt)}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#64748B", whiteSpace: "nowrap" }}>
+                        {user.profile?.consent_at ? fmtDatetime(user.profile.consent_at) : <span style={{ color: "#FCA5A5" }}>미동의</span>}
+                      </td>
+                      <td style={{ padding: "12px 16px", fontSize: 12, color: "#64748B", whiteSpace: "nowrap" }}>
+                        {user.lastSignIn ? fmtDate(user.lastSignIn) : "—"}
+                      </td>
+                      <td style={{ padding: "12px 16px" }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleDelete(user)}
+                          disabled={deleting === user.id}
+                          style={{
+                            padding: "6px 12px", borderRadius: 6,
+                            border: "1.5px solid #FECDD3", background: "#FFF1F2",
+                            color: "#E11D48", fontSize: 12, fontWeight: 700,
+                            cursor: "pointer", whiteSpace: "nowrap",
+                            opacity: deleting === user.id ? 0.5 : 1,
+                          }}
+                        >
+                          {deleting === user.id ? "삭제 중…" : "삭제"}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {isOpen && (
+                      <tr key={user.id + "-detail"} style={{ borderBottom: isLast ? "none" : "1px solid #F1F5F9", background: "#F8FAFF" }}>
+                        <td colSpan={7} style={{ padding: "14px 24px 18px 36px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, auto)", gap: "8px 32px" }}>
+                            <DetailItem label="회원 ID" value={user.id} mono />
+                            <DetailItem label="생년월일" value={user.profile?.birthday ?? "미입력"} />
+                            <DetailItem label="약관 버전" value={user.profile?.terms_version ?? "—"} />
+                            <DetailItem label="약관동의 일시" value={user.profile?.consent_at ? fmtDatetime(user.profile.consent_at) : "미동의"} />
+                            <DetailItem label="페어 ID" value={user.profile?.pair_id ? user.profile.pair_id : "—"} mono />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#94A3B8", fontSize: 13 }}>
@@ -128,6 +163,15 @@ export default function UsersView() {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+function DetailItem({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, color: "#94A3B8", marginBottom: 2, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+      <div style={{ fontSize: 12.5, color: "#334155", fontFamily: mono ? "monospace" : undefined, wordBreak: "break-all" }}>{value}</div>
     </div>
   );
 }
@@ -144,4 +188,11 @@ function RoleBadge({ role }: { role: string | null }) {
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+function fmtDatetime(d: string) {
+  return new Date(d).toLocaleString("ko-KR", {
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit",
+  });
 }

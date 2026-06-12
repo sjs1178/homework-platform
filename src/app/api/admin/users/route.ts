@@ -30,7 +30,7 @@ export async function GET() {
   // All profiles
   const { data: profiles } = await admin
     .from("user_profiles")
-    .select("id, role, display_name, pair_id, created_at");
+    .select("id, role, display_name, pair_id, birthday, consent_at, terms_version, created_at");
 
   const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]));
 
