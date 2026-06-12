@@ -293,21 +293,102 @@ MVP 개발을 위한 기반 인프라 구축
 
 ---
 
+## 2026-06-13 (Day 6) — 런칭 준비: UX 완성 + 인프라 셋업
+
+### 목표
+서비스 공개를 위한 UX 마무리 및 운영 인프라(도메인, 메일, 앱) 구축
+
+### 완료 작업
+
+#### AdSense 연동 및 ads.txt 설정
+- `google-adsense-account` 메타태그 `metadata.other`에 추가
+- `<script async>` 태그를 Next.js `<head>` JSX에 직접 삽입 (크롤러 가시성 확보)
+  - 기존 `strategy="afterInteractive"` 방식: 봇이 JS 실행 안 해 미탐지
+- `public/ads.txt` 생성
+- 미들웨어 PUBLIC_PATHS에 `/ads.txt` 추가 (인증 없이 접근 허용)
+
+#### 루트 페이지 스마트 라우팅
+- `/` 접속 시 Supabase 세션 확인 후 분기:
+  - 로그인 상태 + parent → `/parent/dashboard`
+  - 로그인 상태 + child → `/child/dashboard`
+  - 미로그인 → `/walkthrough` (이전: `/auth/login`)
+
+#### 어드민 패널 강화
+- 회원 목록에 `birthday`, `consent_at`, `terms_version` 컬럼 추가
+- 클릭 시 행 확장 → 상세 정보 (id, birthday, terms_version, consent_at, pair_id)
+- `/admin/homeworks` 신설 — 전체 숙제 등록 데이터 조회 (subject/description/이름 검색, 완료/대기 필터)
+- `/admin/homework-checks` 신설 — 전체 숙제 검사 데이터 조회 (점수 뱃지, 문제별 O/X 확장)
+- 어드민 비밀번호 변경: `admin1178`
+
+#### 약관 동의 서버사이드 강제
+- `/api/onboarding/complete`, `/api/onboarding/request-parent`
+- `termsAgreed`, `privacyAgreed` 미동의 시 400 반환
+- 클라이언트(`OnboardingFlow.tsx`)에서 두 필드 API body에 포함
+
+#### 로그인 화면 일러스트 추가
+- `brand_assets/login-illustration-1480.png` → `sips`로 860×604로 리사이즈
+- `public/login-illustration.png` 저장 (225KB)
+- 로그인 페이지에 `next/image`로 삽입
+- 미들웨어 매처 정규식에 `.png` 등 정적 파일 확장자 예외 추가 → 이미지 404 해결
+
+#### 사용방법 도움말 페이지 (`/help`)
+- 11개 아코디언 섹션: 계정/로그인/페어링/부모대시보드/숙제입력/자녀완료/프로필/숙제검사/AI토큰/리워드/통계
+- AI 토큰 섹션: API 키 발급 방법, 보안 안내, 광고 대안 안내
+- 부모 설정(`/parent/settings`) + 자녀 프로필(`/child/profile`)에서 진입 링크 추가
+- 미들웨어 PUBLIC_PATHS에 `/help` 추가
+
+#### 페이지 헤더 UI 표준화
+- `PageHeader` 컴포넌트 신설 (`src/components/ui/PageHeader.tsx`)
+  - `useRouter().back()` 기반 뒤로가기 (역할 무관하게 동작)
+  - 기존 `href="javascript:history.back()"` 오류 수정
+- `MarkdownBody` 컴포넌트 신설 (`src/components/ui/MarkdownBody.tsx`)
+  - `react-markdown` v10 + 커스텀 렌더러 (h1~h3, p, ul, ol, li, strong, code, table 등)
+  - 이용약관·개인정보처리방침 마크다운 기호 노출 → 렌더링 정상화
+- 공지사항, 이용약관, 개인정보처리방침, 도움말 페이지에 `PageHeader` 적용
+
+#### 워크스루 온보딩 슬라이드 (`/walkthrough`)
+- 3슬라이드 구성:
+  - Slide 1: 계정 만들고 연결 (로그인 + 페어링 화면 CSS 목업)
+  - Slide 2: 숙제 등록 + 완료/검사 요청 (부모 입력 + 자녀 완료 화면)
+  - Slide 3: 리워드 + 통계 (잔액 카드 + 과목별 바 차트)
+- 터치 스와이프(40px 임계값) + 하단 버튼 네비게이션
+- 슬라이드 인디케이터 도트 (현재 = 늘어나는 pill)
+- `localStorage.wt_seen` 플래그 — 재방문자 자동 skip
+- "건너뛰기" 버튼 / 마지막 슬라이드 "시작하기 →" 버튼 → `/auth/login`
+- 미들웨어 PUBLIC_PATHS에 `/walkthrough` 추가
+
+#### 문의하기 버튼
+- 부모 설정 "앱 정보" 섹션에 `SettingRow icon="mail"` 추가 → `mailto:contact@kiddoloop.com`
+- 자녀 프로필 하단에 문의하기 링크 추가
+
+#### 운영 인프라 셋업
+- **Zoho Mail** 유료 Lite($1/월) 가입 → `contact@kiddoloop.com` 메일함 생성
+  - 가비아 DNS: MX 3개 + SPF TXT + DKIM TXT(1024비트, `zmail._domainkey`) + DMARC 등록
+  - 수발신 정상 확인
+- **Android Studio** 설치 + Kiddoloop 프로젝트 생성 (`com.kiddoloop.app`, API 24)
+- **Firebase** 프로젝트 생성 + Android 앱 등록 + `google-services.json` 추가
+  - 향후 FCM 푸시 알림 연동 예정 (별도 세션)
+
+---
+
 ## 개발 지표 요약
 
 | 항목 | 수치 |
 |------|------|
-| 총 개발 기간 | 6일 (2026-06-06 ~ 2026-06-11) |
-| Git 커밋 수 | 20개 |
-| 생성된 파일 수 | 70+ |
+| 총 개발 기간 | 7일 (2026-06-06 ~ 2026-06-13) |
+| Git 커밋 수 | 25개+ |
+| 생성된 파일 수 | 85+ |
 | DB 마이그레이션 | 11개 |
-| API 엔드포인트 | 22개 |
-| 페이지/화면 수 | 22개 |
+| API 엔드포인트 | 24개 |
+| 페이지/화면 수 | 26개 |
+| 운영 도메인 | kiddoloop.com |
+| 대표 메일 | contact@kiddoloop.com |
 
 ## 기술 부채 및 주의사항
 
 | 항목 | 내용 | 우선순위 |
 |------|------|---------|
+| Android 앱 FCM 미완성 | Firebase 프로젝트 생성까지 완료, WebView+FCM 코드 미작성 | 높음 |
 | 광고 SDK 미연동 | AdGateModal에 `[AD_PLACEHOLDER]` 마커, 현재 5초 카운트다운만 | 중간 |
 | 이메일 발송 미구현 | 부모 승인 요청 시 이메일 없음 (인앱 알림으로만 처리) | 높음 |
 | 과목별 규칙 UI 없음 | subject_rules 테이블 있으나 어드민 편집 UI 미구현 | 높음 |
