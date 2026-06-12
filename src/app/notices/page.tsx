@@ -1,5 +1,6 @@
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 export const revalidate = 60;
 
@@ -15,15 +16,9 @@ export default async function NoticesPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 20px 60px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-        <Link
-          href="/parent/settings"
-          style={{ fontSize: 13, color: "var(--green-d, #15803D)", textDecoration: "none", fontWeight: 700 }}
-        >
-          ← 뒤로
-        </Link>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0F172A" }}>공지사항</h1>
+    <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 480, margin: "0 auto", padding: "0 16px 40px" }}>
+      <div style={{ position: "sticky", top: 0, background: "var(--bg)", zIndex: 10, paddingTop: 16 }}>
+        <PageHeader title="공지사항" />
       </div>
 
       {(notices ?? []).length === 0 ? (
