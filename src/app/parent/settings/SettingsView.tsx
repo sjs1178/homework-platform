@@ -688,6 +688,11 @@ export default function SettingsView({
       <SectionHeader>앱 정보</SectionHeader>
       <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>
         <SettingRow
+          icon="help-circle"
+          label="사용 방법"
+          onClick={() => router.push("/help")}
+        />
+        <SettingRow
           icon="clipboard-check"
           label="공지사항"
           onClick={() => router.push("/notices")}
