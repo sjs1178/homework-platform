@@ -6,10 +6,13 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const { childName, childBirthday, parentEmail, role } = await req.json();
+  const { childName, childBirthday, parentEmail, role, termsAgreed, privacyAgreed } = await req.json();
 
   if (!childName || !childBirthday || !parentEmail) {
     return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
+  }
+  if (!termsAgreed || !privacyAgreed) {
+    return NextResponse.json({ error: "이용약관 및 개인정보처리방침에 모두 동의해야 합니다." }, { status: 400 });
   }
 
   // 이미 pending 요청이 있는 경우 재사용

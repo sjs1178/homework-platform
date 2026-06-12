@@ -10,7 +10,7 @@ export function checkAdminCredentials(
   username: string,
   password: string
 ): boolean {
-  return username === "admin" && password === "1178";
+  return username === "admin" && password === "admin1178";
 }
 
 export function verifyAdminToken(token: string | undefined): boolean {

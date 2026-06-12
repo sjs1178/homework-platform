@@ -6,13 +6,16 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const { role, displayName, birthday } = await req.json();
+  const { role, displayName, birthday, termsAgreed, privacyAgreed } = await req.json();
 
   if (!role || !displayName || !birthday) {
     return NextResponse.json({ error: "필수 항목 누락" }, { status: 400 });
   }
   if (!["parent", "child"].includes(role)) {
     return NextResponse.json({ error: "올바른 역할이 아닙니다" }, { status: 400 });
+  }
+  if (!termsAgreed || !privacyAgreed) {
+    return NextResponse.json({ error: "이용약관 및 개인정보처리방침에 모두 동의해야 합니다." }, { status: 400 });
   }
 
   const { error } = await supabase.from("user_profiles").upsert({

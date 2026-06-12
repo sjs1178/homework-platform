@@ -69,7 +69,7 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
     const res = await fetch("/api/onboarding/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, displayName, birthday }),
+      body: JSON.stringify({ role, displayName, birthday, termsAgreed, privacyAgreed }),
     });
     const json = await res.json();
     setLoading(false);
@@ -98,6 +98,8 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
         childBirthday: birthday,
         parentEmail,
         role,
+        termsAgreed,
+        privacyAgreed,
       }),
     });
     const json = await res.json();
