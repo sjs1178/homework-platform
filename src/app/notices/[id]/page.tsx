@@ -1,6 +1,7 @@
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import MarkdownBody from "@/components/ui/MarkdownBody";
 
 export const revalidate = 60;
 
@@ -32,20 +33,7 @@ export default async function NoticePage({ params }: { params: Promise<{ id: str
         {new Date(notice.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
       </p>
 
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 14,
-          padding: "20px 22px",
-          boxShadow: "0 1px 6px rgba(0,0,0,.06)",
-          fontSize: 14,
-          color: "#334155",
-          lineHeight: 1.9,
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        {notice.content}
-      </div>
+      <MarkdownBody content={notice.content} />
     </div>
   );
 }
