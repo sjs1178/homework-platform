@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import Icon from "@/components/ui/Icon";
 import { KiddoloopAppicon } from "@/components/ui/Logo";
@@ -73,7 +74,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* 일러스트 자리 */}
+      {/* 일러스트 */}
       <div
         style={{
           flex: "1 1 auto",
@@ -83,25 +84,16 @@ export default function LoginPage() {
           minHeight: 180,
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            height: 240,
-            borderRadius: 24,
-            border: "1.5px dashed var(--line-strong)",
-            background: "repeating-linear-gradient(135deg,#F1F5F2 0 10px,#E9F0EB 10px 20px)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            color: "#8B988F",
-          }}
-        >
-          <Icon name="image" size={26} color="#A6B2AB" stroke={1.8} />
-          <span style={{ fontFamily: "ui-monospace,Menlo,monospace", fontSize: 11.5, fontWeight: 600 }}>
-            부모–자녀 숙제 일러스트
-          </span>
+        <div style={{ width: "100%", borderRadius: 24, overflow: "hidden" }}>
+          <Image
+            src="/login-illustration.png"
+            alt="부모와 자녀가 함께하는 숙제 일러스트"
+            width={860}
+            height={604}
+            sizes="(max-width: 430px) 100vw, 430px"
+            priority
+            style={{ width: "100%", height: "auto", display: "block" }}
+          />
         </div>
       </div>
 
