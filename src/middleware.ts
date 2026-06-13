@@ -55,6 +55,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
+  // ── Role-based route protection ───────────────────────
+  if (user) {
+    const isParentRoute = pathname.startsWith("/parent");
+    const isChildRoute = pathname.startsWith("/child");
+
+    if (isParentRoute || isChildRoute) {
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("role, consent_at")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.role || !profile?.consent_at) {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
+
+      if (isParentRoute && profile.role !== "parent") {
+        return NextResponse.redirect(new URL("/child/dashboard", request.url));
+      }
+
+      if (isChildRoute && profile.role !== "child") {
+        return NextResponse.redirect(new URL("/parent/dashboard", request.url));
+      }
+    }
+  }
+
   return response;
 }
 

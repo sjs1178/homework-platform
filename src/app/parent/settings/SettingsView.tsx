@@ -706,12 +706,12 @@ export default function SettingsView({
         <SettingRow
           icon="lock"
           label="이용약관"
-          onClick={() => router.push("/terms")}
+          onClick={() => router.push("/terms?from=/parent/settings")}
         />
         <SettingRow
           icon="lock"
           label="개인정보처리방침"
-          onClick={() => router.push("/privacy")}
+          onClick={() => router.push("/privacy?from=/parent/settings")}
         />
         <div
           style={{

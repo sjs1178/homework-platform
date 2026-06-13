@@ -4,7 +4,8 @@ import MarkdownBody from "@/components/ui/MarkdownBody";
 
 export const revalidate = 300;
 
-export default async function PrivacyPage() {
+export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const { from } = await searchParams;
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -19,7 +20,7 @@ export default async function PrivacyPage() {
   return (
     <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 480, margin: "0 auto", padding: "0 16px 40px" }}>
       <div style={{ position: "sticky", top: 0, background: "var(--bg)", zIndex: 10, paddingTop: 16 }}>
-        <PageHeader title="개인정보처리방침" />
+        <PageHeader title="개인정보처리방침" backHref={from} />
       </div>
 
       {doc && (

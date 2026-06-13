@@ -12,7 +12,7 @@ interface Props {
 export default function BottomNav({ active, role = "child" }: Props) {
   const TABS: [string, Tab, string][] = [
     ["home", "홈", role === "parent" ? "/parent/dashboard" : "/child/dashboard"],
-    ["calendar", "캘린더", "/child/calendar"],
+    ["calendar", "캘린더", role === "parent" ? "/parent/calendar" : "/child/calendar"],
     ["gift", "리워드", role === "parent" ? "/parent/rewards" : "/child/rewards"],
     ["user", "내정보", role === "parent" ? "/parent/settings" : "/child/profile"],
   ];

@@ -4,7 +4,8 @@ import MarkdownBody from "@/components/ui/MarkdownBody";
 
 export const revalidate = 300;
 
-export default async function TermsPage() {
+export default async function TermsPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const { from } = await searchParams;
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -19,7 +20,7 @@ export default async function TermsPage() {
   return (
     <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 480, margin: "0 auto", padding: "0 16px 40px" }}>
       <div style={{ position: "sticky", top: 0, background: "var(--bg)", zIndex: 10, paddingTop: 16 }}>
-        <PageHeader title="이용약관" />
+        <PageHeader title="이용약관" backHref={from} />
       </div>
 
       {doc && (
