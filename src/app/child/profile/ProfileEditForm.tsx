@@ -19,6 +19,7 @@ const AVATAR_CATEGORIES = [
 
 export default function ProfileEditForm({ userId, displayName, avatarId }: Props) {
   const router = useRouter();
+  const supabase = createClient();
   const [name, setName] = useState(displayName);
   const [selectedAvatarId, setSelectedAvatarId] = useState(avatarId ?? "boy-medium");
   const [saving, setSaving] = useState(false);
@@ -26,10 +27,15 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
 
   const current = getAvatar(selectedAvatarId);
 
+  async function handleLogout() {
+    if (!confirm("로그아웃 하시겠어요?")) return;
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  }
+
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
-    const supabase = createClient();
     await supabase.from("user_profiles").update({
       display_name: name.trim(),
       avatar_id: selectedAvatarId,
@@ -95,6 +101,27 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
       >
         {saved ? "저장됨 ✓" : saving ? "저장 중..." : "저장하기"}
       </button>
+
+      {/* 계정 */}
+      <div>
+        <p style={{ fontSize: 12, fontWeight: 800, color: "#94A3B8", letterSpacing: "0.04em", textTransform: "uppercase", margin: "4px 4px 8px" }}>
+          계정
+        </p>
+        <div style={{ background: "#fff", borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,.06)", overflow: "hidden" }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 12,
+              padding: "14px 16px", background: "none", border: "none", cursor: "pointer",
+            }}
+          >
+            <span style={{ width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "#FEF2F2", flexShrink: 0 }}>
+              <span style={{ fontSize: 17 }}>🚪</span>
+            </span>
+            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#E11D48" }}>로그아웃</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
