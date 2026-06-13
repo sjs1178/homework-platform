@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Icon from "@/components/ui/Icon";
 import { KiddoloopAppicon } from "@/components/ui/Logo";
@@ -16,7 +18,45 @@ function GoogleG() {
   );
 }
 
+declare global {
+  interface Window {
+    onNativeGoogleToken?: (idToken: string, nonce?: string) => void;
+    isKiddoloopApp?: boolean;
+  }
+}
+
 export default function LoginPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // 앱(WebView)에서 네이티브 구글 로그인 완료 시 호출되는 훅
+    window.onNativeGoogleToken = async (idToken: string, nonce?: string) => {
+      try {
+        const res = await fetch("/api/auth/google-native", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken, nonce }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          router.replace(data.redirectTo ?? "/");
+        } else {
+          alert("로그인 실패: " + (data.error ?? "unknown"));
+        }
+      } catch {
+        alert("네트워크 오류가 발생했습니다.");
+      }
+    };
+
+    // 앱 환경 여부 플래그 (Android JS Bridge 존재 여부로 판단)
+    window.isKiddoloopApp = !!(window as unknown as Record<string, unknown>)["AndroidNativeAuth"];
+
+    return () => {
+      delete window.onNativeGoogleToken;
+    };
+  }, [router]);
+
   async function handleGoogleLogin() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
