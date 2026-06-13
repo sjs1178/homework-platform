@@ -1,9 +1,11 @@
 # Kiddoloop 서비스 기획서
 
 > **최종 업데이트**: 2026-06-13
-> **서비스 URL**: https://kiddoloop.com (도메인 연결 예정) / https://homework-platform-ten.vercel.app
+> **서비스 URL**: https://kiddoloop.com / https://homework-platform-ten.vercel.app
 > **대표 메일**: contact@kiddoloop.com
 > **GitHub**: https://github.com/sjs1178/homework-platform
+> **Supabase**: muzevgexilkborqisrai.supabase.co (Seoul)
+> **Vercel 리전**: icn1 (Seoul)
 
 ---
 
@@ -82,6 +84,11 @@ Google 로그인
   ├── [히어로 카드] 자녀 아바타·이름·학년·스트릭·주간 완료 도트·리워드 잔액
   ├── 검사 기다리는 숙제 목록
   ├── 빠른 메뉴: 숙제 입력 / 리워드 관리
+  │
+  ├── 숙제 캘린더 (읽기 전용)  ← 자녀 숙제 월간 조회, 완료 현황 확인
+  │     ├── 연결 자녀 전체 숙제 통합 표시
+  │     ├── 다중 자녀 시 자녀 이름 표시
+  │     └── 완료 버튼 없음 (조회 전용)
   │
   ├── 숙제 입력
   │     ├── AI 게이트: 보유 토큰 있으면 직접 호출 → 없으면 광고 시청 또는 수동 입력
@@ -195,7 +202,9 @@ Google 로그인
 - AI 호출 시 HTTPS로 전달 → 서버 메모리에서 1회 사용 후 폐기
 - 시스템 토큰(환경변수)이 폴백으로 동작하지 않음 (사용자 토큰 없으면 광고 게이트)
 
-### 4-6. 숙제 캘린더 (자녀)
+### 4-6. 숙제 캘린더
+
+#### 자녀 캘린더 (`/child/calendar`)
 
 | 기능 | 상태 | 설명 |
 |------|------|------|
@@ -205,6 +214,17 @@ Google 로그인
 | 완료 처리 | ✅ | is_completed 업데이트 + reward_logs 적립 |
 | 1시간 전 브라우저 알림 | ✅ | Notification API + setTimeout |
 | 다:다 숙제 통합 표시 | ✅ | 연결된 모든 부모의 숙제를 합산 표시 |
+
+#### 부모 캘린더 (`/parent/calendar`)
+
+| 기능 | 상태 | 설명 |
+|------|------|------|
+| 월간 캘린더 뷰 | ✅ | 자녀 숙제 날짜별 완료 현황 |
+| 월 이동 | ✅ | 클라이언트 상태로 이전/다음 월 전환 |
+| 일간 상세 뷰 | ✅ | 날짜 클릭 시 숙제 목록 (읽기 전용) |
+| 자녀 이름 표시 | ✅ | 다중 자녀 구분을 위해 숙제에 자녀 이름 표기 |
+| 완료 버튼 없음 | ✅ | 부모는 조회 전용 (완료는 자녀만 가능) |
+| 연결 자녀 없음 안내 | ✅ | 자녀 미연결 시 안내 화면 표시 |
 
 ### 4-7. 리워드 시스템
 
@@ -468,18 +488,22 @@ Google 로그인
 
 | URL | 대상 | 설명 |
 |-----|------|------|
-| `/auth/login` | 공통 | Google 로그인 |
+| `/` | 공통 | 세션 확인 → 역할별 대시보드 / 워크스루 분기 |
+| `/walkthrough` | 비로그인 | 3슬라이드 앱 소개 (localStorage skip) |
+| `/auth/login` | 공통 | Google 로그인 (+ 네이티브 WebView 훅) |
 | `/onboarding` | 신규 | 역할·생년월일·약관 동의 위저드 |
 | `/notices` | 공개 | 공지사항 목록 |
-| `/notices/[id]` | 공개 | 공지사항 상세 |
-| `/terms` | 공개 | 이용약관 (현재 버전) |
-| `/privacy` | 공개 | 개인정보처리방침 (현재 버전) |
+| `/notices/[id]` | 공개 | 공지사항 상세 (마크다운 렌더링) |
+| `/terms` | 공개 | 이용약관 (?from= 뒤로가기 지원) |
+| `/privacy` | 공개 | 개인정보처리방침 (?from= 뒤로가기 지원) |
+| `/help` | 공개 | 사용방법 (11개 아코디언 섹션) |
 
 ### 부모
 
 | URL | 설명 |
 |-----|------|
 | `/parent/dashboard` | 히어로 카드·스트릭·주간 도트·검사 대기 목록 |
+| `/parent/calendar` | 숙제 캘린더 (자녀 숙제 읽기 전용, 자녀 이름 표시) |
 | `/parent/homework/new` | 숙제 입력 (텍스트/이미지 + 리워드 + AI 게이트) |
 | `/parent/homework/check` | 숙제 검사 (AI 모드 / 수동 모드) |
 | `/parent/rewards` | 리워드 잔액·내역 + 수동 지급·차감 |
@@ -511,6 +535,7 @@ Google 로그인
 
 | 경로 | 메서드 | 설명 |
 |------|--------|------|
+| `/api/auth/google-native` | POST | 네이티브 WebView Google 로그인 (signInWithIdToken) |
 | `/api/parse-homework` | POST | 자연어/이미지 → 숙제 파싱 (aiToken/aiProvider 지원) |
 | `/api/check-homework` | POST | 숙제 사진 → AI 채점 / 수동 결과(manualResult) 처리 |
 | `/api/correct-homework` | POST | 부모 수정 저장 |
@@ -527,6 +552,8 @@ Google 로그인
 | `/api/admin/users` | GET/DELETE | 회원 목록 / 삭제 |
 | `/api/admin/pairs` | GET/PATCH/DELETE | 페어 조회 / 자녀 변경 / 삭제 |
 | `/api/admin/rewards` | GET/POST | 리워드 현황 / 어드민 조정 |
+| `/api/admin/homeworks` | GET | 전체 숙제 조회 (어드민) |
+| `/api/admin/homework-checks` | GET | 전체 채점 조회 (어드민) |
 | `/api/admin/content/announcements` | GET/POST/PATCH/DELETE | 공지사항 CRUD |
 | `/api/admin/content/legal` | GET/POST | 약관 조회 / 신규 버전 게시 |
 
@@ -536,11 +563,13 @@ Google 로그인
 
 | 항목 | 내용 |
 |------|------|
-| 프로덕션 URL | https://homework-platform-ten.vercel.app |
-| 도메인 | kiddoloop.com (가비아 구매 완료, Vercel 연결 예정) |
-| 배포 방식 | GitHub push → Vercel 자동 배포 |
-| Supabase 프로젝트 | stlxwsufitsktgpwjunm.supabase.co |
-| 최근 배포 | 2026-06-11 |
+| 프로덕션 URL | https://kiddoloop.com |
+| Vercel 프로젝트 | homework-platform-ten.vercel.app |
+| 배포 방식 | GitHub push → Vercel 자동 배포 (icn1 Seoul) |
+| Supabase 프로젝트 | muzevgexilkborqisrai.supabase.co (Seoul) |
+| 도메인 | kiddoloop.com (가비아 DNS, Vercel 연결 완료) |
+| 이메일 | contact@kiddoloop.com (Zoho Mail Lite) |
+| 최근 배포 | 2026-06-13 |
 
 ---
 
@@ -550,29 +579,29 @@ Google 로그인
 
 | 기능 | 설명 |
 |------|------|
-| kiddoloop.com 도메인 연결 | Vercel 도메인 설정 + 가비아 DNS |
-| 부모 완료 알림 | 자녀 완료 처리 시 푸시/이메일 알림 |
-| 과목별 규칙 설정 UI | subject_rules 테이블 CRUD UI |
-| 리워드 카탈로그 관리 UI | 부모가 교환 항목 직접 추가·삭제 |
-| 다중 자녀 대시보드 전환 | 부모가 자녀 선택해 각 자녀 현황 확인 |
+| Android WebView 앱 | FCM 푸시 알림 + 네이티브 Google 로그인 연동 코드 작성 |
+| 부모 완료 알림 | 자녀 완료 처리 시 FCM 또는 이메일 알림 |
+| 숙제 수정·삭제 UI | 등록된 숙제 편집 기능 |
+| 과목별 규칙 설정 UI | subject_rules 테이블 CRUD UI (현재 DB만 존재) |
+| 부모 승인 요청 이메일 | pending_approvals 생성 시 부모 이메일 자동 발송 |
 
 ### 중간 우선순위
 
 | 기능 | 설명 |
 |------|------|
-| 숙제 수정·삭제 | 등록된 숙제 편집 기능 |
-| 자녀 결과 확인 화면 | 숙제 검사 결과 자녀가 확인 |
-| 월간 리포트 | 완료율·리워드 통계 |
-| PWA / 홈 화면 추가 | 모바일 앱처럼 설치 가능 |
-| 이메일 알림 | 부모 승인 요청 시 이메일 발송 |
+| 리워드 카탈로그 관리 UI | 부모가 교환 항목 직접 추가·삭제 (reward_catalog 테이블 있음) |
+| 다중 자녀 대시보드 전환 | 부모 히어로 카드에서 자녀 선택 스위처 |
+| 월간 리포트 | 완료율·리워드 통계 요약 |
+| PWA / 홈 화면 추가 | manifest.json 확장, 설치 배너 |
+| AdSense 광고 수익화 | 심사 승인 후 실제 광고 SDK 교체 |
 
-### 낮은 우선순위 (MVP 이후)
+### 낮은 우선순위 (성장 단계)
 
 | 기능 | 설명 |
 |------|------|
-| React Native 앱 | 웹 검증 후 모바일 앱 전환 |
-| 학습 데이터 활용 | corrections corpus로 과목별 맞춤 피드백 |
+| 과목별 맞춤 피드백 | corrections corpus 활용, 오답 패턴 분석 |
 | 학원 연동 | 외부 학원 숙제 데이터 연결 |
+| 만료된 pending_approval 정리 | 7일 만료 후 자동 status=expired 변경 크론 |
 
 ---
 
@@ -598,21 +627,27 @@ Google 로그인
 | 2026-06-13 | 워크스루 → localStorage wt_seen으로 재방문자 skip | 이미 앱을 아는 사용자에게 매번 워크스루 강제 노출 방지 |
 | 2026-06-13 | Zoho Mail Lite $1/월 선택 | 무료 플랜 신규 가입 불가, 최소 비용으로 정식 메일함 확보 |
 | 2026-06-13 | Android 앱: WebView 래퍼 방식 선택 | 웹 배포만으로 앱 업데이트 가능, FCM은 JS Bridge로 연결 |
+| 2026-06-13 | Supabase 싱가포르 → 서울 이전 | 한국 사용자 레이턴시 최소화 (~75ms→~15ms), Vercel(icn1)과 동일 리전 배치 |
+| 2026-06-13 | 미들웨어에 역할 기반 라우트 보호 추가 | 부모가 자녀 페이지 접근하거나 반대의 경우 방지, 온보딩 미완료 사용자 차단 |
+| 2026-06-13 | 부모 캘린더 페이지 신설 (`/parent/calendar`) | BottomNav 캘린더 탭이 자녀 캘린더로 잘못 연결되던 버그 수정 |
+| 2026-06-13 | 약관 페이지에 `?from=` 쿼리 파라미터 지원 | 설정 → 약관 → 뒤로가기 시 설정 페이지로 정확히 복귀 |
 
 ---
 
-## 14. 현재 구현 완성도 (v0.1 기준, 2026-06-13)
+## 14. 현재 구현 완성도 (v0.1, 2026-06-13 기준)
 
 ### 완료된 기능 체크리스트
 
 #### 인증 & 온보딩
-- [x] Google OAuth 로그인
+- [x] Google OAuth 로그인 (웹)
+- [x] Google 로그인 (Android WebView 네이티브 브리지)
 - [x] 역할 선택 (부모/자녀) + 이름/생년월일 입력
 - [x] 이용약관·개인정보처리방침 동의 (서버사이드 강제)
 - [x] 미성년자 법정대리인 승인 흐름
 - [x] consent_at·terms_version DB 기록
 - [x] 세션 기반 자동 리다이렉트 (루트 → 역할별 대시보드)
 - [x] 워크스루 온보딩 슬라이드 (비로그인 첫 방문자)
+- [x] 역할 기반 미들웨어 보호 (부모↔자녀 페이지 격리)
 
 #### 부모 기능
 - [x] 자연어 숙제 입력 → Claude AI 파싱
@@ -620,23 +655,26 @@ Google 로그인
 - [x] 파싱 결과 미리보기·편집
 - [x] 숙제 검사 (Claude Vision 자동 채점)
 - [x] 채점 결과 부모 수정·확정
+- [x] 부모 캘린더 (자녀 숙제 읽기 전용 월간 뷰)
 - [x] 리워드 수동 지급·차감
 - [x] 리워드 이름·단위 커스텀
 - [x] 자녀 학년 설정
 - [x] 다자녀 연결 (초대 코드)
 - [x] 미성년자 가입 승인
 - [x] 과목별 통계 조회
+- [x] 로그아웃
 
 #### 자녀 기능
 - [x] 월간 캘린더 (날짜별 숙제 현황)
 - [x] 숙제 완료 처리
 - [x] 이모지 아바타 프로필
 - [x] 리워드 잔액·내역 확인
+- [x] 로그아웃
 
 #### 공통 UX
 - [x] 도움말 페이지 (11개 섹션)
-- [x] 공지사항 (어드민 발행)
-- [x] 이용약관·개인정보처리방침 (마크다운 렌더링)
+- [x] 공지사항 (어드민 발행, 마크다운 렌더링)
+- [x] 이용약관·개인정보처리방침 (마크다운 렌더링, 뒤로가기 정상화)
 - [x] 문의하기 (contact@kiddoloop.com)
 - [x] 로그인 일러스트
 - [x] BYOK AI 토큰 (Claude/OpenAI/Gemini)
@@ -644,20 +682,20 @@ Google 로그인
 - [x] 수동 입력 모드 (AI 없이 직접 입력)
 
 #### 인프라
-- [x] Vercel 자동 배포 (GitHub push)
-- [x] Supabase RLS 전 테이블 적용
+- [x] Vercel 자동 배포 (GitHub push, icn1 Seoul)
+- [x] Supabase RLS 전 테이블 적용 (Seoul 리전)
+- [x] kiddoloop.com 도메인 연결 완료
 - [x] AdSense 연동 (승인 대기 중)
-- [x] contact@kiddoloop.com 메일함 (Zoho Mail)
+- [x] contact@kiddoloop.com 메일함 (Zoho Mail Lite)
 - [x] 어드민 패널 (회원/페어링/숙제/검사/리워드/콘텐츠)
 
 ### 미완성 / 예정 기능
 
 | 기능 | 상태 | 예정 |
 |------|------|------|
-| Android WebView 앱 + FCM | 프로젝트 생성 완료, 코드 미작성 | 다음 스프린트 |
+| Android WebView 앱 + FCM | Firebase 프로젝트 생성 완료, 코드 미작성 | 다음 스프린트 |
 | 부모 승인 요청 이메일 발송 | 미구현 (인앱 코드만) | 다음 스프린트 |
 | 숙제 수정·삭제 UI | 미구현 | 다음 스프린트 |
 | 과목별 규칙 어드민 편집 UI | 미구현 | 다음 스프린트 |
-| kiddoloop.com 도메인 연결 | DNS 설정 진행 중 | 이번 주 |
-| AdSense 승인 | 심사 대기 중 | 미정 |
-| 2026-06-11 | /auth/select-role → /onboarding 위저드로 교체 | 단순 역할 선택 → 법령 준수 온보딩 흐름으로 고도화 |
+| AdSense 광고 승인 | 심사 대기 중 | 미정 |
+| 리워드 카탈로그 관리 UI | 테이블만 있고 UI 없음 | 다음 스프린트 |

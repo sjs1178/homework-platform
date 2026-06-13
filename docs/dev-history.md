@@ -371,18 +371,61 @@ MVP 개발을 위한 기반 인프라 구축
 
 ---
 
+## 2026-06-13 (Day 6 – 추가 작업) — 버그 수정 3건 + Supabase 서울 이전
+
+### Supabase 서울 이전
+
+- 기존 싱가포르 프로젝트(`stlxwsufitsktgpwjunm`) → 서울 신규 프로젝트(`muzevgexilkborqisrai.supabase.co`)
+- `supabase/migrations/000_combined_migration.sql` 생성 (001~011 통합 마이그레이션 단일 파일)
+- 서울 프로젝트 SQL Editor에서 통합 마이그레이션 실행
+- Vercel 환경변수 업데이트 (URL, anon key, service_role key)
+- `vercel.json` 생성 → 리전 `icn1`(서울) 명시 → Vercel↔Supabase 동일 리전 배치 (~5ms 레이턴시)
+
+### 버그 수정 3건
+
+#### Bug #1 — 약관 뒤로가기 시 역할 선택 화면 이동
+**원인**: `SettingsView.tsx`에서 `router.push("/terms")`로 이동 후 `PageHeader`의 `router.back()` 호출 시, 히스토리에 따라 예상치 못한 페이지(온보딩 초기 상태)로 복귀  
+**수정**:
+- `terms/page.tsx`, `privacy/page.tsx`에 `searchParams.from` 수용 → `PageHeader backHref` prop으로 전달
+- `SettingsView.tsx`: 약관/개인정보처리방침 클릭 시 `?from=/parent/settings` 쿼리 파라미터 추가
+- 설정에서 접근 시 back → `/parent/settings`, 온보딩 새 탭에서 접근 시 `router.back()` 기본값 유지
+
+#### Bug #2 + 역할 분리 — 부모가 자녀 페이지 접근 및 역할 격리 미구현
+**원인**: `middleware.ts`가 인증 여부만 확인하고 역할(role) 검사 없음  
+**수정**:
+- `middleware.ts`에 역할 기반 라우트 보호 로직 추가
+  - `/parent/*` 또는 `/child/*` 접근 시 `user_profiles` 테이블에서 role + consent_at 조회
+  - `consent_at` 미존재(온보딩 미완료) → `/onboarding` 리다이렉트
+  - 자녀 계정으로 `/parent/*` 접근 → `/child/dashboard` 리다이렉트
+  - 부모 계정으로 `/child/*` 접근 → `/parent/dashboard` 리다이렉트
+
+#### Bug #3 — 부모 BottomNav 캘린더가 자녀 캘린더로 이동
+**원인**: `BottomNav.tsx` 캘린더 링크가 role 무관하게 `/child/calendar`로 하드코딩  
+**수정**:
+- `BottomNav.tsx`: 캘린더 링크를 `role === "parent" ? "/parent/calendar" : "/child/calendar"`로 분기
+- `/parent/calendar/page.tsx` 신규 생성
+  - 부모의 모든 연결 자녀 숙제 월간 캘린더 표시 (pairs WHERE parent_id = 현재 사용자)
+  - 자녀 이름 함께 표시 (다중 자녀 구분)
+  - 완료 버튼 없는 읽기 전용 뷰 (부모는 조회만)
+  - 자녀 미연결 시 안내 화면 표시
+- `ParentCalendarView.tsx` 신규 생성 (읽기 전용 캘린더 클라이언트 컴포넌트)
+
+---
+
 ## 개발 지표 요약
 
 | 항목 | 수치 |
 |------|------|
-| 총 개발 기간 | 7일 (2026-06-06 ~ 2026-06-13) |
-| Git 커밋 수 | 25개+ |
-| 생성된 파일 수 | 85+ |
-| DB 마이그레이션 | 11개 |
+| 총 개발 기간 | 8일 (2026-06-06 ~ 2026-06-13) |
+| Git 커밋 수 | 30개+ |
+| 생성된 파일 수 | 90+ |
+| DB 마이그레이션 | 11개 (통합 파일 1개) |
 | API 엔드포인트 | 24개 |
-| 페이지/화면 수 | 26개 |
+| 페이지/화면 수 | 30개 |
 | 운영 도메인 | kiddoloop.com |
 | 대표 메일 | contact@kiddoloop.com |
+| Supabase 리전 | Seoul (muzevgexilkborqisrai) |
+| Vercel 리전 | icn1 (Seoul) |
 
 ## 기술 부채 및 주의사항
 
@@ -390,8 +433,9 @@ MVP 개발을 위한 기반 인프라 구축
 |------|------|---------|
 | Android 앱 FCM 미완성 | Firebase 프로젝트 생성까지 완료, WebView+FCM 코드 미작성 | 높음 |
 | 광고 SDK 미연동 | AdGateModal에 `[AD_PLACEHOLDER]` 마커, 현재 5초 카운트다운만 | 중간 |
-| 이메일 발송 미구현 | 부모 승인 요청 시 이메일 없음 (인앱 알림으로만 처리) | 높음 |
+| 이메일 발송 미구현 | 부모 승인 요청 시 이메일 없음 (인앱 코드만) | 높음 |
 | 과목별 규칙 UI 없음 | subject_rules 테이블 있으나 어드민 편집 UI 미구현 | 높음 |
 | 다중 자녀 부모 대시보드 | 부모에게 자녀 여러 명 있을 경우 선택 UI 없음 | 높음 |
 | 리워드 카탈로그 UI 없음 | reward_catalog 테이블 있으나 부모 CRUD UI 없음 | 중간 |
 | 만료된 pending_approval 정리 | 7일 만료 후 자동 status 변경 크론 없음 | 낮음 |
+| 숙제 수정·삭제 UI 없음 | 등록된 숙제 편집 불가 | 높음 |
