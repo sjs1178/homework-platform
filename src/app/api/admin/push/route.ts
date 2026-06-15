@@ -95,6 +95,15 @@ export async function POST(req: NextRequest) {
   const succeeded = results.filter((r) => r.success).length;
   const failed = results.filter((r) => !r.success);
 
+  if (succeeded > 0) {
+    await admin.from("notifications").insert({
+      user_id: userId,
+      title,
+      body,
+      image_url: imageUrl || null,
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     sent: succeeded,
