@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/homework-checks", label: "숙제 검사 데이터" },
   { href: "/admin/rewards", label: "리워드 관리" },
   { href: "/admin/content", label: "콘텐츠 관리" },
+  { href: "/admin/push", label: "푸쉬 발송" },
 ];
 
 export default function AdminNav() {
