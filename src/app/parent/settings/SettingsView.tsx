@@ -77,11 +77,11 @@ function SettingRow({
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span
           style={{
-            width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center",
-            justifyContent: "center", background: danger ? "#FEF2F2" : "var(--green-50)", flexShrink: 0,
+            width: 42, height: 42, borderRadius: 12, display: "flex", alignItems: "center",
+            justifyContent: "center", background: danger ? "#FEF2F2" : "#E9F4EC", flexShrink: 0,
           }}
         >
-          <Icon name={icon} size={18} color={danger ? "#E11D48" : "var(--green-d)"} stroke={2} />
+          <Icon name={icon} size={22} color={danger ? "#DC2626" : "#16A34A"} stroke={2} />
         </span>
         <span style={{ fontSize: 14.5, fontWeight: 700, color: danger ? "#E11D48" : "var(--text)" }}>
           {label}
@@ -89,7 +89,7 @@ function SettingRow({
       </div>
       {rightEl ?? (
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {value && <span style={{ fontSize: 13, color: "var(--faint)", fontWeight: 600 }}>{value}</span>}
+          {value && <span style={{ fontSize: 13, color: "#7B8A81", fontWeight: 600 }}>{value}</span>}
           {onClick && <Icon name="chevron-right" size={16} color="var(--faint)" />}
         </div>
       )}
@@ -677,7 +677,7 @@ export default function SettingsView({
           value="부모"
         />
         <SettingRow
-          icon="arrow-left"
+          icon="log-out"
           label="로그아웃"
           danger
           onClick={handleLogout}
@@ -688,7 +688,7 @@ export default function SettingsView({
       <SectionHeader>앱 정보</SectionHeader>
       <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>
         <SettingRow
-          icon="help-circle"
+          icon="book-open"
           label="사용 방법"
           onClick={() => router.push("/help")}
         />
@@ -699,7 +699,7 @@ export default function SettingsView({
           onClick={() => window.open("mailto:contact@kiddoloop.com", "_self")}
         />
         <SettingRow
-          icon="clipboard-check"
+          icon="megaphone"
           label="공지사항"
           onClick={() => router.push("/notices")}
         />

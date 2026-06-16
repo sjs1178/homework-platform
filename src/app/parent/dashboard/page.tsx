@@ -6,6 +6,7 @@ import { getEffectiveGradeLabel } from "@/lib/grade";
 import ChildCarousel, { type ChildData } from "./ChildCarousel";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
+import EmptyState from "@/components/ui/EmptyState";
 import { LogoLockup } from "@/components/ui/Logo";
 
 function getWeekRange() {
@@ -310,15 +311,18 @@ export default async function ParentDashboard() {
             style={{
               background: "#fff",
               borderRadius: "var(--r-card)",
-              padding: "28px 16px",
-              textAlign: "center",
+              padding: "32px 16px",
               boxShadow: "var(--sh-sm)",
             }}
           >
-            <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--muted)" }}>
-              검사할 숙제가 없어요
-            </p>
+            <EmptyState
+              icon="clipboard-check"
+              title="검사할 숙제가 없어요"
+              desc="오늘 숙제를 입력하면 여기서 검사 결과를 바로 확인할 수 있어요."
+              actionLabel="숙제 입력하기"
+              actionIcon="plus"
+              actionHref="/parent/homework/new"
+            />
           </div>
         ) : (
           pendingChecks.slice(0, 3).map((hw) => (
@@ -451,7 +455,7 @@ export default async function ParentDashboard() {
               textDecoration: "none",
             }}
           >
-            <span style={{ fontSize: 20 }}>📊</span>
+            <Icon name="bar-chart-3" size={22} color="#16A34A" />
             <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-soft)", whiteSpace: "nowrap" }}>
               학습 통계 · 직업군 가이드
             </span>

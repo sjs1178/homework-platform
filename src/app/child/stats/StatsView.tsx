@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CAREERS, CareerPath } from "@/lib/careers";
+import Icon from "@/components/ui/Icon";
 
 interface AreaStat {
   area: string;
@@ -99,9 +100,15 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
 
       {!loading && subjects.length === 0 && (
         <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-          <p className="text-3xl mb-2">📊</p>
-          <p className="text-gray-500 font-semibold">아직 데이터가 없어요</p>
-          <p className="text-xs text-gray-400 mt-1">숙제를 완료하면 통계가 쌓여요</p>
+          <div style={{
+            width: 88, height: 88, borderRadius: 26, background: "#E9F4EC",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 14px",
+          }}>
+            <Icon name="bar-chart-3" size={46} color="#9DB3A6" stroke={1.9} />
+          </div>
+          <p className="text-gray-800 font-extrabold text-base">아직 데이터가 없어요</p>
+          <p className="text-gray-400 text-sm mt-1">숙제를 완료하면 통계가 쌓여요</p>
         </div>
       )}
 

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ProfileEditForm from "./ProfileEditForm";
 import PairInput from "@/app/child/dashboard/PairInput";
+import Icon from "@/components/ui/Icon";
 
 export default async function ChildProfilePage() {
   const supabase = await createClient();
@@ -46,10 +47,15 @@ export default async function ChildProfilePage() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 20 }}>📖</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>사용 방법</span>
+              <span style={{
+                width: 42, height: 42, borderRadius: 12, background: "#E9F4EC",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name="book-open" size={22} color="#16A34A" />
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#13241B" }}>사용 방법</span>
             </div>
-            <span style={{ fontSize: 12, color: "#94A3B8" }}>▶</span>
+            <Icon name="chevron-right" size={16} color="#7B8A81" />
           </a>
           <a
             href="mailto:contact@kiddoloop.com"
@@ -60,10 +66,15 @@ export default async function ChildProfilePage() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 20 }}>✉️</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>문의하기</span>
+              <span style={{
+                width: 42, height: 42, borderRadius: 12, background: "#E9F4EC",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name="mail" size={22} color="#16A34A" />
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#13241B" }}>문의하기</span>
             </div>
-            <span style={{ fontSize: 12, color: "#94A3B8" }}>contact@kiddoloop.com</span>
+            <span style={{ fontSize: 12, color: "#7B8A81", fontWeight: 600 }}>contact@kiddoloop.com</span>
           </a>
         </div>
       </div>

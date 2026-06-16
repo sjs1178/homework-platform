@@ -1,29 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import ParentCalendarView from "./ParentCalendarView";
 import BottomNav from "@/components/ui/BottomNav";
+import EmptyState from "@/components/ui/EmptyState";
 
 export default async function ParentCalendarPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: pairs } = await supabase
-    .from("pairs")
-    .select("id, child_id, user_profiles!pairs_child_id_fkey(display_name)")
-    .eq("parent_id", user.id)
-    .eq("status", "active");
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-  const allPairIds = (pairs ?? []).map((p) => p.id);
+  const { data: pairs } = await admin
+    .from("pairs")
+    .select("id, child_id")
+    .eq("parent_id", user.id)
+    .order("created_at");
+
+  const connectedPairs = (pairs ?? []).filter((p) => p.child_id);
+  const allPairIds = connectedPairs.map((p) => p.id);
   if (allPairIds.length === 0) {
     return (
       <div style={{ minHeight: "100svh", background: "#F1F7F3", display: "flex", flexDirection: "column", maxWidth: 430, margin: "0 auto" }}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", gap: 12 }}>
-          <div style={{ fontSize: 40 }}>📅</div>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text)", textAlign: "center" }}>연결된 자녀가 없어요</h2>
-          <p style={{ fontSize: 14, color: "var(--muted)", textAlign: "center", lineHeight: 1.6 }}>
-            설정에서 자녀를 먼저 추가해주세요.
-          </p>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+          <EmptyState
+            icon="calendar"
+            title="연결된 자녀가 없어요"
+            desc="자녀를 추가하면 숙제 일정을 달력에서 한눈에 볼 수 있어요."
+            actionLabel="자녀 추가하기"
+            actionIcon="user-plus"
+            actionHref="/parent/settings"
+          />
         </div>
         <BottomNav active="캘린더" role="parent" />
       </div>
@@ -31,10 +42,18 @@ export default async function ParentCalendarPage() {
   }
 
   // Build child name map: pair_id → childName
+  const childIds = connectedPairs.map((p) => p.child_id!);
+  const { data: childProfiles } = await admin
+    .from("user_profiles")
+    .select("id, display_name")
+    .in("id", childIds);
+
+  const profileMap = Object.fromEntries(
+    (childProfiles ?? []).map((p) => [p.id, p.display_name])
+  );
   const childNameByPairId: Record<string, string | null> = {};
-  (pairs ?? []).forEach((p) => {
-    const profile = Array.isArray(p.user_profiles) ? p.user_profiles[0] : p.user_profiles;
-    childNameByPairId[p.id] = (profile as { display_name: string | null } | null)?.display_name ?? null;
+  connectedPairs.forEach((p) => {
+    childNameByPairId[p.id] = profileMap[p.child_id!] ?? null;
   });
 
   const now = new Date();
