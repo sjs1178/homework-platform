@@ -354,13 +354,6 @@ export default async function ChildDashboard() {
               ))}
             </div>
 
-            {/* 부모 추가 등록 */}
-            <div style={{ marginTop: 16 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", margin: "0 4px 10px" }}>
-                부모님 추가 연결
-              </h2>
-              <PairInput />
-            </div>
           </>
         )}
       </div>

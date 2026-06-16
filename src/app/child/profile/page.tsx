@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ProfileEditForm from "./ProfileEditForm";
+import PairInput from "@/app/child/dashboard/PairInput";
 
 export default async function ChildProfilePage() {
   const supabase = await createClient();
@@ -25,6 +26,14 @@ export default async function ChildProfilePage() {
           displayName={profile?.display_name ?? ""}
           avatarId={profile?.avatar_id ?? null}
         />
+
+        {/* 부모님 추가 연결 */}
+        <div style={{ marginTop: 24 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", marginBottom: 10 }}>
+            부모님 추가 연결
+          </h2>
+          <PairInput />
+        </div>
 
         {/* 사용 방법 / 문의하기 링크 */}
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 8 }}>

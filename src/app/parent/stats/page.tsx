@@ -11,26 +11,29 @@ export default async function ParentStatsPage() {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("pair_id, role")
+    .select("role")
     .eq("id", user.id)
     .single();
 
   if (profile?.role !== "parent") redirect("/child/stats");
-  if (!profile?.pair_id) redirect("/parent/dashboard");
 
-  // 자녀 정보 조회
-  const { data: pair } = await supabase
+  // pairs 테이블에서 부모의 첫 번째 연결된 페어 조회
+  const { data: pairs } = await supabase
     .from("pairs")
-    .select("child_id")
-    .eq("id", profile.pair_id)
-    .single();
+    .select("id, child_id")
+    .eq("parent_id", user.id)
+    .eq("status", "active")
+    .order("created_at")
+    .limit(1);
 
-  if (!pair?.child_id) redirect("/parent/dashboard");
+  const activePair = pairs?.[0];
+  if (!activePair?.child_id) redirect("/parent/dashboard");
+  const pairId = activePair.id;
 
   const { data: childProfile } = await supabase
     .from("user_profiles")
     .select("display_name, avatar_id, grade, grade_school_year")
-    .eq("id", pair.child_id)
+    .eq("id", activePair.child_id)
     .single();
 
   const effectiveGrade = getEffectiveGrade(
@@ -54,7 +57,7 @@ export default async function ParentStatsPage() {
           </div>
         </div>
         <StatsView
-          pairId={profile.pair_id}
+          pairId={pairId}
           effectiveGrade={effectiveGrade ?? 0}
           gradeLabel={gradeLabel}
           childName={childProfile?.display_name ?? ""}

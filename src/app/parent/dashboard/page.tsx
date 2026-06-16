@@ -189,7 +189,7 @@ export default async function ParentDashboard() {
         margin: "0 auto",
       }}
     >
-      <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "0 20px 22px", WebkitOverflowScrolling: "touch" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 22px" }}>
         {/* 헤더 */}
         <div
           style={{

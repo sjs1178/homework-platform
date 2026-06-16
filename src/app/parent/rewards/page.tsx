@@ -9,24 +9,23 @@ export default async function ParentRewardsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("pair_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.pair_id) redirect("/parent/dashboard");
-
-  const { data: pair } = await supabase
+  // pairs 테이블에서 부모의 첫 번째 연결된 페어 조회
+  const { data: pairs } = await supabase
     .from("pairs")
-    .select("child_id")
-    .eq("id", profile.pair_id)
-    .single();
+    .select("id, child_id")
+    .eq("parent_id", user.id)
+    .eq("status", "active")
+    .order("created_at")
+    .limit(1);
+
+  const activePair = pairs?.[0];
+  if (!activePair?.child_id) redirect("/parent/dashboard");
+  const pairId = activePair.id;
 
   const { data: settings } = await supabase
     .from("reward_settings")
     .select("*")
-    .eq("pair_id", profile.pair_id)
+    .eq("pair_id", pairId)
     .single();
 
   const unit = settings?.point_reward_unit ?? "P";
@@ -34,7 +33,7 @@ export default async function ParentRewardsPage() {
 
   // 자녀 이름 (service role — RLS 우회)
   let childName = "자녀";
-  let childId: string | null = pair?.child_id ?? null;
+  let childId: string | null = activePair.child_id ?? null;
   if (childId) {
     const admin = createAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,7 +50,7 @@ export default async function ParentRewardsPage() {
   const { data: logs } = await supabase
     .from("reward_logs")
     .select("*, homeworks(subject, description)")
-    .eq("pair_id", profile.pair_id)
+    .eq("pair_id", pairId)
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -86,7 +85,7 @@ export default async function ParentRewardsPage() {
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 32px" }}>
         <RewardsManager
-          pairId={profile.pair_id}
+          pairId={pairId}
           childId={childId ?? ""}
           childName={childName}
           unit={unit}
