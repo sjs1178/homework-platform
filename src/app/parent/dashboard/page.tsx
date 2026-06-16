@@ -189,7 +189,7 @@ export default async function ParentDashboard() {
         margin: "0 auto",
       }}
     >
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 22px" }}>
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "0 20px 22px", WebkitOverflowScrolling: "touch" }}>
         {/* 헤더 */}
         <div
           style={{
@@ -253,7 +253,7 @@ export default async function ParentDashboard() {
 
         {/* 히어로 카드 */}
         {hasChildren ? (
-          <ChildCarousel children={childrenData} />
+          <ChildCarousel items={childrenData} />
         ) : (
           <a
             href="/parent/settings"

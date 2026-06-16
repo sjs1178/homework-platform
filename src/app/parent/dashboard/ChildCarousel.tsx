@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Icon from "@/components/ui/Icon";
 
 const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
@@ -18,87 +18,132 @@ export interface ChildData {
 }
 
 interface Props {
-  children: ChildData[];
+  items: ChildData[];
   onSelect?: (index: number) => void;
 }
 
-export default function ChildCarousel({ children, onSelect }: Props) {
+export default function ChildCarousel({ items, onSelect }: Props) {
   const [current, setCurrent] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
   const touchDeltaX = useRef(0);
-  const [dragging, setDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
+  const isHorizontalSwipe = useRef<boolean | null>(null);
+  const animFrame = useRef(0);
   const todayIdx = (new Date().getDay() + 6) % 7;
+
+  const getTranslateX = useCallback(
+    (index: number, offset = 0) =>
+      `translateX(calc(-${index * 100}% + ${offset - index * 12}px))`,
+    []
+  );
+
+  useEffect(() => {
+    if (trackRef.current) {
+      trackRef.current.style.transition = "transform 0.3s ease";
+      trackRef.current.style.transform = getTranslateX(current);
+    }
+  }, [current, getTranslateX]);
 
   const goTo = useCallback(
     (idx: number) => {
-      const clamped = Math.max(0, Math.min(idx, children.length - 1));
+      const clamped = Math.max(0, Math.min(idx, items.length - 1));
       setCurrent(clamped);
-      setDragOffset(0);
       onSelect?.(clamped);
     },
-    [children.length, onSelect]
+    [items.length, onSelect]
   );
 
   function handleTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
     touchDeltaX.current = 0;
-    setDragging(true);
+    isHorizontalSwipe.current = null;
+    if (trackRef.current) {
+      trackRef.current.style.transition = "none";
+    }
   }
 
   function handleTouchMove(e: React.TouchEvent) {
     const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+
+    if (isHorizontalSwipe.current === null) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        isHorizontalSwipe.current = Math.abs(dx) > Math.abs(dy);
+      }
+      return;
+    }
+
+    if (!isHorizontalSwipe.current) return;
+
     touchDeltaX.current = dx;
-    setDragOffset(dx);
+    cancelAnimationFrame(animFrame.current);
+    animFrame.current = requestAnimationFrame(() => {
+      if (trackRef.current) {
+        trackRef.current.style.transform = getTranslateX(current, dx);
+      }
+    });
   }
 
-  function handleTouchEnd() {
-    setDragging(false);
+  function snapToNearest() {
+    cancelAnimationFrame(animFrame.current);
+    if (trackRef.current) {
+      trackRef.current.style.transition = "transform 0.3s ease";
+    }
+
+    const dx = touchDeltaX.current;
     const threshold = 60;
-    if (touchDeltaX.current < -threshold) {
+
+    if (dx < -threshold && current < items.length - 1) {
       goTo(current + 1);
-    } else if (touchDeltaX.current > threshold) {
+    } else if (dx > threshold && current > 0) {
       goTo(current - 1);
     } else {
-      setDragOffset(0);
+      if (trackRef.current) {
+        trackRef.current.style.transform = getTranslateX(current);
+      }
     }
+
+    touchDeltaX.current = 0;
+    isHorizontalSwipe.current = null;
   }
 
-  if (children.length === 0) return null;
+  if (items.length === 0) return null;
 
   return (
     <div>
       <div
-        ref={containerRef}
-        style={{ overflow: "hidden", position: "relative" }}
+        style={{
+          overflow: "hidden",
+          position: "relative",
+          touchAction: items.length > 1 ? "pan-y" : "auto",
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onTouchEnd={snapToNearest}
+        onTouchCancel={snapToNearest}
       >
         <div
+          ref={trackRef}
           style={{
             display: "flex",
             gap: 12,
-            transition: dragging ? "none" : "transform 0.3s ease",
-            transform: `translateX(calc(-${current * 100}% - ${current * 12}px + ${dragOffset}px))`,
+            transform: getTranslateX(current),
+            transition: "transform 0.3s ease",
           }}
         >
-          {children.map((child, idx) => (
+          {items.map((child, idx) => (
             <div
               key={child.pairId}
-              style={{
-                minWidth: "100%",
-                flexShrink: 0,
-              }}
+              style={{ minWidth: "100%", flexShrink: 0 }}
             >
               <HeroCard child={child} todayIdx={todayIdx} isActive={idx === current} />
             </div>
           ))}
         </div>
 
-        {/* 우측 피크 힌트 */}
-        {children.length > 1 && current < children.length - 1 && (
+        {items.length > 1 && current < items.length - 1 && (
           <div
             style={{
               position: "absolute",
@@ -117,8 +162,7 @@ export default function ChildCarousel({ children, onSelect }: Props) {
           </div>
         )}
 
-        {/* 좌측 피크 힌트 */}
-        {children.length > 1 && current > 0 && (
+        {items.length > 1 && current > 0 && (
           <div
             style={{
               position: "absolute",
@@ -138,8 +182,7 @@ export default function ChildCarousel({ children, onSelect }: Props) {
         )}
       </div>
 
-      {/* 인디케이터 도트 */}
-      {children.length > 1 && (
+      {items.length > 1 && (
         <div
           style={{
             display: "flex",
@@ -148,7 +191,7 @@ export default function ChildCarousel({ children, onSelect }: Props) {
             marginTop: 10,
           }}
         >
-          {children.map((_, idx) => (
+          {items.map((_, idx) => (
             <button
               key={idx}
               onClick={() => goTo(idx)}
@@ -196,7 +239,6 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
         }}
       />
 
-      {/* 자녀 row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
@@ -245,7 +287,6 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
         </div>
       </div>
 
-      {/* 스트릭 + 주간 */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 18, position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
           <Icon name="flame" size={20} color="#FFD27D" stroke={0} fill="#FFD27D" />
@@ -258,7 +299,6 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
         </span>
       </div>
 
-      {/* 주간 도트 */}
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 11, position: "relative" }}>
         {DAY_LABELS.map((label, i) => {
           const done = child.weeklyDots[i];
