@@ -1,15 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
-import DashboardHero from "./DashboardHero";
+import ChildCarousel, { type ChildData } from "./ChildCarousel";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
 import { LogoLockup } from "@/components/ui/Logo";
 
 function getWeekRange() {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun
+  const day = now.getDay();
   const monday = new Date(now);
   monday.setDate(now.getDate() - ((day + 6) % 7));
   monday.setHours(0, 0, 0, 0);
@@ -24,109 +25,158 @@ export default async function ParentDashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("pair_id, display_name")
-    .eq("id", user.id)
-    .single();
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-  let pair = null;
-  let childProfile: { display_name?: string; avatar_id?: string; grade?: number; grade_school_year?: number } | null = null;
-  let completedHomeworks: { id: string; subject: string; description: string; due_date: string; checked: boolean }[] = [];
-  let weeklyDots: boolean[] = [false, false, false, false, false, false, false];
-  let streak = 0;
-  let rewardBalance = 0;
-  let rewardUnit = "P";
+  // 이 부모의 모든 페어 조회
+  const { data: pairs } = await admin
+    .from("pairs")
+    .select("id, child_id")
+    .eq("parent_id", user.id)
+    .order("created_at");
 
-  if (profile?.pair_id) {
-    const { data } = await supabase.from("pairs").select("*").eq("id", profile.pair_id).single();
-    pair = data;
+  const connectedPairs = (pairs ?? []).filter((p) => p.child_id);
+  const allPairIds = connectedPairs.map((p) => p.id);
+  const childIds = connectedPairs.map((p) => p.child_id!);
+  const hasChildren = connectedPairs.length > 0;
 
-    // 리워드 잔액 + 단위
-    const { data: rwSettings } = await supabase
-      .from("reward_settings")
-      .select("point_reward_unit")
-      .eq("pair_id", profile.pair_id)
-      .single();
-    rewardUnit = rwSettings?.point_reward_unit ?? "P";
+  let childrenData: ChildData[] = [];
+  let pendingChecks: { id: string; subject: string; description: string; due_date: string; checked: boolean; childName: string }[] = [];
 
-    const { data: rwLogs } = await supabase
+  if (hasChildren) {
+    // 자녀 프로필 배치 조회
+    const { data: childProfiles } = await admin
+      .from("user_profiles")
+      .select("id, display_name, avatar_id, grade, grade_school_year")
+      .in("id", childIds);
+
+    const profileMap = Object.fromEntries(
+      (childProfiles ?? []).map((p) => [p.id, p])
+    );
+
+    // 주간 숙제 배치 조회
+    const { monday, sunday } = getWeekRange();
+    const mondayStr = monday.toISOString().split("T")[0];
+    const sundayStr = sunday.toISOString().split("T")[0];
+
+    const { data: weekHws } = await admin
+      .from("homeworks")
+      .select("pair_id, due_date, is_completed")
+      .in("pair_id", allPairIds)
+      .gte("due_date", mondayStr)
+      .lte("due_date", sundayStr);
+
+    // 스트릭용 완료 날짜 배치 조회
+    const { data: allCompleted } = await admin
+      .from("homeworks")
+      .select("pair_id, due_date")
+      .in("pair_id", allPairIds)
+      .eq("is_completed", true)
+      .order("due_date", { ascending: false });
+
+    // 리워드 배치 조회
+    const { data: allLogs } = await admin
       .from("reward_logs")
-      .select("type, amount")
-      .eq("pair_id", profile.pair_id);
-    const earned = (rwLogs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
-    const spent = (rwLogs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
-    rewardBalance = earned - spent;
+      .select("pair_id, type, amount")
+      .in("pair_id", allPairIds);
 
-    if (pair?.child_id) {
-      const { data: cp } = await supabase
-        .from("user_profiles")
-        .select("display_name, avatar_id, grade, grade_school_year")
-        .eq("id", pair.child_id)
-        .single();
-      childProfile = cp;
+    const { data: allSettings } = await admin
+      .from("reward_settings")
+      .select("pair_id, point_reward_unit")
+      .in("pair_id", allPairIds);
 
-      // 이번 주 완료 현황
-      const { monday, sunday } = getWeekRange();
-      const { data: weekHws } = await supabase
-        .from("homeworks")
-        .select("due_date, is_completed")
-        .eq("pair_id", profile.pair_id)
-        .gte("due_date", monday.toISOString().split("T")[0])
-        .lte("due_date", sunday.toISOString().split("T")[0]);
+    const settingsMap = Object.fromEntries(
+      (allSettings ?? []).map((s) => [s.pair_id, s])
+    );
 
-      const completedDays = new Set(
-        (weekHws ?? []).filter((h) => h.is_completed).map((h) => h.due_date)
-      );
-      weeklyDots = Array.from({ length: 7 }, (_, i) => {
+    // 각 자녀별 데이터 구성
+    childrenData = connectedPairs.map((pair) => {
+      const cp = profileMap[pair.child_id!];
+      const avatar = getAvatar(cp?.avatar_id ?? null);
+      const gradeLabel = getEffectiveGradeLabel(
+        cp?.grade as number | null,
+        cp?.grade_school_year as number | null
+      ) ?? "";
+
+      // 주간 도트
+      const pairWeek = (weekHws ?? []).filter((h) => h.pair_id === pair.id);
+      const completedDays = new Set(pairWeek.filter((h) => h.is_completed).map((h) => h.due_date));
+      const weeklyDots = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
         return completedDays.has(d.toISOString().split("T")[0]);
       });
 
-      // 스트릭 계산 (완료한 날 연속)
-      const { data: allCompleted } = await supabase
-        .from("homeworks")
-        .select("due_date")
-        .eq("pair_id", profile.pair_id)
-        .eq("is_completed", true)
-        .order("due_date", { ascending: false });
-
-      const completedDateSet = new Set((allCompleted ?? []).map((h) => h.due_date));
+      // 스트릭
+      const pairCompleted = (allCompleted ?? [])
+        .filter((h) => h.pair_id === pair.id)
+        .map((h) => h.due_date);
+      const completedSet = new Set(pairCompleted);
       const today = new Date();
-      let count = 0;
+      let streak = 0;
       for (let i = 1; i <= 365; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
-        if (completedDateSet.has(d.toISOString().split("T")[0])) count++;
+        if (completedSet.has(d.toISOString().split("T")[0])) streak++;
         else break;
       }
-      streak = count;
 
-      // 검사 대기 숙제
-      const { data: hws } = await supabase
-        .from("homeworks")
-        .select("id, subject, description, due_date")
-        .eq("pair_id", profile.pair_id)
-        .eq("is_completed", true)
-        .order("due_date", { ascending: false })
-        .limit(10);
+      // 리워드
+      const pairLogs = (allLogs ?? []).filter((l) => l.pair_id === pair.id);
+      const earned = pairLogs.filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
+      const spent = pairLogs.filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
 
-      if (hws?.length) {
-        const { data: checks } = await supabase
-          .from("homework_checks")
-          .select("homework_id")
-          .in("homework_id", hws.map((h) => h.id));
-        const checkedIds = new Set(checks?.map((c) => c.homework_id) ?? []);
-        completedHomeworks = hws.map((h) => ({ ...h, checked: checkedIds.has(h.id) }));
-      }
+      return {
+        pairId: pair.id,
+        childName: cp?.display_name ?? "자녀",
+        childAvatar: avatar.emoji,
+        gradeLabel,
+        streak,
+        weeklyDone: weeklyDots.filter(Boolean).length,
+        weeklyDots,
+        balance: earned - spent,
+        unit: settingsMap[pair.id]?.point_reward_unit ?? "P",
+      };
+    });
+
+    // 검사 대기 숙제 (전체 자녀 통합)
+    const { data: completedHws } = await admin
+      .from("homeworks")
+      .select("id, pair_id, subject, description, due_date")
+      .in("pair_id", allPairIds)
+      .eq("is_completed", true)
+      .order("due_date", { ascending: false })
+      .limit(20);
+
+    if (completedHws?.length) {
+      const { data: checks } = await admin
+        .from("homework_checks")
+        .select("homework_id")
+        .in("homework_id", completedHws.map((h) => h.id));
+      const checkedIds = new Set(checks?.map((c) => c.homework_id) ?? []);
+
+      const pairChildMap = Object.fromEntries(
+        connectedPairs.map((p) => [p.id, profileMap[p.child_id!]?.display_name ?? "자녀"])
+      );
+
+      pendingChecks = completedHws
+        .filter((h) => !checkedIds.has(h.id))
+        .map((h) => ({
+          ...h,
+          checked: false,
+          childName: pairChildMap[h.pair_id] ?? "자녀",
+        }));
     }
   }
 
-  const avatar = getAvatar(childProfile?.avatar_id ?? null);
-  const gradeLabel = getEffectiveGradeLabel(childProfile?.grade ?? null, childProfile?.grade_school_year ?? null);
-  const weeklyDone = weeklyDots.filter(Boolean).length;
-  const pendingChecks = completedHomeworks.filter((h) => !h.checked);
+  // 읽지 않은 알림 수
+  const { count: unreadCount } = await admin
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_read", false);
 
   return (
     <div
@@ -139,7 +189,6 @@ export default async function ParentDashboard() {
         margin: "0 auto",
       }}
     >
-      {/* 스크롤 영역 */}
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 22px" }}>
         {/* 헤더 */}
         <div
@@ -164,9 +213,24 @@ export default async function ParentDashboard() {
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
+                position: "relative",
               }}
             >
               <Icon name="bell" size={19} color="var(--text-soft)" />
+              {(unreadCount ?? 0) > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 6,
+                    right: 6,
+                    width: 9,
+                    height: 9,
+                    borderRadius: "50%",
+                    background: "#E11D48",
+                    border: "2px solid #fff",
+                  }}
+                />
+              )}
             </a>
             <a
               href="/parent/settings"
@@ -188,19 +252,8 @@ export default async function ParentDashboard() {
         </div>
 
         {/* 히어로 카드 */}
-        {pair?.child_id ? (
-          <DashboardHero
-            childName={childProfile?.display_name ?? "자녀"}
-            childInitial={(childProfile?.display_name ?? "자")[0]}
-            childAvatar={avatar.emoji}
-            gradeLabel={gradeLabel ?? ""}
-            streak={streak}
-            weeklyDone={weeklyDone}
-            weeklyDots={weeklyDots}
-            balance={rewardBalance}
-            unit={rewardUnit}
-            pairId={profile!.pair_id!}
-          />
+        {hasChildren ? (
+          <ChildCarousel children={childrenData} />
         ) : (
           <a
             href="/parent/settings"
@@ -301,6 +354,11 @@ export default async function ParentDashboard() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center" }}>
                     <SubjectTag subject={hw.subject} />
+                    {childrenData.length > 1 && (
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green-d)", background: "var(--green-50)", padding: "2px 7px", borderRadius: 6 }}>
+                        {hw.childName}
+                      </span>
+                    )}
                     <span style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap" }}>
                       {hw.due_date}
                     </span>
@@ -377,7 +435,7 @@ export default async function ParentDashboard() {
         </div>
 
         {/* 학습 통계 링크 */}
-        {pair?.child_id && (
+        {hasChildren && (
           <a
             href="/parent/stats"
             style={{
@@ -426,7 +484,6 @@ function SubjectTag({ subject }: { subject: string }) {
         background: bg,
         color,
         whiteSpace: "nowrap",
-        letterSpacing: 0,
       }}
     >
       {subject}
