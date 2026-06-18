@@ -50,7 +50,7 @@ export default async function ChildRewardsPage() {
         margin: "0 auto",
       }}
     >
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 22px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <RewardBody
           childName={profile.display_name ?? "자녀"}
           balance={balance}

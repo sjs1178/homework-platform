@@ -20,14 +20,20 @@ export default function BottomNav({ active, role = "child" }: Props) {
   return (
     <div
       style={{
-        flexShrink: 0,
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 900,
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "space-around",
-        padding: "10px 14px 26px",
+        padding: "10px 14px calc(env(safe-area-inset-bottom, 0px) + 10px)",
         background: "rgba(255,255,255,.92)",
         backdropFilter: "blur(10px)",
         borderTop: "1px solid var(--line)",
+        maxWidth: 430,
+        margin: "0 auto",
       }}
     >
       {TABS.map(([icon, label, href]) => {

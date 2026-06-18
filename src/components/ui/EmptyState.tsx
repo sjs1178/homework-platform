@@ -3,7 +3,7 @@ import Icon from "./Icon";
 interface EmptyStateProps {
   icon: string;
   title: string;
-  desc: string;
+  desc?: string;
   actionLabel?: string;
   actionIcon?: string;
   actionHref?: string;
@@ -22,7 +22,7 @@ export default function EmptyState({ icon, title, desc, actionLabel, actionIcon,
         <Icon name={icon} size={46} color="#9DB3A6" stroke={1.9} />
       </div>
       <p style={{ fontSize: 17, fontWeight: 800, color: "#13241B", margin: 0 }}>{title}</p>
-      <p style={{ fontSize: 13.5, color: "#7B8A81", margin: 0, maxWidth: 210, textAlign: "center", lineHeight: 1.6 }}>{desc}</p>
+      {desc && <p style={{ fontSize: 13.5, color: "#7B8A81", margin: 0, maxWidth: 210, textAlign: "center", lineHeight: 1.6 }}>{desc}</p>}
       {actionLabel && actionHref && (
         <a
           href={actionHref}

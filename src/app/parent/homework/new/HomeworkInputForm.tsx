@@ -205,12 +205,12 @@ export default function HomeworkInputForm({
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100svh", background: "var(--bg)" }}>
       {/* 헤더 */}
       <div style={{ display: "flex", alignItems: "center", flexShrink: 0, padding: "4px 18px 14px", gap: 6 }}>
-        <a
-          href="/parent/dashboard"
-          style={{ width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}
+        <button
+          onClick={() => window.history.back()}
+          style={{ width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
         >
           <Icon name="arrow-left" size={23} color="var(--text)" stroke={2.2} />
-        </a>
+        </button>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>숙제 입력</h1>
         {isManual && (
           <span

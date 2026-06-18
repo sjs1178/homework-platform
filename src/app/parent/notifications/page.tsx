@@ -52,7 +52,7 @@ export default async function ParentNotifications() {
         margin: "0 auto",
       }}
     >
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 22px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         {/* 헤더 */}
         <div
           style={{

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import HomeworkCheckForm from "./HomeworkCheckForm";
 import Icon from "@/components/ui/Icon";
+import BackButton from "@/components/ui/BackButton";
 
 export default async function ParentHomeworkCheckPage({
   searchParams,
@@ -50,16 +51,7 @@ export default async function ParentHomeworkCheckPage({
           gap: 8,
         }}
       >
-        <a
-          href="/parent/dashboard"
-          style={{
-            width: 40, height: 40, borderRadius: 12,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            textDecoration: "none",
-          }}
-        >
-          <Icon name="arrow-left" size={23} color="var(--text)" stroke={2.2} />
-        </a>
+        <BackButton />
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>
             숙제 검사

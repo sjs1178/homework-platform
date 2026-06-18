@@ -26,11 +26,10 @@ export default async function ParentCalendarPage() {
   if (allPairIds.length === 0) {
     return (
       <div style={{ minHeight: "100svh", background: "#F1F7F3", display: "flex", flexDirection: "column", maxWidth: 430, margin: "0 auto" }}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px 80px" }}>
           <EmptyState
             icon="calendar"
             title="연결된 자녀가 없어요"
-            desc="자녀를 추가하면 숙제 일정을 달력에서 한눈에 볼 수 있어요."
             actionLabel="자녀 추가하기"
             actionIcon="user-plus"
             actionHref="/parent/settings"
@@ -92,7 +91,7 @@ export default async function ParentCalendarPage() {
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>숙제 캘린더</h1>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 24px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <ParentCalendarView
           year={year}
           month={month}

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import RewardsManager from "./RewardsManager";
 import Icon from "@/components/ui/Icon";
+import BackButton from "@/components/ui/BackButton";
 
 export default async function ParentRewardsPage() {
   const supabase = await createClient();
@@ -70,16 +71,7 @@ export default async function ParentRewardsPage() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 18px 14px", flexShrink: 0 }}>
-        <a
-          href="/parent/dashboard"
-          style={{
-            width: 40, height: 40, borderRadius: 12,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            textDecoration: "none",
-          }}
-        >
-          <Icon name="arrow-left" size={23} color="var(--text)" stroke={2.2} />
-        </a>
+        <BackButton />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>리워드 관리</h1>
       </div>
 

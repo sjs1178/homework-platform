@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getEffectiveGrade, getGradeLabel } from "@/lib/grade";
 import { getAvatar } from "@/lib/avatars";
 import StatsView from "@/app/child/stats/StatsView";
+import BackButton from "@/components/ui/BackButton";
 
 export default async function ParentStatsPage() {
   const supabase = await createClient();
@@ -47,7 +48,7 @@ export default async function ParentStatsPage() {
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <a href="/parent/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
+          <BackButton />
           <div className="flex items-center gap-2">
             <span className="text-2xl">{avatar.emoji}</span>
             <div>

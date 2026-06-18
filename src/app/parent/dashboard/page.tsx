@@ -190,7 +190,7 @@ export default async function ParentDashboard() {
         margin: "0 auto",
       }}
     >
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 22px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         {/* 헤더 */}
         <div
           style={{
@@ -318,7 +318,6 @@ export default async function ParentDashboard() {
             <EmptyState
               icon="clipboard-check"
               title="검사할 숙제가 없어요"
-              desc="오늘 숙제를 입력하면 여기서 검사 결과를 바로 확인할 수 있어요."
               actionLabel="숙제 입력하기"
               actionIcon="plus"
               actionHref="/parent/homework/new"

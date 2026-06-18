@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import ProfileEditForm from "./ProfileEditForm";
 import PairInput from "@/app/child/dashboard/PairInput";
 import Icon from "@/components/ui/Icon";
+import BackButton from "@/components/ui/BackButton";
 
 export default async function ChildProfilePage() {
   const supabase = await createClient();
@@ -19,7 +20,7 @@ export default async function ChildProfilePage() {
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <a href="/child/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
+          <BackButton />
           <h1 className="text-xl font-bold">내 프로필 설정</h1>
         </div>
         <ProfileEditForm

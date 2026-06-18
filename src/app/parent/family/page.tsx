@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import FamilyManager from "./FamilyManager";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
+import BackButton from "@/components/ui/BackButton";
 
 export default async function FamilyPage() {
   const supabase = await createClient();
@@ -53,7 +54,7 @@ export default async function FamilyPage() {
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center gap-3 mb-6">
-          <a href="/parent/dashboard" className="text-gray-400 hover:text-gray-600">←</a>
+          <BackButton />
           <h1 className="text-xl font-bold">패밀리 관리</h1>
         </div>
         <FamilyManager parentId={user.id} pairs={pairsWithChild} />
