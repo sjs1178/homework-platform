@@ -261,22 +261,34 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
   return (
     <div>
       {/* 탭 */}
-      <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-4">
+      <div style={{ display: "flex", background: "#fff", borderRadius: 16, padding: 3, boxShadow: "0 1px 4px rgba(0,0,0,.06)", marginBottom: 16 }}>
         <button
           onClick={() => setTab("stats")}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            tab === "stats" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500"
-          }`}
+          style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            padding: "10px 0", borderRadius: 13, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 700,
+            background: tab === "stats" ? "#16A34A" : "transparent",
+            color: tab === "stats" ? "#fff" : "#7B8A81",
+            transition: "all .2s",
+          }}
         >
-          📊 과목별 현황
+          <Icon name="bar-chart-3" size={17} color={tab === "stats" ? "#fff" : "#7B8A81"} stroke={2.2} />
+          과목별 현황
         </button>
         <button
           onClick={() => setTab("career")}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-            tab === "career" ? "bg-indigo-500 text-white shadow-sm" : "text-gray-500"
-          }`}
+          style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            padding: "10px 0", borderRadius: 13, border: "none", cursor: "pointer",
+            fontSize: 14, fontWeight: 700,
+            background: tab === "career" ? "#16A34A" : "transparent",
+            color: tab === "career" ? "#fff" : "#7B8A81",
+            transition: "all .2s",
+          }}
         >
-          🎯 직업군 가이드
+          <Icon name="target" size={17} color={tab === "career" ? "#fff" : "#7B8A81"} stroke={2.2} />
+          직업군 가이드
         </button>
       </div>
 

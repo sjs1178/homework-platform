@@ -395,10 +395,11 @@ export default async function ParentDashboard() {
           ))
         )}
 
-        {/* 퀵액션 2열 */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11, marginTop: 16 }}>
+        {/* 퀵액션 3열 */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 11, marginTop: 16 }}>
           {([
             ["square-pen", "숙제 입력", "linear-gradient(140deg,#34D399,#16A34A)", "/parent/homework/new"],
+            ["send", "숙제 요청", "linear-gradient(140deg,#60A5FA,#3B82F6)", "/parent/homework-request"],
             ["gift", "리워드", "linear-gradient(140deg,#FBBF24,#F59E0B)", "/parent/rewards"],
           ] as const).map(([icon, label, grad, href]) => (
             <a

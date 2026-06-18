@@ -650,6 +650,25 @@ export default function SettingsView({
           {aiSaved ? "이 기기에 저장됐습니다 ✓" : "토큰 저장 (이 기기에만)"}
         </button>
 
+        {/* 토큰 발급 가이드 링크 */}
+        <a
+          href="/parent/settings/ai-guide"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            marginTop: 12, padding: "12px 14px", borderRadius: 12,
+            background: "var(--green-50)", border: "1.5px solid var(--green-200)",
+            textDecoration: "none", cursor: "pointer",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon name="key" size={16} color="var(--green-d)" stroke={2.2} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--green-d)" }}>
+              AI 토큰 발급 방법 가이드
+            </span>
+          </div>
+          <Icon name="chevron-right" size={15} color="var(--green)" />
+        </a>
+
         {/* 보안 안내 */}
         <div
           style={{

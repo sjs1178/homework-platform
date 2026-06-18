@@ -281,7 +281,7 @@ export default function WalkthroughClient() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        maxWidth: 480,
+        maxWidth: 430,
         margin: "0 auto",
         padding: "0 20px",
         userSelect: "none",
@@ -318,12 +318,15 @@ export default function WalkthroughClient() {
         style={{
           width: "100%",
           transition: "opacity .25s",
-          padding: "4px 0 20px",
+          padding: "4px 0 0",
           display: "flex",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        {slide.mockup}
+        <div style={{ transform: "scale(0.82)", transformOrigin: "top center", marginBottom: -50 }}>
+          {slide.mockup}
+        </div>
       </div>
 
       {/* 텍스트 */}
