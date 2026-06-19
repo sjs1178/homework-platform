@@ -18,7 +18,7 @@ export default async function TermsPage({ searchParams }: { searchParams: Promis
     .single();
 
   return (
-    <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 480, margin: "0 auto", padding: "0 16px 40px" }}>
+    <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 430, margin: "0 auto", padding: "0 16px 40px" }}>
       <div style={{ position: "sticky", top: 0, background: "var(--bg)", zIndex: 10, paddingTop: 16 }}>
         <PageHeader title="이용약관" backHref={from} />
       </div>

@@ -36,7 +36,7 @@ function MockSlide1() {
       <MockPhone>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, paddingTop: 18 }}>
           <KiddoloopAppicon size={44} />
-          <div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 600, fontSize: 18, color: "#0F172A" }}>kiddoloop</div>
+          <div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 600, fontSize: 18 }}><span style={{ color: "#13241B" }}>kiddo</span><span style={{ color: "#16A34A" }}>loop</span></div>
           <div style={{ fontSize: 9, color: "#64748B", fontWeight: 600 }}>아이가 스스로 만드는 숙제 루틴</div>
         </div>
         <div style={{ marginTop: 22, background: "#E9F0EB", borderRadius: 14, height: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -292,7 +292,7 @@ export default function WalkthroughClient() {
       <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 20, paddingBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <KiddoloopAppicon size={30} />
-          <span style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 600, fontSize: 18, color: "#0F172A" }}>kiddoloop</span>
+          <span style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 600, fontSize: 18 }}><span style={{ color: "#13241B" }}>kiddo</span><span style={{ color: "#16A34A" }}>loop</span></span>
         </div>
         <button
           onClick={handleStart}

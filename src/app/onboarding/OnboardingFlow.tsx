@@ -33,7 +33,6 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [parentEmail, setParentEmail] = useState("");
-  const [approvalCode, setApprovalCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,12 +41,16 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
 
   async function handleBirthdayNext() {
     if (!birthday) return;
-    if (age! < 7) {
-      setError("만 7세 이상만 가입할 수 있습니다.");
+    if (age! < 5) {
+      setError("만 5세 이상만 가입할 수 있습니다.");
       return;
     }
     setError("");
-    setStep("consent");
+    if (age! < 14) {
+      setStep("parent-request");
+    } else {
+      setStep("consent");
+    }
   }
 
   async function handleConsentComplete() {
@@ -109,7 +112,6 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
       setError(json.error ?? "요청 중 오류가 발생했습니다.");
       return;
     }
-    setApprovalCode(json.approvalCode);
     setStep("done");
   }
 
@@ -330,7 +332,6 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
               label="이용약관 동의 (필수)"
               linkText="전문 보기"
               linkHref="/terms"
-              isMinor={isMinor}
             />
             <ConsentCheckbox
               checked={privacyAgreed}
@@ -338,7 +339,6 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
               label="개인정보처리방침 동의 (필수)"
               linkText="전문 보기"
               linkHref="/privacy"
-              isMinor={isMinor}
             />
 
             {isMinor && (
@@ -399,7 +399,7 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 10 }}>
-            <button onClick={() => setStep("consent")} style={{ ...btnPrimary, background: "var(--line-strong)", color: "var(--text-soft)" }}>
+            <button onClick={() => setStep(age !== null && age < 14 ? "birthday" : "consent")} style={{ ...btnPrimary, background: "var(--line-strong)", color: "var(--text-soft)" }}>
               ← 이전
             </button>
             <button
@@ -418,34 +418,19 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
         <div style={{ width: "100%", textAlign: "center" }}>
           <div style={{ ...cardStyle, padding: "36px 24px" }}>
             <div style={{ fontSize: 52, marginBottom: 16 }}>
-              {approvalCode ? "⏳" : "🎉"}
+              {isMinor ? "⏳" : "🎉"}
             </div>
-            {approvalCode ? (
+            {isMinor ? (
               <>
                 <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
                   부모님 승인을 기다리고 있어요
                 </h2>
-                <p style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7, marginBottom: 20 }}>
+                <p style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
                   부모님이 kiddoloop에 가입하시면
                   <br />
                   설정에서 승인 요청을 확인하실 수 있습니다.
                 </p>
-                <div style={{
-                  background: "var(--green-50)",
-                  border: "2px dashed var(--green-200)",
-                  borderRadius: 16,
-                  padding: "16px",
-                  marginBottom: 16,
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 4 }}>
-                    승인 코드
-                  </div>
-                  <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: "0.12em", color: "var(--green-d)" }}>
-                    {approvalCode}
-                  </div>
-                </div>
-                <p style={{ fontSize: 12.5, color: "var(--faint)", fontWeight: 600, lineHeight: 1.6 }}>
-                  부모님께 이 코드를 알려주세요.
+                <p style={{ fontSize: 12.5, color: "var(--faint)", fontWeight: 600, lineHeight: 1.6, marginTop: 16 }}>
                   요청은 7일 후 만료됩니다.
                 </p>
               </>
@@ -462,7 +447,7 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
           </div>
 
           <button
-            onClick={() => router.push(approvalCode ? `/${role}/dashboard` : `/${role}/dashboard`)}
+            onClick={() => router.push(`/${role}/dashboard`)}
             style={btnPrimary}
           >
             시작하기 →
@@ -474,14 +459,13 @@ export default function OnboardingFlow({ userName, userEmail }: Props) {
 }
 
 function ConsentCheckbox({
-  checked, onChange, label, linkText, linkHref, isMinor,
+  checked, onChange, label, linkText, linkHref,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
   linkText: string;
   linkHref: string;
-  isMinor?: boolean;
 }) {
   return (
     <div
@@ -515,7 +499,7 @@ function ConsentCheckbox({
         )}
       </button>
       <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-        {isMinor ? `[법정대리인 동의] ${label}` : label}
+        {label}
       </span>
       <a
         href={linkHref}

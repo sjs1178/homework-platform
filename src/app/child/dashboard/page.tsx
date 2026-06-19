@@ -323,10 +323,9 @@ export default async function ChildDashboard() {
             )}
 
             {/* 퀵 액션 */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 11 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11 }}>
               {([
                 ["calendar", "숙제 캘린더", "linear-gradient(140deg,#34D399,#16A34A)", "/child/calendar"],
-                ["send", "숙제 요청", "linear-gradient(140deg,#60A5FA,#3B82F6)", "/child/homework-request"],
                 ["gift", "내 리워드", "linear-gradient(140deg,#FBBF24,#F59E0B)", "/child/rewards"],
               ] as const).map(([icon, label, grad, href]) => (
                 <a

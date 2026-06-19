@@ -32,7 +32,7 @@ export default function AdGateModal({ onWatchComplete, onManualEntry, onClose }:
         position: "fixed", inset: 0, zIndex: 1000,
         background: "rgba(19,36,27,.55)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "flex-end", justifyContent: "center",
-        padding: "0 0 env(safe-area-inset-bottom)",
+        paddingBottom: "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >

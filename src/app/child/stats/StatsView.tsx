@@ -292,7 +292,14 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
         </button>
       </div>
 
-      {tab === "stats" ? statsTab : careerTab}
+      {tab === "stats" ? statsTab : (
+        <>
+          {careerTab}
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--muted)", fontWeight: 600, marginTop: 16 }}>
+            본 가이드는 AI가 생성한 자료이며, 실제와 다를 수 있습니다.
+          </p>
+        </>
+      )}
     </div>
   );
 }

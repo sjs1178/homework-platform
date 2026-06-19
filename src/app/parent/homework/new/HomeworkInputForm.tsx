@@ -18,6 +18,7 @@ interface Props {
   gradeLabel: string;
   rewardUnit: string;
   rewardName: string;
+  pendingRequestCount?: number;
 }
 
 const SUBJECT_COLORS: Record<string, [string, string]> = {
@@ -41,7 +42,7 @@ function emptyItem(): HomeworkItem {
 }
 
 export default function HomeworkInputForm({
-  pairId, rules, childGrade, childName, childInitial, gradeLabel, rewardUnit, rewardName,
+  pairId, rules, childGrade, childName, childInitial, gradeLabel, rewardUnit, rewardName, pendingRequestCount = 0,
 }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -222,6 +223,25 @@ export default function HomeworkInputForm({
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "4px 20px 24px" }}>
+
+        {/* 자녀 숙제 요청 알림 */}
+        {pendingRequestCount > 0 && (
+          <a
+            href="/parent/homework-request"
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 14px", borderRadius: 14, marginBottom: 16,
+              background: "#EFF6FF", border: "1.5px solid #BFDBFE",
+              textDecoration: "none",
+            }}
+          >
+            <Icon name="send" size={18} color="#3B82F6" stroke={2.2} />
+            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: "#1E40AF" }}>
+              자녀가 요청한 숙제가 {pendingRequestCount}건 있어요
+            </span>
+            <Icon name="chevron-right" size={16} color="#3B82F6" stroke={2.2} />
+          </a>
+        )}
 
         {/* 자녀 */}
         <FieldLabel>자녀</FieldLabel>

@@ -103,13 +103,13 @@ export function LogoLockup({
           fontFamily: "'Fredoka', sans-serif",
           fontWeight: 600,
           fontSize: Math.round(height * 0.88),
-          color: textColor,
           letterSpacing: "-0.01em",
           lineHeight: 1,
           whiteSpace: "nowrap",
         }}
       >
-        kiddoloop
+        <span style={{ color: variant === "white" ? "#FFFFFF" : "#13241B" }}>kiddo</span>
+        <span style={{ color: variant === "white" ? "#FFFFFF" : "#16A34A" }}>loop</span>
       </span>
       {badge && (
         <span

@@ -250,6 +250,20 @@ export default function CalendarView({ year: initYear, month: initMonth, homewor
         ))}
       </div>
 
+      {/* 숙제 등록 요청 */}
+      <a
+        href="/child/homework-request"
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "13px 0", borderRadius: 14,
+          background: "#fff", border: "1.5px solid var(--green-200)",
+          boxShadow: "var(--sh-sm)", textDecoration: "none", marginBottom: 16,
+        }}
+      >
+        <Icon name="send" size={17} color="var(--green)" stroke={2.2} />
+        <span style={{ fontSize: 14, fontWeight: 800, color: "var(--green-d)" }}>부모님께 숙제 등록 요청하기</span>
+      </a>
+
       {/* 선택된 날짜 */}
       {selectedDate && (
         <DayDetail

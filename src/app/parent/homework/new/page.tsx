@@ -37,6 +37,12 @@ export default async function NewHomeworkPage() {
     .eq("pair_id", pairId)
     .single();
 
+  const { count: pendingRequestCount } = await supabase
+    .from("homework_requests")
+    .select("*", { count: "exact", head: true })
+    .eq("pair_id", pairId)
+    .eq("status", "pending");
+
   let childGrade: number | null = null;
   let childName = "자녀";
   let childInitial = "자";
@@ -63,6 +69,7 @@ export default async function NewHomeworkPage() {
         gradeLabel={gradeLabel}
         rewardUnit={settings?.point_reward_unit ?? "P"}
         rewardName={settings?.point_reward_name ?? "리워드"}
+        pendingRequestCount={pendingRequestCount ?? 0}
       />
     </div>
   );

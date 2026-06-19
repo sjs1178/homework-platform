@@ -5,6 +5,7 @@ const PATHS: Record<string, string> = {
   "check": "M20 6 9 17l-5-5",
   "check-circle": "M21.801 10A10 10 0 1 1 17 3.335|m9 11 3 3L22 4",
   "clipboard-check": "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2|M9 2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z|m9 14 2 2 4-4",
+  "chevron-left": "m15 18-6-6 6-6",
   "chevron-right": "m9 18 6-6-6-6",
   "arrow-right": "M5 12h14|m12 5 7 7-7 7",
   "arrow-left": "m12 19-7-7 7-7|M19 12H5",

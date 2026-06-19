@@ -28,7 +28,7 @@ export default function BottomNav({ active, role = "child" }: Props) {
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "space-around",
-        padding: "10px 14px calc(env(safe-area-inset-bottom, 0px) + 4px)",
+        padding: "10px 14px calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) + 4px)",
         background: "rgba(255,255,255,.92)",
         backdropFilter: "blur(10px)",
         borderTop: "1px solid var(--line)",

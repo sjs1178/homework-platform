@@ -14,8 +14,10 @@ export default function PageHeader({ title, backHref }: Props) {
   function handleBack() {
     if (backHref) {
       router.push(backHref);
-    } else {
+    } else if (window.history.length > 1) {
       router.back();
+    } else {
+      window.close();
     }
   }
 

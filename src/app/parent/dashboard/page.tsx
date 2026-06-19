@@ -342,9 +342,9 @@ export default async function ParentDashboard() {
               <div style={{ display: "flex", gap: 13 }}>
                 <span
                   style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 16,
+                    width: 42,
+                    height: 42,
+                    borderRadius: 13,
                     background: "var(--green-50)",
                     display: "flex",
                     alignItems: "center",
@@ -352,7 +352,7 @@ export default async function ParentDashboard() {
                     flexShrink: 0,
                   }}
                 >
-                  <Icon name="clipboard-check" size={24} color="var(--green)" stroke={2} />
+                  <Icon name="clipboard-check" size={19} color="var(--green)" stroke={2} />
                 </span>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center" }}>
@@ -374,14 +374,14 @@ export default async function ParentDashboard() {
               <div
                 style={{
                   width: "100%",
-                  height: 46,
-                  borderRadius: 14,
+                  height: 38,
+                  borderRadius: 12,
                   border: "none",
                   background: "var(--green)",
                   color: "#fff",
                   fontWeight: 800,
-                  fontSize: 15,
-                  marginTop: 14,
+                  fontSize: 13,
+                  marginTop: 12,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -389,17 +389,16 @@ export default async function ParentDashboard() {
                 }}
               >
                 지금 검사하기
-                <Icon name="arrow-right" size={18} stroke={2.4} color="#fff" />
+                <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
               </div>
             </a>
           ))
         )}
 
         {/* 퀵액션 3열 */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 11, marginTop: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11, marginTop: 16 }}>
           {([
             ["square-pen", "숙제 입력", "linear-gradient(140deg,#34D399,#16A34A)", "/parent/homework/new"],
-            ["send", "숙제 요청", "linear-gradient(140deg,#60A5FA,#3B82F6)", "/parent/homework-request"],
             ["gift", "리워드", "linear-gradient(140deg,#FBBF24,#F59E0B)", "/parent/rewards"],
           ] as const).map(([icon, label, grad, href]) => (
             <a
