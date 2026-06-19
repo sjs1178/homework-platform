@@ -77,8 +77,8 @@ export default function RequestForm({ pairId, parentId }: Props) {
           }}
           style={{
             height: 44, padding: "0 24px", borderRadius: 12,
-            border: "1.5px solid #D1D5DB", background: "#fff",
-            fontSize: 14, fontWeight: 700, color: "#374151", cursor: "pointer",
+            border: "1.5px solid var(--line-strong)", background: "#fff",
+            fontSize: 14, fontWeight: 700, color: "var(--text-soft)", cursor: "pointer",
             marginRight: 8,
           }}
         >
@@ -88,7 +88,7 @@ export default function RequestForm({ pairId, parentId }: Props) {
           onClick={() => window.history.back()}
           style={{
             height: 44, padding: "0 24px", borderRadius: 12,
-            border: "none", background: "#16A34A",
+            border: "none", background: "var(--green)",
             fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer",
           }}
         >
@@ -102,7 +102,7 @@ export default function RequestForm({ pairId, parentId }: Props) {
     <div>
       {/* 사진 촬영/업로드 */}
       <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: "#7B8A81", marginBottom: 10 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", marginBottom: 10 }}>
           숙제 사진
         </p>
         {imagePreview ? (
@@ -111,7 +111,7 @@ export default function RequestForm({ pairId, parentId }: Props) {
               src={imagePreview}
               alt="숙제 사진"
               style={{
-                width: "100%", borderRadius: 16, border: "1.5px solid #E5E7EB",
+                width: "100%", borderRadius: 16, border: "1.5px solid var(--line-strong)",
                 maxHeight: 300, objectFit: "cover",
               }}
             />
@@ -138,13 +138,13 @@ export default function RequestForm({ pairId, parentId }: Props) {
               }}
               style={{
                 height: 100, borderRadius: 16,
-                border: "2px dashed #D1D5DB", background: "#F9FAFB",
+                border: "2px dashed var(--line-strong)", background: "var(--surface-2)",
                 display: "flex", flexDirection: "column", alignItems: "center",
                 justifyContent: "center", gap: 8, cursor: "pointer",
               }}
             >
-              <Icon name="camera" size={28} color="#9CA3AF" stroke={1.8} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#6B7280" }}>촬영하기</span>
+              <Icon name="camera" size={28} color="var(--faint)" stroke={1.8} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>촬영하기</span>
             </button>
             <button
               onClick={() => {
@@ -155,13 +155,13 @@ export default function RequestForm({ pairId, parentId }: Props) {
               }}
               style={{
                 height: 100, borderRadius: 16,
-                border: "2px dashed #D1D5DB", background: "#F9FAFB",
+                border: "2px dashed var(--line-strong)", background: "var(--surface-2)",
                 display: "flex", flexDirection: "column", alignItems: "center",
                 justifyContent: "center", gap: 8, cursor: "pointer",
               }}
             >
-              <Icon name="upload" size={28} color="#9CA3AF" stroke={1.8} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#6B7280" }}>앨범에서 선택</span>
+              <Icon name="upload" size={28} color="var(--faint)" stroke={1.8} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>앨범에서 선택</span>
             </button>
           </div>
         )}
@@ -176,7 +176,7 @@ export default function RequestForm({ pairId, parentId }: Props) {
 
       {/* 코멘트 */}
       <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: "#7B8A81", marginBottom: 10 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", marginBottom: 10 }}>
           부모님께 메시지 (선택)
         </p>
         <textarea
@@ -186,8 +186,8 @@ export default function RequestForm({ pairId, parentId }: Props) {
           rows={3}
           style={{
             width: "100%", borderRadius: 14, padding: "14px 16px",
-            border: "1.5px solid #D1D5DB", fontSize: 14, fontWeight: 600,
-            color: "#13241B", resize: "none", outline: "none",
+            border: "1.5px solid var(--line-strong)", fontSize: 14, fontWeight: 600,
+            color: "var(--text)", resize: "none", outline: "none",
             boxSizing: "border-box", lineHeight: 1.6,
             fontFamily: "inherit",
           }}
@@ -200,7 +200,7 @@ export default function RequestForm({ pairId, parentId }: Props) {
         disabled={sending || (!imageBase64 && !comment.trim())}
         style={{
           width: "100%", height: 52, borderRadius: 14, border: "none",
-          background: (!imageBase64 && !comment.trim()) ? "#D1D5DB" : "#16A34A",
+          background: (!imageBase64 && !comment.trim()) ? "var(--line-strong)" : "var(--green)",
           color: "#fff", fontSize: 16, fontWeight: 800, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           opacity: sending ? 0.6 : 1,

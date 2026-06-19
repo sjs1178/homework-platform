@@ -20,17 +20,17 @@ export default async function ChildHomeworkRequestPage() {
   if (!pair) redirect("/child/dashboard");
 
   return (
-    <main style={{ minHeight: "100vh", background: "#F5F5F5", padding: 24 }}>
-      <div style={{ maxWidth: 430, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-          <BackButton />
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#13241B", margin: 0 }}>숙제 등록 요청</h1>
-        </div>
-        <p style={{ fontSize: 14, color: "#7B8A81", fontWeight: 600, marginBottom: 24, paddingLeft: 4 }}>
+    <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 430, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 18px 14px", flexShrink: 0 }}>
+        <BackButton />
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>숙제 등록 요청</h1>
+      </div>
+      <div style={{ padding: "0 20px 40px" }}>
+        <p style={{ fontSize: 14, color: "var(--muted)", fontWeight: 600, marginBottom: 20 }}>
           숙제를 사진 찍어서 부모님께 등록을 요청해요
         </p>
         <RequestForm pairId={pair.id} parentId={pair.parent_id} />
       </div>
-    </main>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AVATARS, getAvatar } from "@/lib/avatars";
+import Icon from "@/components/ui/Icon";
 
 interface Props {
   userId: string;
@@ -50,45 +51,61 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* 현재 선택 미리보기 */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col items-center gap-2">
-        <span className="text-7xl">{current.emoji}</span>
-        <p className="text-lg font-bold">{name || "이름을 입력하세요"}</p>
+      <div style={{
+        background: "#fff", borderRadius: "var(--r-card)", padding: "24px 16px",
+        boxShadow: "var(--sh-md)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+      }}>
+        <span style={{ fontSize: 70 }}>{current.emoji}</span>
+        <p style={{ fontSize: 18, fontWeight: 800, color: "var(--text)" }}>{name || "이름을 입력하세요"}</p>
       </div>
 
       {/* 이름 입력 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <label className="text-sm text-gray-500 mb-2 block">이름</label>
+      <div style={{ background: "#fff", borderRadius: "var(--r-card)", padding: 16, boxShadow: "var(--sh-md)" }}>
+        <label style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: 8 }}>이름</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="이름을 입력하세요"
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-400"
+          style={{
+            width: "100%", height: 48, borderRadius: 14,
+            border: "2px solid var(--line-strong)", padding: "0 16px",
+            fontSize: 15, fontWeight: 600, color: "var(--text)",
+            outline: "none", boxSizing: "border-box",
+          }}
         />
       </div>
 
       {/* 아바타 선택 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <p className="text-sm text-gray-500 mb-3">캐릭터 선택</p>
+      <div style={{ background: "#fff", borderRadius: "var(--r-card)", padding: 16, boxShadow: "var(--sh-md)" }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", marginBottom: 12 }}>캐릭터 선택</p>
         {AVATAR_CATEGORIES.map(({ key, label }) => (
-          <div key={key} className="mb-4">
-            <p className="text-xs text-gray-400 font-semibold mb-2">{label}</p>
-            <div className="flex flex-wrap gap-2">
-              {AVATARS.filter((a) => a.category === key).map((avatar) => (
-                <button
-                  key={avatar.id}
-                  onClick={() => setSelectedAvatarId(avatar.id)}
-                  className={`w-14 h-14 text-3xl rounded-2xl flex items-center justify-center transition-all border-2 ${
-                    selectedAvatarId === avatar.id
-                      ? "border-blue-500 bg-blue-50 scale-110 shadow-md"
-                      : "border-gray-100 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
-                  title={avatar.label}
-                >
-                  {avatar.emoji}
-                </button>
-              ))}
+          <div key={key} style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--faint)", marginBottom: 8 }}>{label}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {AVATARS.filter((a) => a.category === key).map((avatar) => {
+                const isSelected = selectedAvatarId === avatar.id;
+                return (
+                  <button
+                    key={avatar.id}
+                    onClick={() => setSelectedAvatarId(avatar.id)}
+                    title={avatar.label}
+                    style={{
+                      width: 52, height: 52, fontSize: 28, borderRadius: 16,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: `2.5px solid ${isSelected ? "var(--green)" : "var(--line)"}`,
+                      background: isSelected ? "var(--green-50)" : "#fff",
+                      cursor: "pointer",
+                      transform: isSelected ? "scale(1.1)" : "none",
+                      boxShadow: isSelected ? "var(--sh-md)" : "none",
+                      transition: "all .15s",
+                    }}
+                  >
+                    {avatar.emoji}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -97,17 +114,23 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
       <button
         onClick={handleSave}
         disabled={saving || !name.trim()}
-        className="py-4 bg-blue-600 text-white rounded-2xl font-semibold text-lg hover:bg-blue-700 disabled:opacity-50"
+        style={{
+          width: "100%", height: 54, borderRadius: 16, border: "none",
+          background: "var(--green)", color: "#fff",
+          fontWeight: 800, fontSize: 16, cursor: "pointer",
+          boxShadow: "var(--sh-green)",
+          opacity: saving || !name.trim() ? 0.4 : 1,
+        }}
       >
         {saved ? "저장됨 ✓" : saving ? "저장 중..." : "저장하기"}
       </button>
 
       {/* 계정 */}
       <div>
-        <p style={{ fontSize: 12, fontWeight: 800, color: "#94A3B8", letterSpacing: "0.04em", textTransform: "uppercase", margin: "4px 4px 8px" }}>
+        <p style={{ fontSize: 12, fontWeight: 800, color: "var(--faint)", letterSpacing: "0.04em", textTransform: "uppercase", margin: "4px 4px 8px" }}>
           계정
         </p>
-        <div style={{ background: "#fff", borderRadius: 14, boxShadow: "0 1px 4px rgba(0,0,0,.06)", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>
           <button
             onClick={handleLogout}
             style={{
@@ -115,8 +138,12 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
               padding: "14px 16px", background: "none", border: "none", cursor: "pointer",
             }}
           >
-            <span style={{ width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "#FEF2F2", flexShrink: 0 }}>
-              <span style={{ fontSize: 17 }}>🚪</span>
+            <span style={{
+              width: 42, height: 42, borderRadius: 12,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "#FEF2F2", flexShrink: 0,
+            }}>
+              <Icon name="log-out" size={22} color="#DC2626" stroke={2} />
             </span>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#E11D48" }}>로그아웃</span>
           </button>

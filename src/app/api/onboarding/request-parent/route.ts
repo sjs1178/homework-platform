@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendEmail, parentApprovalRequestEmail } from "@/lib/send-email";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -38,6 +39,10 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const approvalUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://kiddoloop.com"}/parent/approve`;
+  const email = parentApprovalRequestEmail(childName, approvalUrl);
+  sendEmail({ to: parentEmail.toLowerCase().trim(), ...email }).catch(console.error);
 
   return NextResponse.json({ ok: true, approvalCode: data.approval_code });
 }

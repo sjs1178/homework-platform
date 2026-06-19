@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
+import { sendEmail, childApprovalConfirmEmail } from "@/lib/send-email";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -90,6 +91,14 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     },
   }).eq("id", approvalId);
+
+  // 자녀에게 승인 완료 이메일 발송
+  const { data: childUser } = await admin.auth.admin.getUserById(approval.child_auth_id);
+  if (childUser?.user?.email) {
+    const loginUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://kiddoloop.com"}/auth/login`;
+    const email = childApprovalConfirmEmail(childName, loginUrl);
+    sendEmail({ to: childUser.user.email, ...email }).catch(console.error);
+  }
 
   return NextResponse.json({ ok: true, pairId: pair.id });
 }

@@ -28,14 +28,14 @@ export default async function ParentHomeworkRequestPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#F5F5F5", padding: 24 }}>
-      <div style={{ maxWidth: 430, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-          <BackButton />
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#13241B", margin: 0 }}>숙제 등록 요청</h1>
-        </div>
+    <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 430, margin: "0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 18px 14px", flexShrink: 0 }}>
+        <BackButton />
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>숙제 등록 요청</h1>
+      </div>
+      <div style={{ padding: "0 20px 40px" }}>
         <RequestList childName={childName} />
       </div>
-    </main>
+    </div>
   );
 }
