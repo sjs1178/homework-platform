@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import type { CheckResult, Problem } from "@/lib/check-homework";
 import Icon from "@/components/ui/Icon";
+import AiProcessing from "@/components/ui/AiProcessing";
 import AdGateModal from "@/components/ui/AdGateModal";
 import { getStoredAiToken } from "@/lib/ai-token";
 
@@ -19,6 +20,7 @@ interface Props {
 
 interface EditState {
   isCorrect: boolean;
+  studentAnswer: string;
   correctAnswer: string;
   explanation: string;
 }
@@ -261,7 +263,7 @@ function QCard({
         </div>
         <div style={{ paddingLeft: 34 }}>
           <div style={{ fontSize: 13.5, color: "var(--text-soft)", fontWeight: 600, lineHeight: 1.5, marginBottom: 4 }}>
-            <span style={{ color: "var(--muted)" }}>학생 답</span> · {p.studentAnswer}
+            <span style={{ color: "var(--muted)" }}>학생 답</span> · {editing ? editing.studentAnswer : p.studentAnswer}
           </div>
           {!editing ? (
             <>
@@ -282,6 +284,15 @@ function QCard({
             </>
           ) : (
             <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8, background: "var(--amber-50)", borderRadius: 12, padding: 12 }}>
+              <div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 4, display: "block" }}>학생 답 수정</span>
+                <input
+                  value={editing.studentAnswer}
+                  onChange={(e) => onChangeEdit({ studentAnswer: e.target.value })}
+                  placeholder="학생이 쓴 답"
+                  style={{ width: "100%", border: "1px solid var(--line-strong)", borderRadius: 8, padding: "7px 10px", fontSize: 13.5, color: "var(--text)", outline: "none" }}
+                />
+              </div>
               <div style={{ display: "flex", gap: 8 }}>
                 {[true, false].map((val) => (
                   <button
@@ -469,7 +480,7 @@ export default function HomeworkCheckForm({
       const edit = editing[num];
       return {
         problemNumber: num, subject: result.subject, question: orig.question,
-        studentAnswer: orig.studentAnswer, aiIsCorrect: orig.isCorrect,
+        studentAnswer: edit.studentAnswer, aiIsCorrect: orig.isCorrect,
         aiCorrectAnswer: orig.correctAnswer ?? "", aiExplanation: orig.explanation ?? null,
         correctedIsCorrect: edit.isCorrect, correctedCorrectAnswer: edit.correctAnswer,
         correctedExplanation: edit.explanation,
@@ -486,7 +497,7 @@ export default function HomeworkCheckForm({
       const updatedProblems = result.problems.map((p) => {
         const edit = editing[p.number];
         if (!edit) return p;
-        return { ...p, isCorrect: edit.isCorrect, correctAnswer: edit.correctAnswer, explanation: edit.explanation || null };
+        return { ...p, isCorrect: edit.isCorrect, studentAnswer: edit.studentAnswer, correctAnswer: edit.correctAnswer, explanation: edit.explanation || null };
       });
       const newScore = updatedProblems.filter((p) => p.isCorrect).length;
       setResult({ ...result, problems: updatedProblems, score: newScore });
@@ -648,7 +659,7 @@ export default function HomeworkCheckForm({
             onStartEdit={() =>
               setEditing((prev) => ({
                 ...prev,
-                [p.number]: { isCorrect: p.isCorrect, correctAnswer: p.correctAnswer ?? "", explanation: p.explanation ?? "" },
+                [p.number]: { isCorrect: p.isCorrect, studentAnswer: p.studentAnswer, correctAnswer: p.correctAnswer ?? "", explanation: p.explanation ?? "" },
               }))
             }
             onCancelEdit={() => setEditing((prev) => { const n = { ...prev }; delete n[p.number]; return n; })}
@@ -793,20 +804,24 @@ export default function HomeworkCheckForm({
 
           {error && <p style={{ color: "var(--red)", fontSize: 13.5, textAlign: "center" }}>{error}</p>}
 
-          <button
-            onClick={handleCheck}
-            disabled={checking}
-            style={{
-              width: "100%", height: 54, borderRadius: 16, border: "none",
-              background: "var(--green)", color: "#fff",
-              fontWeight: 800, fontSize: 16, cursor: checking ? "default" : "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              boxShadow: "var(--sh-green)", opacity: checking ? 0.7 : 1,
-            }}
-          >
-            <Icon name="clipboard-check" size={20} color="#fff" stroke={2} />
-            {checkBtnLabel()}
-          </button>
+          {checking ? (
+            <AiProcessing label="AI가 채점하고 있어요" />
+          ) : (
+            <button
+              onClick={handleCheck}
+              disabled={checking}
+              style={{
+                width: "100%", height: 54, borderRadius: 16, border: "none",
+                background: "var(--green)", color: "#fff",
+                fontWeight: 800, fontSize: 16, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                boxShadow: "var(--sh-green)",
+              }}
+            >
+              <Icon name="clipboard-check" size={20} color="#fff" stroke={2} />
+              {checkBtnLabel()}
+            </button>
+          )}
           {!images.length && !text.trim() && (
             <p style={{ fontSize: 12, textAlign: "center", color: "var(--faint)" }}>
               사진이나 메모 없이 누르면 확인 완료로만 저장됩니다

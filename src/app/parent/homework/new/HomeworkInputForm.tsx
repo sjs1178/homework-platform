@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { HomeworkItem, SubjectRule } from "@/lib/types";
 import { tagCurriculum } from "@/lib/curriculum";
 import Icon from "@/components/ui/Icon";
+import AiProcessing from "@/components/ui/AiProcessing";
 import AdGateModal from "@/components/ui/AdGateModal";
 import { getStoredAiToken } from "@/lib/ai-token";
 
@@ -295,39 +296,50 @@ export default function HomeworkInputForm({
                 }}
               />
             </div>
-            <button
-              onClick={handleParse}
-              disabled={!text.trim() || parsing}
-              style={{
-                width: "100%", height: 44, borderRadius: 12, border: "none",
-                background: text.trim() ? "var(--green)" : "var(--line-strong)",
-                color: text.trim() ? "#fff" : "var(--faint)",
-                fontWeight: 800, fontSize: 14, cursor: text.trim() ? "pointer" : "default",
-                marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              }}
-            >
-              <Icon name="sparkles" size={16} color={text.trim() ? "#fff" : "var(--faint)"} stroke={2} />
-              {parsing ? "분석 중..." : "AI로 분석하기"}
-            </button>
+            {parsing ? (
+              <div style={{ marginBottom: 14 }}>
+                <AiProcessing label="AI가 분석하고 있어요" />
+              </div>
+            ) : (
+              <button
+                onClick={handleParse}
+                disabled={!text.trim()}
+                style={{
+                  width: "100%", height: 44, borderRadius: 12, border: "none",
+                  background: text.trim() ? "var(--green)" : "var(--line-strong)",
+                  color: text.trim() ? "#fff" : "var(--faint)",
+                  fontWeight: 800, fontSize: 14, cursor: text.trim() ? "pointer" : "default",
+                  marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}
+              >
+                <Icon name="sparkles" size={16} color={text.trim() ? "#fff" : "var(--faint)"} stroke={2} />
+                AI로 분석하기
+              </button>
+            )}
 
             {/* 사진 업로드 */}
             <FieldLabel>학습지 사진 (선택)</FieldLabel>
             <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={parsing}
-              style={{
-                width: "100%", height: 96, borderRadius: 16, cursor: "pointer",
-                border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
-                display: "flex", flexDirection: "column", alignItems: "center",
-                justifyContent: "center", gap: 7, marginBottom: 10,
-              }}
-            >
-              <Icon name="camera" size={24} color="var(--green-d)" stroke={1.9} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
-                {parsing ? "분석 중..." : "사진 추가하기"}
-              </span>
-            </button>
+            {parsing ? (
+              <div style={{ marginBottom: 10 }}>
+                <AiProcessing label="AI가 분석하고 있어요" />
+              </div>
+            ) : (
+              <button
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  width: "100%", height: 96, borderRadius: 16, cursor: "pointer",
+                  border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  justifyContent: "center", gap: 7, marginBottom: 10,
+                }}
+              >
+                <Icon name="camera" size={24} color="var(--green-d)" stroke={1.9} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
+                  사진 추가하기
+                </span>
+              </button>
+            )}
 
             {/* 수동 입력 전환 */}
             <button
