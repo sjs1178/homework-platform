@@ -262,14 +262,46 @@ const SECTIONS: Section[] = [
     content: (
       <div style={{ paddingTop: 14 }}>
         <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
-          kiddoloop의 AI 기능(자연어 숙제 파싱·이미지 분석·자동 검사)은 Claude AI를 사용합니다. 본인의 API 키를 입력하면 무제한으로 이용할 수 있습니다.
+          kiddoloop의 AI 기능(자연어 숙제 파싱·이미지 분석·자동 검사)은 본인의 API 키로 작동합니다. 아래 3개 AI 중 하나를 선택해 사용할 수 있습니다.
         </p>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>API 토큰 입력 방법</div>
         <Step num={1}>부모 계정 <b>설정 → AI 설정</b>으로 이동합니다.</Step>
-        <Step num={2}>AI 제공사를 선택합니다. (현재 Anthropic Claude 지원)</Step>
-        <Step num={3}><b>console.anthropic.com</b>에서 발급받은 API 키를 입력합니다.</Step>
+        <Step num={2}>AI 제공사를 선택합니다 (Claude / ChatGPT / Gemini).</Step>
+        <Step num={3}>아래 안내에 따라 발급받은 API 키를 입력합니다.</Step>
         <Step num={4}>저장하면 즉시 AI 기능이 활성화됩니다.</Step>
+
+        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>① Google Gemini (무료로 시작 가능)</div>
+        <div style={{ padding: "12px 14px", borderRadius: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", fontSize: 13, color: "#1D4ED8", lineHeight: 1.75, marginBottom: 10 }}>
+          Google 계정만 있으면 <b>무료로 API 키를 발급</b>받아 바로 사용할 수 있습니다. 별도 결제나 충전이 필요 없습니다.<br /><br />
+          <b>발급 방법:</b><br />
+          1. <b>aistudio.google.com</b>에 Google 계정으로 로그인<br />
+          2. 왼쪽 메뉴에서 <b>API keys</b> 클릭<br />
+          3. <b>Create API key</b> 버튼 클릭 → 키 복사<br />
+          4. kiddoloop AI 설정에서 <b>Gemini</b> 탭 선택 후 붙여넣기<br /><br />
+          <b>무료 사용량:</b> 분당 요청 수와 일일 요청 수에 제한이 있습니다. 일반적인 숙제 관리 용도로는 충분합니다. 한도 초과 시 잠시 후 다시 시도하면 됩니다.
+        </div>
+
+        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>② Anthropic Claude (유료, 가장 정확)</div>
+        <div style={{ padding: "12px 14px", borderRadius: 12, background: "#F5F3FF", border: "1px solid #DDD6FE", fontSize: 13, color: "#5B21B6", lineHeight: 1.75, marginBottom: 10 }}>
+          숙제 분석과 채점 정확도가 가장 높습니다. 유료 API로, 사용한 만큼 과금됩니다.<br /><br />
+          <b>발급 방법:</b><br />
+          1. <b>console.anthropic.com</b>에서 회원가입<br />
+          2. 결제 수단 등록 후 크레딧 충전 ($5부터)<br />
+          3. <b>API Keys</b> 메뉴에서 키 생성 → 복사<br />
+          4. kiddoloop AI 설정에서 <b>Claude</b> 탭 선택 후 붙여넣기<br /><br />
+          <b>비용:</b> 숙제 1건 파싱에 약 $0.01 이하. 월 $1~2 수준으로 충분합니다.
+        </div>
+
+        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>③ OpenAI ChatGPT (유료)</div>
+        <div style={{ padding: "12px 14px", borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", fontSize: 13, color: "#166534", lineHeight: 1.75, marginBottom: 10 }}>
+          ChatGPT를 사용 중이라면 같은 API 키를 활용할 수 있습니다.<br /><br />
+          <b>발급 방법:</b><br />
+          1. <b>platform.openai.com</b>에서 로그인<br />
+          2. 결제 수단 등록 후 크레딧 충전 ($5부터)<br />
+          3. <b>API Keys</b> 메뉴에서 키 생성 → 복사<br />
+          4. kiddoloop AI 설정에서 <b>ChatGPT</b> 탭 선택 후 붙여넣기
+        </div>
 
         <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 12, background: "#FFF7ED", border: "1px solid #FED7AA", fontSize: 13, color: "#92400E", lineHeight: 1.7 }}>
           <b>🔒 보안 안내</b><br />
@@ -279,8 +311,8 @@ const SECTIONS: Section[] = [
         <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>API 키가 없다면?</div>
         <div style={{ padding: "12px 14px", borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", fontSize: 13, color: "#166534", lineHeight: 1.75 }}>
           API 키 없이도 서비스를 이용할 수 있습니다.<br />
-          AI 기능이 비활성화된 상태에서는 <b>광고 수익으로 AI 비용을 지원</b>하여 기본적인 분석 기능을 제공할 예정입니다.<br />
-          광고 노출에 협조해주시면 서비스를 무료로 계속 유지할 수 있습니다. 🙏
+          AI 기능 대신 <b>직접 입력 모드</b>로 숙제를 수동 등록하거나, <b>광고 시청</b> 후 AI 기능을 이용할 수 있습니다.<br />
+          처음이라면 <b>무료인 Gemini</b>부터 시작해보세요!
         </div>
       </div>
     ),

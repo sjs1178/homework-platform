@@ -39,12 +39,29 @@ export default async function ParentDashboard() {
     .order("created_at");
 
   const connectedPairs = (pairs ?? []).filter((p) => p.child_id);
-  const allPairIds = connectedPairs.map((p) => p.id);
   const childIds = connectedPairs.map((p) => p.child_id!);
   const hasChildren = connectedPairs.length > 0;
 
+  // 각 자녀에 연결된 모든 페어 조회 (다른 부모 포함)
+  let allPairIds: string[] = connectedPairs.map((p) => p.id);
+  let childPairMap: Record<string, string[]> = {};
+  connectedPairs.forEach((p) => { childPairMap[p.child_id!] = [p.id]; });
+
+  if (childIds.length > 0) {
+    const { data: allChildPairs } = await admin
+      .from("pairs")
+      .select("id, child_id")
+      .in("child_id", childIds);
+    allPairIds = [...new Set((allChildPairs ?? []).map((p) => p.id))];
+    childPairMap = {};
+    (allChildPairs ?? []).forEach((p) => {
+      if (!childPairMap[p.child_id]) childPairMap[p.child_id] = [];
+      childPairMap[p.child_id].push(p.id);
+    });
+  }
+
   let childrenData: ChildData[] = [];
-  let pendingChecks: { id: string; subject: string; description: string; due_date: string; checked: boolean; childName: string }[] = [];
+  let todayHomeworks: { id: string; subject: string; description: string; due_date: string; due_time: string | null; is_completed: boolean; hasCheck: boolean; childName: string }[] = [];
 
   if (hasChildren) {
     // 자녀 프로필 배치 조회
@@ -101,18 +118,19 @@ export default async function ParentDashboard() {
         cp?.grade_school_year as number | null
       ) ?? "";
 
-      // 주간 도트
-      const pairWeek = (weekHws ?? []).filter((h) => h.pair_id === pair.id);
-      const completedDays = new Set(pairWeek.filter((h) => h.is_completed).map((h) => h.due_date));
+      // 주간 도트 (자녀의 모든 페어 통합)
+      const childPairIds = childPairMap[pair.child_id!] ?? [pair.id];
+      const childWeek = (weekHws ?? []).filter((h) => childPairIds.includes(h.pair_id));
+      const completedDays = new Set(childWeek.filter((h) => h.is_completed).map((h) => h.due_date));
       const weeklyDots = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
         return completedDays.has(d.toISOString().split("T")[0]);
       });
 
-      // 스트릭
+      // 스트릭 (자녀의 모든 페어 통합)
       const pairCompleted = (allCompleted ?? [])
-        .filter((h) => h.pair_id === pair.id)
+        .filter((h) => childPairIds.includes(h.pair_id))
         .map((h) => h.due_date);
       const completedSet = new Set(pairCompleted);
       const today = new Date();
@@ -142,33 +160,33 @@ export default async function ParentDashboard() {
       };
     });
 
-    // 검사 대기 숙제 (전체 자녀 통합)
-    const { data: completedHws } = await admin
+    // 오늘의 숙제 (전체 자녀 통합, 모든 부모 페어 포함)
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: todayHws } = await admin
       .from("homeworks")
-      .select("id, pair_id, subject, description, due_date")
+      .select("id, pair_id, subject, description, due_date, due_time, is_completed")
       .in("pair_id", allPairIds)
-      .eq("is_completed", true)
-      .order("due_date", { ascending: false })
-      .limit(20);
+      .eq("due_date", todayStr)
+      .order("due_time", { ascending: true, nullsFirst: false });
 
-    if (completedHws?.length) {
+    if (todayHws?.length) {
       const { data: checks } = await admin
         .from("homework_checks")
         .select("homework_id")
-        .in("homework_id", completedHws.map((h) => h.id));
+        .in("homework_id", todayHws.map((h) => h.id));
       const checkedIds = new Set(checks?.map((c) => c.homework_id) ?? []);
 
-      const pairChildMap = Object.fromEntries(
-        connectedPairs.map((p) => [p.id, profileMap[p.child_id!]?.display_name ?? "자녀"])
-      );
+      const pairChildMap: Record<string, string> = {};
+      Object.entries(childPairMap).forEach(([childId, pIds]) => {
+        const name = profileMap[childId]?.display_name ?? "자녀";
+        pIds.forEach((pid) => { pairChildMap[pid] = name; });
+      });
 
-      pendingChecks = completedHws
-        .filter((h) => !checkedIds.has(h.id))
-        .map((h) => ({
-          ...h,
-          checked: false,
-          childName: pairChildMap[h.pair_id] ?? "자녀",
-        }));
+      todayHomeworks = todayHws.map((h) => ({
+        ...h,
+        hasCheck: checkedIds.has(h.id),
+        childName: pairChildMap[h.pair_id] ?? "자녀",
+      }));
     }
   }
 
@@ -277,7 +295,7 @@ export default async function ParentDashboard() {
           </a>
         )}
 
-        {/* 검사 기다리는 숙제 */}
+        {/* 오늘의 숙제 */}
         <div
           style={{
             display: "flex",
@@ -287,13 +305,13 @@ export default async function ParentDashboard() {
           }}
         >
           <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>
-            검사 기다리는 숙제
+            오늘의 숙제
           </h2>
-          {pendingChecks.length > 0 && (
+          {todayHomeworks.length > 0 && (
             <span
               style={{
-                background: "var(--amber-100)",
-                color: "var(--amber-d)",
+                background: todayHomeworks.every((h) => h.hasCheck) ? "var(--green-100)" : "var(--amber-100)",
+                color: todayHomeworks.every((h) => h.hasCheck) ? "var(--green-d)" : "var(--amber-d)",
                 padding: "3px 10px",
                 borderRadius: 999,
                 fontSize: 12.5,
@@ -301,12 +319,12 @@ export default async function ParentDashboard() {
                 whiteSpace: "nowrap",
               }}
             >
-              {pendingChecks.length}개
+              {todayHomeworks.filter((h) => h.hasCheck).length}/{todayHomeworks.length} 검사완료
             </span>
           )}
         </div>
 
-        {pendingChecks.length === 0 ? (
+        {todayHomeworks.length === 0 ? (
           <div
             style={{
               background: "#fff",
@@ -317,82 +335,137 @@ export default async function ParentDashboard() {
           >
             <EmptyState
               icon="clipboard-check"
-              title="검사할 숙제가 없어요"
+              title="오늘 숙제가 없어요"
               actionLabel="숙제 입력하기"
               actionIcon="plus"
               actionHref="/parent/homework/new"
             />
           </div>
         ) : (
-          pendingChecks.slice(0, 3).map((hw) => (
-            <a
-              key={hw.id}
-              href={`/parent/homework/check?id=${hw.id}`}
-              style={{
-                display: "block",
-                background: "#fff",
-                borderRadius: "var(--r-card)",
-                padding: 15,
-                marginBottom: 12,
-                border: "1.5px solid var(--green-200)",
-                boxShadow: "var(--sh-md)",
-                textDecoration: "none",
-              }}
-            >
-              <div style={{ display: "flex", gap: 13 }}>
-                <span
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 13,
-                    background: "var(--green-50)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon name="clipboard-check" size={19} color="var(--green)" stroke={2} />
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center" }}>
-                    <SubjectTag subject={hw.subject} />
-                    {childrenData.length > 1 && (
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green-d)", background: "var(--green-50)", padding: "2px 7px", borderRadius: 6 }}>
-                        {hw.childName}
-                      </span>
-                    )}
-                    <span style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                      {hw.due_date}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)" }}>
-                    {hw.description}
-                  </div>
-                </div>
-              </div>
+          todayHomeworks.map((hw) => {
+            const statusIcon = hw.hasCheck ? "circle-check" : hw.is_completed ? "clipboard-check" : "clock";
+            const statusColor = hw.hasCheck ? "var(--green)" : hw.is_completed ? "var(--amber)" : "var(--faint)";
+            const statusBg = hw.hasCheck ? "var(--green-50)" : hw.is_completed ? "var(--amber-100)" : "#F5F5F4";
+            const borderColor = hw.hasCheck ? "var(--green-200)" : hw.is_completed ? "var(--amber-200)" : "var(--line)";
+
+            return (
               <div
+                key={hw.id}
                 style={{
-                  width: "100%",
-                  height: 38,
-                  borderRadius: 12,
-                  border: "none",
-                  background: "var(--green)",
-                  color: "#fff",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  marginTop: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 7,
+                  background: "#fff",
+                  borderRadius: "var(--r-card)",
+                  padding: 15,
+                  marginBottom: 12,
+                  border: `1.5px solid ${borderColor}`,
+                  boxShadow: "var(--sh-md)",
                 }}
               >
-                지금 검사하기
-                <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
+                <div style={{ display: "flex", gap: 13 }}>
+                  <span
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 13,
+                      background: statusBg,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon name={statusIcon} size={19} color={statusColor} stroke={2} />
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center", flexWrap: "wrap" }}>
+                      <SubjectTag subject={hw.subject} />
+                      {childrenData.length > 1 && (
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green-d)", background: "var(--green-50)", padding: "2px 7px", borderRadius: 6 }}>
+                          {hw.childName}
+                        </span>
+                      )}
+                      {hw.due_time && (
+                        <span style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                          {hw.due_time.slice(0, 5)}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)" }}>
+                      {hw.description}
+                    </div>
+                  </div>
+                </div>
+
+                {hw.hasCheck ? (
+                  <a
+                    href={`/parent/homework/check?id=${hw.id}`}
+                    style={{
+                      width: "100%",
+                      height: 38,
+                      borderRadius: 12,
+                      border: "1.5px solid var(--green-200)",
+                      background: "var(--green-50)",
+                      color: "var(--green-d)",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      marginTop: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 7,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <Icon name="sparkles" size={15} color="var(--green-d)" stroke={2} />
+                    검사 결과 보기
+                  </a>
+                ) : hw.is_completed ? (
+                  <a
+                    href={`/parent/homework/check?id=${hw.id}`}
+                    style={{
+                      width: "100%",
+                      height: 38,
+                      borderRadius: 12,
+                      border: "none",
+                      background: "var(--green)",
+                      color: "#fff",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      marginTop: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 7,
+                      textDecoration: "none",
+                    }}
+                  >
+                    지금 검사하기
+                    <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
+                  </a>
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: 38,
+                      borderRadius: 12,
+                      border: "1.5px solid var(--line)",
+                      background: "#FAFAF8",
+                      color: "var(--muted)",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      marginTop: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 7,
+                    }}
+                  >
+                    <Icon name="clock" size={14} color="var(--faint)" stroke={2} />
+                    자녀가 아직 완료하지 않았어요
+                  </div>
+                )}
               </div>
-            </a>
-          ))
+            );
+          })
         )}
 
         {/* 퀵액션 3열 */}

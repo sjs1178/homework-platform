@@ -37,18 +37,30 @@ export async function POST(req: NextRequest) {
     manualResult?: CheckResult;
   };
 
-  const { data: hw } = await supabase
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: hw } = await admin
     .from("homeworks")
-    .select("*, pairs(id)")
+    .select("*, pairs(id, child_id)")
     .eq("id", homeworkId)
     .single();
 
   if (!hw) return NextResponse.json({ error: "숙제 없음" }, { status: 404 });
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  // 이 부모가 해당 자녀와 연결되어 있는지 확인
+  const childId = hw.pairs?.child_id;
+  if (childId) {
+    const { data: parentPair } = await admin
+      .from("pairs")
+      .select("id")
+      .eq("parent_id", user.id)
+      .eq("child_id", childId)
+      .single();
+    if (!parentPair) return NextResponse.json({ error: "권한 없음" }, { status: 403 });
+  }
 
   // curriculum_meta 백필
   if (!hw.curriculum_meta) {
@@ -87,7 +99,15 @@ export async function POST(req: NextRequest) {
       result = MANUAL_RESULT;
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "채점 중 오류가 발생했어요.";
+    const raw = err instanceof Error ? err.message : "";
+    const lower = raw.toLowerCase();
+    let msg = "채점 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.";
+    if (lower.includes("quota") || lower.includes("rate") || lower.includes("429"))
+      msg = "API 키의 사용 한도가 초과되었어요. 잠시 후 다시 시도하거나, 다른 AI 키를 사용해 주세요.";
+    else if (lower.includes("invalid") && lower.includes("key"))
+      msg = "API 키가 유효하지 않아요. 설정에서 키를 다시 확인해 주세요.";
+    else if (lower.includes("unauthorized") || lower.includes("401") || lower.includes("403"))
+      msg = "API 키 인증에 실패했어요. 설정에서 키를 다시 확인해 주세요.";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 

@@ -14,7 +14,7 @@
 - **Backend/DB/Auth**: Supabase (Seoul) — PostgreSQL + RLS + Google OAuth
 - **AI**: Anthropic Claude API (`claude-sonnet-4-6`) + BYOK (Claude/OpenAI/Gemini)
 - **Hosting**: Vercel icn1(Seoul) / GitHub push 자동 배포
-- **Email**: Zoho Mail Lite (contact@kiddoloop.com)
+- **Email**: Nodemailer + Zoho Mail SMTP (contact@kiddoloop.com)
 
 ## Role
 
@@ -42,7 +42,7 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 - 주석은 WHY가 비자명할 때만 (WHAT 설명 주석 금지).
 - 에러 핸들링은 시스템 경계(외부 API, 사용자 입력)에만.
 
-## 현재 구현 상태 (2026-06-13 기준)
+## 현재 구현 상태 (2026-06-20 기준)
 
 ### 배포 인프라
 - 프로덕션 URL: https://kiddoloop.com
@@ -53,7 +53,9 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 ### 완료된 주요 기능
 - Google OAuth 로그인 (웹 + Android WebView 네이티브 브리지)
 - 온보딩 위저드: 역할→생년월일→약관 동의 (서버사이드 강제)
-- 미성년자 법정대리인 승인 흐름 (pending_approvals)
+- 미성년자 법정대리인 승인 흐름 (pending_approvals + 이메일 발송)
+- 만 14세 미만 동의 생략 (법정대리인 대리 동의, 개인정보보호법 제22조의2)
+- 가입 이메일 자동 발송 (부모 승인 요청 + 자녀 승인 완료, Nodemailer + Zoho SMTP)
 - 미들웨어 역할 격리 (부모↔자녀 페이지 격리, 온보딩 미완료 차단)
 - 워크스루 슬라이드 (비로그인 첫 방문자, localStorage skip)
 - 부모: 자연어/이미지 숙제 입력 → Claude AI 파싱 → 저장
@@ -61,7 +63,8 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 - 부모: 캘린더 (자녀 숙제 읽기 전용, /parent/calendar)
 - 부모: 리워드 수동 지급·차감 + 이름·단위 커스텀
 - 부모: 자녀 학년 설정 + 다:다 연결 (초대 코드)
-- 자녀: 월간 캘린더 + 완료 처리 + 리워드 적립
+- 자녀: 월간 캘린더 + 완료 처리 + 리워드 적립 + 숙제 등록 요청
+- 자녀: 학습 통계 (과목별 완료 현황 + 직업군 가이드)
 - 자녀: 이모지 아바타 프로필 + 로그아웃
 - BYOK AI 토큰 (Claude/OpenAI/Gemini, localStorage, 광고 게이트)
 - 어드민 패널 (회원/페어링/숙제/검사/리워드/콘텐츠)
@@ -71,7 +74,6 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 - Android WebView 앱 코드 작성 + FCM 푸시 알림
 - 자녀 완료 시 부모 알림
 - 숙제 수정·삭제 UI
-- 부모 승인 요청 이메일 자동 발송
 - 과목별 규칙 설정 UI
 
 ## 주요 파일 위치
@@ -87,6 +89,7 @@ Act as a senior full-stack engineer, product manager, and technical cofounder.
 | 숙제 파싱 로직 | `src/lib/parse-homework.ts` |
 | AI 채점 로직 | `src/lib/check-homework.ts` |
 | BYOK 멀티 AI 호출 | `src/lib/ai-caller.ts` |
+| 이메일 발송 | `src/lib/send-email.ts` |
 | Supabase 클라이언트 | `src/lib/supabase/client.ts`, `server.ts` |
 | 디자인 토큰 | `src/app/globals.css` |
 | 공통 컴포넌트 | `src/components/ui/` |

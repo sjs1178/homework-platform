@@ -1,8 +1,8 @@
 # Kiddoloop 개발 히스토리
 
-> 개발 기간: 2026-06-06 ~ 2026-06-11 (6일)
+> 개발 기간: 2026-06-06 ~ 2026-06-20
 > 개발자: SongJinseok
-> AI 페어 프로그래밍: Claude Sonnet 4.6
+> AI 페어 프로그래밍: Claude Sonnet 4.6 / Claude Opus 4.6
 
 ---
 
@@ -412,16 +412,67 @@ MVP 개발을 위한 기반 인프라 구축
 
 ---
 
+## 2026-06-20 (Day 7) — 배포 전 수정 + 자녀 디자인 통일 + 이메일 발송
+
+### 목표
+배포 전 10개 항목 수정, 자녀 페이지 디자인 통일, 가입 이메일 발송 구현
+
+### 완료 작업
+
+#### 배포 전 10개 수정 항목 (`3f1659a`)
+
+1. **AI 면책 안내 추가** — 자녀 통계 탭 직업 가이드 하단에 AI 생성 면책 문구 삽입
+2. **캘린더 좌측 화살표 수정** — `Icon.tsx`에 `chevron-left` 경로 누락 → 추가
+3. **최소 가입 연령 변경** — 만 7세 → 만 5세 (`OnboardingFlow.tsx`)
+4. **약관 전문 뒤로가기 수정** — `PageHeader.tsx`에 `window.history.length` 폴백 + `window.close()` 처리
+5. **만 14세 미만 동의 생략** — 개인정보보호법 제22조의2 준수: 14세 미만은 동의 단계 건너뛰고 `parent-request`로 직행
+6. **승인 코드 표시 제거** — 사용되지 않는 7자리 코드 표시 제거 (이메일 기반으로 전환)
+7. **숙제 검사 카드 높이 축소** — 부모 대시보드 검사 카드 아이콘·버튼 크기 80%로 축소
+8. **숙제 요청 버튼 이동** — 대시보드 퀵메뉴에서 제거 → 캘린더/숙제입력 페이지로 이동, 퀵메뉴 3열→2열
+9. **kiddoloop 투톤 워드마크** — `LogoLockup` + `WalkthroughClient`에서 kiddo=#13241B, loop=#16A34A 분리 적용
+10. **safe-area-inset-bottom 패턴 변경** — `var(--safe-area-inset-bottom, env(...))` 패턴으로 `AdGateModal`, `BottomNav` 수정
+
+#### 자녀 페이지 디자인 통일 (`56fd970`)
+
+부모 페이지 디자인 가이드에 맞춰 자녀 전 페이지 재작업:
+
+- **`StatsView.tsx`** — Tailwind 전체 → inline styles, blue/indigo → 브랜드 그린, AI 면책 추가
+- **`ProfileEditForm.tsx`** — blue-500 → green, 로그아웃 이모지(🚪) → Icon `log-out` + 빨간 danger 스타일 (부모 SettingsView와 통일)
+- **`child/profile/page.tsx`** — Tailwind → inline styles, maxWidth 430
+- **`child/results/page.tsx`** — 텍스트 뒤로가기(←) → `BackButton` 컴포넌트, blue → 브랜드 그린
+- **`child/homework-request/page.tsx`** — `#F5F5F5` → `var(--bg)`, 헤더 통일
+- **`RequestForm.tsx`** — 하드코딩 그레이(`#D1D5DB`, `#6B7280` 등) → CSS 변수(`var(--line-strong)`, `var(--muted)` 등)
+- **`parent/homework-request/page.tsx`** — 동일 패턴 적용
+
+#### 이메일 발송 구현 (`56fd970`)
+
+- **`src/lib/send-email.ts`** 신설 — Nodemailer + Zoho SMTP 유틸리티
+  - `sendEmail()` — 공통 발송 함수 (SMTP 자격증명 없으면 skip + 경고 로그)
+  - `parentApprovalRequestEmail()` — 부모 승인 요청 메일 HTML 템플릿 (브랜드 투톤 로고, 그린 CTA)
+  - `childApprovalConfirmEmail()` — 자녀 승인 완료 메일 HTML 템플릿
+- **`request-parent/route.ts`** — `pending_approvals` 생성 후 부모 이메일로 승인 요청 메일 발송
+- **`approve-child/route.ts`** — 승인 완료 후 `admin.auth.admin.getUserById()`로 자녀 이메일 조회 → 승인 완료 메일 발송
+- 이메일 발송 실패 시 API 응답 차단 안 함 (`.catch(console.error)`)
+- 패키지 추가: `nodemailer`, `@types/nodemailer`
+- 환경변수: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (Zoho 앱 비밀번호)
+
+### 기술 결정
+- **만 14세 미만 동의 생략**: 개인정보보호법 제22조의2에 따라 법정대리인만 동의하면 충분, 자녀 본인 동의는 법적 요건 아님
+- **이메일 fire-and-forget**: SMTP 장애가 가입 흐름을 막지 않도록 비동기 발송 + catch 처리
+- **Zoho 앱 비밀번호**: 일반 비밀번호가 아닌 앱 전용 비밀번호 사용 (2FA 호환)
+
+---
+
 ## 개발 지표 요약
 
 | 항목 | 수치 |
 |------|------|
-| 총 개발 기간 | 8일 (2026-06-06 ~ 2026-06-13) |
-| Git 커밋 수 | 30개+ |
-| 생성된 파일 수 | 90+ |
+| 총 개발 기간 | 15일 (2026-06-06 ~ 2026-06-20) |
+| Git 커밋 수 | 35개+ |
+| 생성된 파일 수 | 95+ |
 | DB 마이그레이션 | 11개 (통합 파일 1개) |
-| API 엔드포인트 | 24개 |
-| 페이지/화면 수 | 30개 |
+| API 엔드포인트 | 25개 |
+| 페이지/화면 수 | 33개 |
 | 운영 도메인 | kiddoloop.com |
 | 대표 메일 | contact@kiddoloop.com |
 | Supabase 리전 | Seoul (muzevgexilkborqisrai) |
@@ -433,7 +484,6 @@ MVP 개발을 위한 기반 인프라 구축
 |------|------|---------|
 | Android 앱 FCM 미완성 | Firebase 프로젝트 생성까지 완료, WebView+FCM 코드 미작성 | 높음 |
 | 광고 SDK 미연동 | AdGateModal에 `[AD_PLACEHOLDER]` 마커, 현재 5초 카운트다운만 | 중간 |
-| 이메일 발송 미구현 | 부모 승인 요청 시 이메일 없음 (인앱 코드만) | 높음 |
 | 과목별 규칙 UI 없음 | subject_rules 테이블 있으나 어드민 편집 UI 미구현 | 높음 |
 | 다중 자녀 부모 대시보드 | 부모에게 자녀 여러 명 있을 경우 선택 UI 없음 | 높음 |
 | 리워드 카탈로그 UI 없음 | reward_catalog 테이블 있으나 부모 CRUD UI 없음 | 중간 |

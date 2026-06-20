@@ -22,8 +22,7 @@ export default async function ParentCalendarPage() {
     .order("created_at");
 
   const connectedPairs = (pairs ?? []).filter((p) => p.child_id);
-  const allPairIds = connectedPairs.map((p) => p.id);
-  if (allPairIds.length === 0) {
+  if (connectedPairs.length === 0) {
     return (
       <div style={{ minHeight: "100svh", background: "#F1F7F3", display: "flex", flexDirection: "column", maxWidth: 430, margin: "0 auto" }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px 80px" }}>
@@ -40,8 +39,15 @@ export default async function ParentCalendarPage() {
     );
   }
 
-  // Build child name map: pair_id → childName
+  // 각 자녀에 연결된 모든 페어 조회 (다른 부모 포함)
   const childIds = connectedPairs.map((p) => p.child_id!);
+  const { data: allChildPairs } = await admin
+    .from("pairs")
+    .select("id, child_id")
+    .in("child_id", childIds);
+  const allPairIds = [...new Set((allChildPairs ?? []).map((p) => p.id))];
+
+  // Build child name map: pair_id → childName
   const { data: childProfiles } = await admin
     .from("user_profiles")
     .select("id, display_name")
@@ -51,8 +57,8 @@ export default async function ParentCalendarPage() {
     (childProfiles ?? []).map((p) => [p.id, p.display_name])
   );
   const childNameByPairId: Record<string, string | null> = {};
-  connectedPairs.forEach((p) => {
-    childNameByPairId[p.id] = profileMap[p.child_id!] ?? null;
+  (allChildPairs ?? []).forEach((p) => {
+    childNameByPairId[p.id] = profileMap[p.child_id] ?? null;
   });
 
   const now = new Date();
@@ -61,7 +67,7 @@ export default async function ParentCalendarPage() {
   const from = `${year}-${String(month).padStart(2, "0")}-01`;
   const to = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
 
-  const { data: homeworks } = await supabase
+  const { data: homeworks } = await admin
     .from("homeworks")
     .select("*")
     .in("pair_id", allPairIds)
@@ -72,7 +78,7 @@ export default async function ParentCalendarPage() {
   const hwIds = (homeworks ?? []).map((h) => h.id);
   let checkedIds = new Set<string>();
   if (hwIds.length) {
-    const { data: checks } = await supabase
+    const { data: checks } = await admin
       .from("homework_checks")
       .select("homework_id")
       .in("homework_id", hwIds);
@@ -96,7 +102,6 @@ export default async function ParentCalendarPage() {
           year={year}
           month={month}
           homeworks={homeworksWithMeta}
-          pairIds={allPairIds}
         />
       </div>
 

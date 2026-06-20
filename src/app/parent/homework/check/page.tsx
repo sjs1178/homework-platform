@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import HomeworkCheckForm from "./HomeworkCheckForm";
 import Icon from "@/components/ui/Icon";
@@ -16,15 +17,33 @@ export default async function ParentHomeworkCheckPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: hw } = await supabase
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // 숙제 조회 (다른 부모가 등록한 숙제도 검사 가능)
+  const { data: hw } = await admin
     .from("homeworks")
-    .select("*")
+    .select("*, pairs(child_id)")
     .eq("id", homeworkId)
     .single();
 
   if (!hw) redirect("/parent/dashboard");
 
-  const { data: existing } = await supabase
+  // 이 부모가 해당 자녀와 연결되어 있는지 확인
+  const childId = hw.pairs?.child_id;
+  if (childId) {
+    const { data: parentPair } = await admin
+      .from("pairs")
+      .select("id")
+      .eq("parent_id", user.id)
+      .eq("child_id", childId)
+      .single();
+    if (!parentPair) redirect("/parent/dashboard");
+  }
+
+  const { data: existing } = await admin
     .from("homework_checks")
     .select("*")
     .eq("homework_id", homeworkId)

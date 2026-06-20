@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Icon from "@/components/ui/Icon";
 
 interface Homework {
@@ -20,7 +19,6 @@ interface Props {
   year: number;
   month: number;
   homeworks: Homework[];
-  pairIds: string[];
 }
 
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -31,7 +29,7 @@ const SUBJECT_COLORS: Record<string, [string, string]> = {
   영어: ["#ECFEFF", "#0891B2"],
 };
 
-export default function ParentCalendarView({ year: initYear, month: initMonth, homeworks: initHomeworks, pairIds }: Props) {
+export default function ParentCalendarView({ year: initYear, month: initMonth, homeworks: initHomeworks }: Props) {
   const [year, setYear] = useState(initYear);
   const [month, setMonth] = useState(initMonth);
   const [homeworks, setHomeworks] = useState(initHomeworks);
@@ -51,30 +49,11 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
 
     setLoading(true);
     setSelectedDate(null);
-    const supabase = createClient();
-    const from = `${newYear}-${String(newMonth).padStart(2, "0")}-01`;
-    const lastDay = new Date(newYear, newMonth, 0).getDate();
-    const to = `${newYear}-${String(newMonth).padStart(2, "0")}-${lastDay}`;
 
-    const { data: hws } = await supabase
-      .from("homeworks")
-      .select("*")
-      .in("pair_id", pairIds)
-      .gte("due_date", from)
-      .lte("due_date", to)
-      .order("due_date");
+    const res = await fetch(`/api/parent/calendar-homework?year=${newYear}&month=${newMonth}`);
+    const json = await res.json();
 
-    const hwIds = (hws ?? []).map((h) => h.id);
-    let checkedIds = new Set<string>();
-    if (hwIds.length) {
-      const { data: checks } = await supabase
-        .from("homework_checks")
-        .select("homework_id")
-        .in("homework_id", hwIds);
-      checkedIds = new Set(checks?.map((c: { homework_id: string }) => c.homework_id) ?? []);
-    }
-
-    setHomeworks((hws ?? []).map((h) => ({ ...h, hasCheck: checkedIds.has(h.id) })));
+    setHomeworks(json.homeworks ?? []);
     setYear(newYear);
     setMonth(newMonth);
     setLoading(false);
@@ -298,13 +277,23 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
                         {hw.description}
                       </div>
                       {hw.is_completed && hw.hasCheck && (
-                        <a href={`/child/results?id=${hw.id}`} style={{
+                        <a href={`/parent/homework/check?id=${hw.id}`} style={{
                           display: "inline-flex", alignItems: "center", gap: 4,
                           marginTop: 6, fontSize: 12.5, fontWeight: 700,
                           color: "var(--green-d)", textDecoration: "none",
                         }}>
                           <Icon name="sparkles" size={13} color="var(--green-d)" stroke={2} />
                           채점 결과 보기
+                        </a>
+                      )}
+                      {hw.is_completed && !hw.hasCheck && (
+                        <a href={`/parent/homework/check?id=${hw.id}`} style={{
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          marginTop: 6, fontSize: 12.5, fontWeight: 700,
+                          color: "var(--green)", textDecoration: "none",
+                        }}>
+                          <Icon name="clipboard-check" size={13} color="var(--green)" stroke={2} />
+                          검사하기
                         </a>
                       )}
                     </div>
