@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/Icon";
 
 interface Homework {
@@ -35,6 +35,33 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
   const [homeworks, setHomeworks] = useState(initHomeworks);
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = useCallback(() => setMenuOpenId(null), []);
+
+  useEffect(() => {
+    if (!menuOpenId) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) closeMenu();
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpenId, closeMenu]);
+
+  async function handleDelete(hwId: string) {
+    if (!confirm("이 숙제를 삭제할까요? 연결된 모든 계정에서 사라져요.")) return;
+    setDeleting(hwId);
+    closeMenu();
+    await fetch("/api/parent/homework-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeworkId: hwId }),
+    });
+    setHomeworks((prev) => prev.filter((h) => h.id !== hwId));
+    setDeleting(null);
+  }
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
@@ -229,6 +256,7 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
             <div style={{ padding: "10px 14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
               {selectedHomeworks.map((hw) => {
                 const [subjectBg, subjectColor] = SUBJECT_COLORS[hw.subject] ?? ["var(--green-50)", "var(--green-d)"];
+                const isDeleting = deleting === hw.id;
                 return (
                   <div key={hw.id} style={{
                     borderRadius: 16,
@@ -236,6 +264,8 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
                     background: hw.is_completed ? "var(--green-50)" : "#FAFAF8",
                     padding: "13px 13px",
                     display: "flex", alignItems: "flex-start", gap: 12,
+                    opacity: isDeleting ? 0.4 : 1, transition: "opacity .2s",
+                    position: "relative",
                   }}>
                     <span style={{
                       width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 1,
@@ -297,6 +327,60 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
                         </a>
                       )}
                     </div>
+
+                    {/* 미완료 숙제 더보기 메뉴 */}
+                    {!hw.is_completed && (
+                      <div style={{ position: "relative", flexShrink: 0, marginTop: 1 }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === hw.id ? null : hw.id); }}
+                          style={{
+                            width: 30, height: 30, borderRadius: 8, border: "none",
+                            background: menuOpenId === hw.id ? "var(--green-100)" : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", padding: 0,
+                          }}
+                        >
+                          <Icon name="more-vertical" size={16} color="var(--muted)" stroke={2} />
+                        </button>
+                        {menuOpenId === hw.id && (
+                          <div
+                            ref={menuRef}
+                            style={{
+                              position: "absolute", right: 0, top: 34, zIndex: 50,
+                              background: "#fff", borderRadius: 14, boxShadow: "0 8px 30px rgba(0,0,0,.15)",
+                              border: "1px solid var(--line)", overflow: "hidden",
+                              minWidth: 150, animation: "fadeIn .12s ease",
+                            }}
+                          >
+                            <a
+                              href={`/parent/homework/check?id=${hw.id}`}
+                              onClick={closeMenu}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 10,
+                                padding: "13px 16px", fontSize: 14, fontWeight: 700,
+                                color: "var(--green-d)", textDecoration: "none",
+                                borderBottom: "1px solid var(--line)",
+                              }}
+                            >
+                              <Icon name="clipboard-check" size={17} color="var(--green)" stroke={2} />
+                              완료 / 검사
+                            </a>
+                            <button
+                              onClick={() => handleDelete(hw.id)}
+                              style={{
+                                display: "flex", alignItems: "center", gap: 10, width: "100%",
+                                padding: "13px 16px", fontSize: 14, fontWeight: 700,
+                                color: "#E11D48", background: "none", border: "none",
+                                cursor: "pointer", textAlign: "left",
+                              }}
+                            >
+                              <Icon name="trash-2" size={17} color="#E11D48" stroke={2} />
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

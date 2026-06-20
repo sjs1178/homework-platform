@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
 import ChildCarousel, { type ChildData } from "./ChildCarousel";
+import TodayHomeworkList from "./TodayHomeworkList";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
-import EmptyState from "@/components/ui/EmptyState";
 import { LogoLockup } from "@/components/ui/Logo";
 
 function getWeekRange() {
@@ -296,177 +296,7 @@ export default async function ParentDashboard() {
         )}
 
         {/* 오늘의 숙제 */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            margin: "22px 4px 11px",
-          }}
-        >
-          <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>
-            오늘의 숙제
-          </h2>
-          {todayHomeworks.length > 0 && (
-            <span
-              style={{
-                background: todayHomeworks.every((h) => h.hasCheck) ? "var(--green-100)" : "var(--amber-100)",
-                color: todayHomeworks.every((h) => h.hasCheck) ? "var(--green-d)" : "var(--amber-d)",
-                padding: "3px 10px",
-                borderRadius: 999,
-                fontSize: 12.5,
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {todayHomeworks.filter((h) => h.hasCheck).length}/{todayHomeworks.length} 검사완료
-            </span>
-          )}
-        </div>
-
-        {todayHomeworks.length === 0 ? (
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "var(--r-card)",
-              padding: "32px 16px",
-              boxShadow: "var(--sh-sm)",
-            }}
-          >
-            <EmptyState
-              icon="clipboard-check"
-              title="오늘 숙제가 없어요"
-              actionLabel="숙제 입력하기"
-              actionIcon="plus"
-              actionHref="/parent/homework/new"
-            />
-          </div>
-        ) : (
-          todayHomeworks.map((hw) => {
-            const statusIcon = hw.hasCheck ? "circle-check" : hw.is_completed ? "clipboard-check" : "clock";
-            const statusColor = hw.hasCheck ? "var(--green)" : hw.is_completed ? "var(--amber)" : "var(--faint)";
-            const statusBg = hw.hasCheck ? "var(--green-50)" : hw.is_completed ? "var(--amber-100)" : "#F5F5F4";
-            const borderColor = hw.hasCheck ? "var(--green-200)" : hw.is_completed ? "var(--amber-200)" : "var(--line)";
-
-            return (
-              <div
-                key={hw.id}
-                style={{
-                  background: "#fff",
-                  borderRadius: "var(--r-card)",
-                  padding: 15,
-                  marginBottom: 12,
-                  border: `1.5px solid ${borderColor}`,
-                  boxShadow: "var(--sh-md)",
-                }}
-              >
-                <div style={{ display: "flex", gap: 13 }}>
-                  <span
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 13,
-                      background: statusBg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Icon name={statusIcon} size={19} color={statusColor} stroke={2} />
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center", flexWrap: "wrap" }}>
-                      <SubjectTag subject={hw.subject} />
-                      {childrenData.length > 1 && (
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green-d)", background: "var(--green-50)", padding: "2px 7px", borderRadius: 6 }}>
-                          {hw.childName}
-                        </span>
-                      )}
-                      {hw.due_time && (
-                        <span style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                          {hw.due_time.slice(0, 5)}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)" }}>
-                      {hw.description}
-                    </div>
-                  </div>
-                </div>
-
-                {hw.hasCheck ? (
-                  <a
-                    href={`/parent/homework/check?id=${hw.id}`}
-                    style={{
-                      width: "100%",
-                      height: 38,
-                      borderRadius: 12,
-                      border: "1.5px solid var(--green-200)",
-                      background: "var(--green-50)",
-                      color: "var(--green-d)",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      marginTop: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 7,
-                      textDecoration: "none",
-                    }}
-                  >
-                    <Icon name="sparkles" size={15} color="var(--green-d)" stroke={2} />
-                    검사 결과 보기
-                  </a>
-                ) : hw.is_completed ? (
-                  <a
-                    href={`/parent/homework/check?id=${hw.id}`}
-                    style={{
-                      width: "100%",
-                      height: 38,
-                      borderRadius: 12,
-                      border: "none",
-                      background: "var(--green)",
-                      color: "#fff",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      marginTop: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 7,
-                      textDecoration: "none",
-                    }}
-                  >
-                    지금 검사하기
-                    <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
-                  </a>
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: 38,
-                      borderRadius: 12,
-                      border: "1.5px solid var(--line)",
-                      background: "#FAFAF8",
-                      color: "var(--muted)",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      marginTop: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 7,
-                    }}
-                  >
-                    <Icon name="clock" size={14} color="var(--faint)" stroke={2} />
-                    자녀가 아직 완료하지 않았어요
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
+        <TodayHomeworkList homeworks={todayHomeworks} multiChild={childrenData.length > 1} />
 
         {/* 퀵액션 3열 */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 11, marginTop: 16 }}>
@@ -540,29 +370,3 @@ export default async function ParentDashboard() {
   );
 }
 
-function SubjectTag({ subject }: { subject: string }) {
-  const map: Record<string, [string, string]> = {
-    수학: ["#EEF2FF", "#4F46E5"],
-    국어: ["#FEF2F2", "#E11D48"],
-    영어: ["#ECFEFF", "#0891B2"],
-  };
-  const [bg, color] = map[subject] ?? ["var(--green-50)", "var(--green-d)"];
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        fontWeight: 700,
-        fontSize: 12,
-        padding: "4px 9px",
-        borderRadius: 8,
-        background: bg,
-        color,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {subject}
-    </span>
-  );
-}

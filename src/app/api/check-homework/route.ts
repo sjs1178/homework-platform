@@ -111,6 +111,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
+  // 미완료 숙제를 부모가 검사하면 완료 처리
+  if (!hw.is_completed) {
+    await admin.from("homeworks").update({ is_completed: true }).eq("id", homeworkId);
+  }
+
   const { data: checkRow } = await admin.from("homework_checks").upsert({
     homework_id: homeworkId,
     pair_id: hw.pair_id,
