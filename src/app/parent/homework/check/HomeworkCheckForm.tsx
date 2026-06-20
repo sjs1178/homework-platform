@@ -16,6 +16,11 @@ interface Props {
   existingScore: { score: number; total: number } | null;
   isReviewed: boolean;
   subject?: string;
+  pairId: string;
+  childId: string | null;
+  rewardName: string;
+  rewardUnit: string;
+  defaultRewardAmount: number;
 }
 
 interface EditState {
@@ -336,6 +341,7 @@ function QCard({
 
 export default function HomeworkCheckForm({
   homeworkId, checkId: initialCheckId, existingResult, existingScore, isReviewed: initialReviewed, subject,
+  pairId, childId, rewardName, rewardUnit, defaultRewardAmount,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [checkMode, setCheckMode] = useState<"ai" | "manual">("ai");
@@ -350,6 +356,11 @@ export default function HomeworkCheckForm({
   const [error, setError] = useState("");
   const [editing, setEditing] = useState<Record<number, EditState>>({});
   const [savedMsg, setSavedMsg] = useState("");
+
+  // Reward modal
+  const [showRewardModal, setShowRewardModal] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState(String(defaultRewardAmount || 10));
+  const [rewardDone, setRewardDone] = useState(false);
 
   // Ad gate
   const [showAdGate, setShowAdGate] = useState(false);
@@ -510,6 +521,29 @@ export default function HomeworkCheckForm({
     setSaving(false);
   }
 
+  async function handleRewardComplete() {
+    const amt = parseInt(rewardAmount) || 0;
+    setSaving(true);
+    if (amt > 0 && childId) {
+      await fetch("/api/adjust-reward", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pairId,
+          childId,
+          type: "earn",
+          amount: amt,
+          note: `${subject ?? "숙제"} 검사 완료`,
+        }),
+      });
+    }
+    setShowRewardModal(false);
+    setRewardDone(true);
+    setSavedMsg(`검사 완료! ${amt > 0 ? `${rewardName} ${amt}${rewardUnit} 지급` : ""}`);
+    setTimeout(() => setSavedMsg(""), 4000);
+    setSaving(false);
+  }
+
   const hasEdits = Object.keys(editing).length > 0;
   const isManualResult = result?.total === 0;
 
@@ -557,7 +591,7 @@ export default function HomeworkCheckForm({
                 <div
                   style={{
                     width: 70, height: 70, borderRadius: "50%", background: "#16823f",
-                    display: "flex", alignItems: "baseline", justifyContent: "center",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
                   <span style={{ fontSize: 24, fontWeight: 800 }}>{pct}</span>
@@ -682,12 +716,119 @@ export default function HomeworkCheckForm({
           </button>
         )}
 
+        {!hasEdits && !rewardDone && (
+          <button
+            onClick={() => setShowRewardModal(true)}
+            style={{
+              width: "100%", height: 54, borderRadius: 16, border: "none",
+              background: "var(--green)", color: "#fff",
+              fontWeight: 800, fontSize: 16, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              boxShadow: "var(--sh-hero-green)",
+            }}
+          >
+            <Icon name="check-circle" size={20} color="#fff" stroke={2} />
+            검사 완료
+          </button>
+        )}
+
+        {rewardDone && (
+          <div style={{
+            textAlign: "center", padding: "12px 0",
+            fontSize: 14, fontWeight: 700, color: "var(--green-d)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          }}>
+            <Icon name="check-circle" size={18} color="var(--green-d)" stroke={2} />
+            검사 완료됨
+          </div>
+        )}
+
         <button
-          onClick={() => { setResult(null); setScore(null); setEditing({}); setCheckMode("ai"); }}
+          onClick={() => { setResult(null); setScore(null); setEditing({}); setCheckMode("ai"); setRewardDone(false); }}
           style={{ padding: "8px 0", fontSize: 13.5, color: "var(--faint)", background: "none", border: "none", cursor: "pointer", textAlign: "center" }}
         >
           다시 채점하기
         </button>
+
+        {/* 리워드 지급 모달 */}
+        {showRewardModal && (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,.45)", display: "flex",
+              alignItems: "center", justifyContent: "center", padding: 20,
+            }}
+            onClick={() => setShowRewardModal(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#fff", borderRadius: 24, padding: "28px 24px 24px",
+                width: "100%", maxWidth: 340, boxShadow: "var(--sh-md)",
+              }}
+            >
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: "50%", margin: "0 auto 12px",
+                  background: "var(--amber-100)", display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Icon name="star" size={28} color="var(--amber-d)" stroke={2} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>
+                  {rewardName} 지급
+                </h3>
+                <p style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>
+                  검사 완료 후 자녀에게 지급할 {rewardName}
+                </p>
+              </div>
+
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10,
+                background: "var(--surface-2)", borderRadius: 14, padding: "10px 14px", marginBottom: 20,
+              }}>
+                <input
+                  type="number"
+                  min={0}
+                  value={rewardAmount}
+                  onChange={(e) => setRewardAmount(e.target.value)}
+                  style={{
+                    flex: 1, height: 44, border: "1.5px solid var(--line-strong)",
+                    borderRadius: 10, padding: "0 12px", fontSize: 22, fontWeight: 800,
+                    color: "var(--text)", outline: "none", textAlign: "center", background: "#fff",
+                  }}
+                />
+                <span style={{ fontSize: 16, fontWeight: 800, color: "var(--muted)", flexShrink: 0 }}>
+                  {rewardUnit}
+                </span>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => setShowRewardModal(false)}
+                  style={{
+                    flex: 1, height: 48, borderRadius: 14,
+                    border: "1.5px solid var(--line-strong)", background: "#fff",
+                    color: "var(--muted)", fontWeight: 800, fontSize: 14, cursor: "pointer",
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleRewardComplete}
+                  disabled={saving}
+                  style={{
+                    flex: 1, height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green)", color: "#fff",
+                    fontWeight: 800, fontSize: 14, cursor: saving ? "default" : "pointer",
+                    boxShadow: "var(--sh-green)", opacity: saving ? 0.7 : 1,
+                  }}
+                >
+                  {saving ? "처리 중..." : "확인"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {savedMsg && (
           <div

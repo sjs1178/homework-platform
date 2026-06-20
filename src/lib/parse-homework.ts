@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { HomeworkItem, SubjectRule } from "./types";
 import type { AiProvider } from "./ai-token";
-import { callParseText, callParseImage } from "./ai-caller";
+import { callParseText, callParseImage, callParseMulti } from "./ai-caller";
 
 const systemClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -90,6 +90,40 @@ export async function parseHomeworkImage(
           { type: "text", text: "이 숙제 이미지에서 숙제 일정을 추출해줘." },
         ],
       }],
+    });
+    raw = (response.content[0] as Anthropic.TextBlock).text;
+  }
+
+  return parseResponse(raw);
+}
+
+export async function parseHomeworkMulti(
+  images: { base64: string; mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp" }[],
+  text?: string,
+  rules: SubjectRule[] = [],
+  userApiKey?: string,
+  userProvider?: AiProvider
+): Promise<HomeworkItem[]> {
+  const prompt = buildSystemPrompt(rules);
+  let raw: string;
+
+  if (userApiKey && userProvider) {
+    raw = await callParseMulti(prompt, images, text, userProvider, userApiKey);
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const content: any[] = images.map((img) => ({
+      type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 },
+    }));
+    const fallbackText = "이 숙제 이미지에서 숙제 일정을 추출해줘.";
+    const textContent = text?.trim() ? `${text.trim()}\n\n이 내용과 이미지에서 숙제 일정을 추출해줘.` : fallbackText;
+    content.push({ type: "text", text: textContent });
+
+    const response = await systemClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      system: [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }] as any,
+      messages: [{ role: "user", content }],
     });
     raw = (response.content[0] as Anthropic.TextBlock).text;
   }

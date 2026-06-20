@@ -123,6 +123,70 @@ export async function callParseImage(
   return json.candidates[0].content.parts[0].text as string;
 }
 
+export async function callParseMulti(
+  systemPrompt: string,
+  images: { base64: string; mediaType: string }[],
+  userText: string | undefined,
+  provider: AiProvider,
+  apiKey: string
+): Promise<string> {
+  const fallbackText = "이 숙제 이미지에서 숙제 일정을 추출해줘.";
+  const textContent = userText?.trim() ? `${userText.trim()}\n\n이 내용과 이미지에서 숙제 일정을 추출해줘.` : fallbackText;
+
+  if (provider === "claude") {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const client = new Anthropic({ apiKey });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const content: any[] = images.map((img) => ({
+      type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 },
+    }));
+    content.push({ type: "text", text: textContent });
+    const res = await client.messages.create({
+      model: "claude-sonnet-4-6", max_tokens: 2048, system: systemPrompt,
+      messages: [{ role: "user", content }],
+    });
+    return (res.content[0] as { type: string; text: string }).text;
+  }
+  if (provider === "openai") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const content: any[] = images.map((img) => ({
+      type: "image_url", image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
+    }));
+    content.push({ type: "text", text: textContent });
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "gpt-4o", max_tokens: 2048,
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content }],
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message ?? "OpenAI API error");
+    return json.choices[0].message.content as string;
+  }
+  // gemini
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parts: any[] = images.map((img) => ({
+    inlineData: { mimeType: img.mediaType, data: img.base64 },
+  }));
+  parts.push({ text: `${systemPrompt}\n\n${textContent}` });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: { maxOutputTokens: 2048 },
+      }),
+    }
+  );
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error?.message ?? "Gemini API error");
+  return json.candidates[0].content.parts[0].text as string;
+}
+
 // ── Homework checking ─────────────────────────────────────────────────────
 
 type CheckPayload =

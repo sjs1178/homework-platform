@@ -49,6 +49,18 @@ export default async function ParentHomeworkCheckPage({
     .eq("homework_id", homeworkId)
     .single();
 
+  // 부모의 pair_id와 리워드 설정 조회
+  const parentPairForChild = childId
+    ? (await admin.from("pairs").select("id").eq("parent_id", user.id).eq("child_id", childId).single()).data
+    : null;
+  const parentPairId = parentPairForChild?.id ?? hw.pair_id;
+
+  const { data: rwSettings } = await admin
+    .from("reward_settings")
+    .select("point_reward_name, point_reward_unit")
+    .eq("pair_id", parentPairId)
+    .single();
+
   return (
     <div
       style={{
@@ -66,7 +78,7 @@ export default async function ParentHomeworkCheckPage({
           display: "flex",
           alignItems: "center",
           flexShrink: 0,
-          padding: "4px 18px 14px",
+          padding: "16px 18px 14px",
           gap: 8,
         }}
       >
@@ -90,6 +102,11 @@ export default async function ParentHomeworkCheckPage({
           existingScore={existing ? { score: existing.score, total: existing.total_problems } : null}
           isReviewed={existing?.is_reviewed ?? false}
           subject={hw.subject}
+          pairId={parentPairId}
+          childId={childId ?? null}
+          rewardName={rwSettings?.point_reward_name ?? "리워드"}
+          rewardUnit={rwSettings?.point_reward_unit ?? "P"}
+          defaultRewardAmount={hw.reward_amount ?? 0}
         />
       </div>
     </div>

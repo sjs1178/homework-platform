@@ -45,9 +45,11 @@ function emptyItem(): HomeworkItem {
 export default function HomeworkInputForm({
   pairId, rules, childGrade, childName, childInitial, gradeLabel, rewardUnit, rewardName, pendingRequestCount = 0,
 }: Props) {
+  type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
+  const [images, setImages] = useState<{ base64: string; mediaType: MediaType; preview: string }[]>([]);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [parsed, setParsed] = useState<HomeworkItem[] | null>(null);
@@ -102,16 +104,44 @@ export default function HomeworkInputForm({
     };
   }
 
-  async function doParseText() {
-    if (!text.trim()) return;
+  function handleImageAdd(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    files.forEach((file) => {
+      if (images.length >= 5) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setImages((prev) => {
+          if (prev.length >= 5) return prev;
+          return [...prev, {
+            base64: dataUrl.split(",")[1],
+            mediaType: file.type as MediaType,
+            preview: dataUrl,
+          }];
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  }
+
+  async function doParse() {
+    if (!text.trim() && !images.length) return;
     setParsing(true);
     setError("");
     setParsed(null);
     setManualMode(false);
+
+    const extra: Record<string, unknown> = {};
+    if (images.length) {
+      extra.images = images.map(({ base64, mediaType }) => ({ base64, mediaType }));
+    }
+    if (text.trim()) extra.text = text.trim();
+
     const res = await fetch("/api/parse-homework", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildApiBody({ text })),
+      body: JSON.stringify(buildApiBody(extra)),
     });
     const json = await res.json();
     if (!res.ok || !json.items?.length) {
@@ -123,39 +153,7 @@ export default function HomeworkInputForm({
   }
 
   function handleParse() {
-    withAiGate(doParseText);
-  }
-
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const doParseImage = () => new Promise<void>((resolve) => {
-      setParsing(true);
-      setError("");
-      setParsed(null);
-      setManualMode(false);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(",")[1];
-        const mediaType = file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
-        const res = await fetch("/api/parse-homework", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildApiBody({ imageBase64: base64, mediaType })),
-        });
-        const json = await res.json();
-        if (!res.ok || !json.items?.length) {
-          setError(json.error ?? "이미지에서 숙제를 찾지 못했어요.");
-        } else {
-          setParsed(json.items);
-        }
-        setParsing(false);
-        resolve();
-      };
-      reader.readAsDataURL(file);
-    });
-    withAiGate(doParseImage);
-    e.target.value = "";
+    withAiGate(doParse);
   }
 
   async function handleSave() {
@@ -277,11 +275,12 @@ export default function HomeworkInputForm({
         {/* AI 입력 (수동 모드가 아닐 때만) */}
         {!isManual && (
           <>
-            <FieldLabel>숙제 내용 (자연어 입력)</FieldLabel>
+            <FieldLabel>숙제 내용</FieldLabel>
             <div
               style={{
                 background: "#fff", border: "1.5px solid var(--line-strong)", borderRadius: 14,
-                padding: "15px 16px", marginBottom: 8, boxShadow: "var(--sh-sm)",
+                padding: "15px 16px", marginBottom: 10, boxShadow: "var(--sh-sm)",
+                display: "flex", flexDirection: "column", gap: 12,
               }}
             >
               <textarea
@@ -295,7 +294,46 @@ export default function HomeworkInputForm({
                   background: "transparent", fontFamily: "inherit",
                 }}
               />
+
+              {/* 이미지 프리뷰 + 추가 */}
+              <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleImageAdd} className="hidden" />
+              {images.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 8 }}>
+                  {images.map((img, i) => (
+                    <div key={i} style={{ position: "relative" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img.preview} alt="" style={{ width: "100%", height: 72, objectFit: "cover", borderRadius: 10 }} />
+                      <button
+                        onClick={() => setImages((p) => p.filter((_, j) => j !== i))}
+                        style={{
+                          position: "absolute", top: -6, right: -6,
+                          width: 20, height: 20, borderRadius: "50%",
+                          background: "#F2607D", border: "none", color: "#fff",
+                          fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center",
+                          cursor: "pointer", lineHeight: 1,
+                        }}
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {images.length < 5 && (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  style={{
+                    width: "100%", height: images.length > 0 ? 44 : 72, borderRadius: 12, cursor: "pointer",
+                    border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                  }}
+                >
+                  <Icon name="camera" size={20} color="var(--green-d)" stroke={1.9} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
+                    사진 추가 {images.length > 0 ? `(${images.length}/5)` : "(최대 5장)"}
+                  </span>
+                </button>
+              )}
             </div>
+
             {parsing ? (
               <div style={{ marginBottom: 14 }}>
                 <AiProcessing label="AI가 분석하고 있어요" />
@@ -303,41 +341,18 @@ export default function HomeworkInputForm({
             ) : (
               <button
                 onClick={handleParse}
-                disabled={!text.trim()}
+                disabled={!text.trim() && !images.length}
                 style={{
                   width: "100%", height: 44, borderRadius: 12, border: "none",
-                  background: text.trim() ? "var(--green)" : "var(--line-strong)",
-                  color: text.trim() ? "#fff" : "var(--faint)",
-                  fontWeight: 800, fontSize: 14, cursor: text.trim() ? "pointer" : "default",
+                  background: (text.trim() || images.length) ? "var(--green)" : "var(--line-strong)",
+                  color: (text.trim() || images.length) ? "#fff" : "var(--faint)",
+                  fontWeight: 800, fontSize: 14,
+                  cursor: (text.trim() || images.length) ? "pointer" : "default",
                   marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 }}
               >
-                <Icon name="sparkles" size={16} color={text.trim() ? "#fff" : "var(--faint)"} stroke={2} />
+                <Icon name="sparkles" size={16} color={(text.trim() || images.length) ? "#fff" : "var(--faint)"} stroke={2} />
                 AI로 분석하기
-              </button>
-            )}
-
-            {/* 사진 업로드 */}
-            <FieldLabel>학습지 사진 (선택)</FieldLabel>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-            {parsing ? (
-              <div style={{ marginBottom: 10 }}>
-                <AiProcessing label="AI가 분석하고 있어요" />
-              </div>
-            ) : (
-              <button
-                onClick={() => fileRef.current?.click()}
-                style={{
-                  width: "100%", height: 96, borderRadius: 16, cursor: "pointer",
-                  border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
-                  display: "flex", flexDirection: "column", alignItems: "center",
-                  justifyContent: "center", gap: 7, marginBottom: 10,
-                }}
-              >
-                <Icon name="camera" size={24} color="var(--green-d)" stroke={1.9} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}>
-                  사진 추가하기
-                </span>
               </button>
             )}
 
