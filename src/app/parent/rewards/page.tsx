@@ -55,6 +55,13 @@ export default async function ParentRewardsPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
+  const { data: pendingReqs } = await supabase
+    .from("reward_requests")
+    .select("*")
+    .eq("pair_id", pairId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
   const totalEarned = (logs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
   const totalSpent = (logs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
   const balance = totalEarned - totalSpent;
@@ -91,6 +98,13 @@ export default async function ParentRewardsPage() {
             amount: l.amount,
             note: l.note,
             created_at: l.created_at,
+          }))}
+          pendingRequests={(pendingReqs ?? []).map((r) => ({
+            id: r.id,
+            amount: r.amount,
+            reason: r.reason,
+            status: r.status,
+            created_at: r.created_at,
           }))}
         />
       </div>

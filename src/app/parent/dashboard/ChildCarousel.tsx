@@ -299,7 +299,10 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
         </span>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 11, position: "relative" }}>
+      <a
+        href="/parent/calendar"
+        style={{ display: "flex", justifyContent: "space-between", marginTop: 11, position: "relative", textDecoration: "none", color: "inherit" }}
+      >
         {DAY_LABELS.map((label, i) => {
           const done = child.weeklyDots[i];
           const isToday = i === todayIdx;
@@ -323,7 +326,7 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
             </div>
           );
         })}
-      </div>
+      </a>
     </div>
   );
 }

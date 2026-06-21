@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import ParentCalendarView from "./ParentCalendarView";
 import BottomNav from "@/components/ui/BottomNav";
 import EmptyState from "@/components/ui/EmptyState";
+import BackButton from "@/components/ui/BackButton";
 
 export default async function ParentCalendarPage() {
   const supabase = await createClient();
@@ -93,7 +94,8 @@ export default async function ParentCalendarPage() {
 
   return (
     <div style={{ minHeight: "100svh", background: "#F1F7F3", display: "flex", flexDirection: "column", maxWidth: 430, margin: "0 auto" }}>
-      <div style={{ padding: "16px 20px 8px", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "16px 18px 8px", flexShrink: 0 }}>
+        <BackButton />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>숙제 캘린더</h1>
       </div>
 

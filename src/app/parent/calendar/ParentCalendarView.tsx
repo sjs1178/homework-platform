@@ -37,6 +37,7 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [detailHw, setDetailHw] = useState<Homework | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setMenuOpenId(null), []);
@@ -225,6 +226,100 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
       </div>
 
       {/* 선택된 날짜 상세 */}
+      {/* 숙제 상세 팝업 */}
+      {detailHw && (() => {
+        const [dBg, dColor] = SUBJECT_COLORS[detailHw.subject] ?? ["var(--green-50)", "var(--green-d)"];
+        return (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,.45)", display: "flex",
+              alignItems: "center", justifyContent: "center", padding: 20,
+            }}
+            onClick={() => setDetailHw(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#fff", borderRadius: 24, padding: "24px 22px 22px",
+                width: "100%", maxWidth: 360, boxShadow: "var(--sh-md)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 800, padding: "3px 10px", borderRadius: 8,
+                  background: dBg, color: dColor,
+                }}>
+                  {detailHw.subject}
+                </span>
+                <button onClick={() => setDetailHw(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  <Icon name="x" size={20} color="var(--muted)" stroke={2} />
+                </button>
+              </div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.6, marginBottom: 16, wordBreak: "break-word" }}>
+                {detailHw.description}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: "var(--text-soft)" }}>
+                {detailHw.childName && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Icon name="user" size={15} color="var(--muted)" stroke={2} />
+                    <span style={{ fontWeight: 600 }}>{detailHw.childName}</span>
+                  </div>
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="calendar" size={15} color="var(--muted)" stroke={2} />
+                  <span style={{ fontWeight: 600 }}>
+                    {detailHw.due_date}{detailHw.due_time ? ` ${detailHw.due_time.slice(0, 5)}` : ""}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="check-circle" size={15} color={detailHw.is_completed ? "var(--green)" : "var(--faint)"} stroke={2} />
+                  <span style={{ fontWeight: 700, color: detailHw.is_completed ? "var(--green-d)" : "var(--muted)" }}>
+                    {detailHw.is_completed ? "완료" : "미완료"}
+                  </span>
+                </div>
+                {detailHw.reward_amount > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Icon name="star" size={15} color="var(--amber-d)" stroke={0} fill="var(--amber-d)" />
+                    <span style={{ fontWeight: 800, color: "var(--amber-d)" }}>+{detailHw.reward_amount}</span>
+                  </div>
+                )}
+              </div>
+              {!detailHw.is_completed && (
+                <a
+                  href={`/parent/homework/check?id=${detailHw.id}`}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green)", color: "#fff",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    boxShadow: "var(--sh-green)", marginTop: 18, textDecoration: "none",
+                  }}
+                >
+                  <Icon name="clipboard-check" size={18} color="#fff" stroke={2} />
+                  완료 / 검사
+                </a>
+              )}
+              {detailHw.is_completed && (
+                <a
+                  href={`/parent/homework/check?id=${detailHw.id}`}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green-100)", color: "var(--green-d)",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    marginTop: 18, textDecoration: "none",
+                  }}
+                >
+                  <Icon name="sparkles" size={18} color="var(--green-d)" stroke={2} />
+                  {detailHw.hasCheck ? "채점 결과 보기" : "검사하기"}
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {selectedDate && (
         <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>
           <div style={{
@@ -275,26 +370,29 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
                       {hw.is_completed && <Icon name="check" size={16} color="#fff" stroke={3} />}
                     </span>
 
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5, flexWrap: "wrap" }}>
+                    <div
+                      style={{ flex: 1, minWidth: 0, cursor: "pointer" }}
+                      onClick={() => setDetailHw(hw)}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
                         <span style={{
                           fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 7,
-                          background: subjectBg, color: subjectColor, whiteSpace: "nowrap",
+                          background: subjectBg, color: subjectColor, whiteSpace: "nowrap", flexShrink: 0,
                         }}>
                           {hw.subject}
                         </span>
                         {hw.childName && (
-                          <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
                             {hw.childName}
                           </span>
                         )}
                         {hw.due_time && (
-                          <span style={{ fontSize: 11.5, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 11.5, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
                             {hw.due_time.slice(0, 5)}
                           </span>
                         )}
                         {hw.reward_amount > 0 && (
-                          <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--amber-d)", whiteSpace: "nowrap", marginLeft: "auto" }}>
+                          <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--amber-d)", whiteSpace: "nowrap", marginLeft: "auto", flexShrink: 0 }}>
                             +{hw.reward_amount}
                           </span>
                         )}
@@ -303,6 +401,7 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
                         fontSize: 15, fontWeight: 700, color: "var(--text)",
                         textDecoration: hw.is_completed ? "line-through" : "none",
                         opacity: hw.is_completed ? 0.5 : 1, lineHeight: 1.4,
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       }}>
                         {hw.description}
                       </div>

@@ -11,6 +11,14 @@ interface Log {
   created_at: string;
 }
 
+interface RewardRequest {
+  id: string;
+  amount: number;
+  reason: string;
+  status: string;
+  created_at: string;
+}
+
 interface Props {
   pairId: string;
   childId: string;
@@ -21,23 +29,51 @@ interface Props {
   totalEarned: number;
   totalSpent: number;
   logs: Log[];
+  pendingRequests: RewardRequest[];
 }
 
 export default function RewardsManager({
   pairId, childId, childName, unit, rewardName,
   balance: initBalance, totalEarned: initEarned, totalSpent: initSpent,
-  logs: initLogs,
+  logs: initLogs, pendingRequests: initRequests,
 }: Props) {
   const [balance, setBalance] = useState(initBalance);
   const [totalEarned, setTotalEarned] = useState(initEarned);
   const [totalSpent, setTotalSpent] = useState(initSpent);
   const [logs, setLogs] = useState<Log[]>(initLogs);
+  const [requests, setRequests] = useState<RewardRequest[]>(initRequests);
+  const [resolving, setResolving] = useState<string | null>(null);
 
   const [adjustType, setAdjustType] = useState<"earn" | "spend">("earn");
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustNote, setAdjustNote] = useState("");
   const [adjusting, setAdjusting] = useState(false);
   const [adjustError, setAdjustError] = useState("");
+
+  async function handleResolve(requestId: string, action: "approved" | "rejected") {
+    setResolving(requestId);
+    const req = requests.find((r) => r.id === requestId);
+    const res = await fetch("/api/reward-request/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId, action }),
+    });
+    if (res.ok) {
+      setRequests((prev) => prev.filter((r) => r.id !== requestId));
+      if (action === "approved" && req) {
+        setBalance((b) => b + req.amount);
+        setTotalEarned((e) => e + req.amount);
+        setLogs((prev) => [{
+          id: crypto.randomUUID(),
+          type: "earn",
+          amount: req.amount,
+          note: req.reason ? `요청: ${req.reason}` : "자녀 요청 승인",
+          created_at: new Date().toISOString(),
+        }, ...prev]);
+      }
+    }
+    setResolving(null);
+  }
 
   async function handleAdjust() {
     const amt = parseInt(adjustAmount);
@@ -117,6 +153,71 @@ export default function RewardsManager({
           </div>
         </div>
       </div>
+
+      {/* 자녀 리워드 요청 */}
+      {requests.length > 0 && (
+        <div style={{
+          background: "#fff", borderRadius: "var(--r-card)",
+          padding: "16px 16px 10px", boxShadow: "var(--sh-md)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <Icon name="send" size={16} color="var(--green)" stroke={2} />
+            <p style={{ fontSize: 14, fontWeight: 800, color: "var(--text)" }}>
+              {childName}님의 요청
+            </p>
+            <span style={{
+              fontSize: 11, fontWeight: 800, color: "#fff", background: "#E11D48",
+              padding: "2px 7px", borderRadius: 999, marginLeft: "auto",
+            }}>
+              {requests.length}
+            </span>
+          </div>
+          {requests.map((req) => (
+            <div key={req.id} style={{
+              padding: "12px 0", borderTop: "1px solid var(--line)",
+              opacity: resolving === req.id ? 0.5 : 1,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: "var(--amber-d)" }}>
+                  +{req.amount.toLocaleString()}{unit}
+                </span>
+                <span style={{ fontSize: 11.5, color: "var(--faint)" }}>
+                  {new Date(req.created_at).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                </span>
+              </div>
+              {req.reason && (
+                <p style={{ fontSize: 13.5, color: "var(--text-soft)", fontWeight: 600, marginBottom: 8 }}>
+                  {req.reason}
+                </p>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => handleResolve(req.id, "approved")}
+                  disabled={resolving === req.id}
+                  style={{
+                    flex: 1, height: 38, borderRadius: 10, border: "none",
+                    background: "var(--green)", color: "#fff",
+                    fontWeight: 800, fontSize: 13, cursor: "pointer",
+                  }}
+                >
+                  승인
+                </button>
+                <button
+                  onClick={() => handleResolve(req.id, "rejected")}
+                  disabled={resolving === req.id}
+                  style={{
+                    flex: 1, height: 38, borderRadius: 10,
+                    border: "1.5px solid var(--line-strong)", background: "#fff",
+                    color: "var(--muted)", fontWeight: 800, fontSize: 13, cursor: "pointer",
+                  }}
+                >
+                  거절
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 수동 지급·차감 */}
       <div

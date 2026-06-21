@@ -34,6 +34,31 @@ export default function RewardBody({ childName, balance, logs, catalog, pairId, 
   const [localLogs, setLocalLogs] = useState(logs);
   const [toast, setToast] = useState("");
 
+  // 리워드 요청
+  const [showRequest, setShowRequest] = useState(false);
+  const [reqAmount, setReqAmount] = useState("");
+  const [reqReason, setReqReason] = useState("");
+  const [requesting, setRequesting] = useState(false);
+
+  async function handleRequest() {
+    const amt = parseInt(reqAmount) || 0;
+    if (amt <= 0) return;
+    setRequesting(true);
+    const res = await fetch("/api/reward-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pairId, amount: amt, reason: reqReason.trim() }),
+    });
+    if (res.ok) {
+      setToast(`${amt}${unit} 요청 완료!`);
+      setTimeout(() => setToast(""), 3000);
+      setShowRequest(false);
+      setReqAmount("");
+      setReqReason("");
+    }
+    setRequesting(false);
+  }
+
   // 다음 교환 가능 리워드 (잔액 부족한 것 중 가장 가까운 것)
   const nextTarget = catalog
     .filter((c) => c.cost > localBalance)
@@ -154,6 +179,77 @@ export default function RewardBody({ childName, balance, logs, catalog, pairId, 
           </div>
         ) : null}
       </div>
+
+      {/* 리워드 요청 */}
+      <button
+        onClick={() => setShowRequest(!showRequest)}
+        style={{
+          width: "100%", height: 48, borderRadius: 14, border: "none",
+          background: showRequest ? "var(--line-strong)" : "var(--green)",
+          color: showRequest ? "var(--text-soft)" : "#fff",
+          fontWeight: 800, fontSize: 14, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          marginBottom: showRequest ? 0 : 20,
+          boxShadow: showRequest ? "none" : "var(--sh-green)",
+        }}
+      >
+        <Icon name="send" size={17} color={showRequest ? "var(--text-soft)" : "#fff"} stroke={2} />
+        {showRequest ? "접기" : "부모에게 리워드 요청하기"}
+      </button>
+
+      {showRequest && (
+        <div style={{
+          background: "#fff", borderRadius: "0 0 var(--r-card) var(--r-card)",
+          padding: "16px 16px 18px", boxShadow: "var(--sh-sm)", marginBottom: 20,
+          borderTop: "1px solid var(--line)",
+        }}>
+          <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+            <div style={{ position: "relative", flex: "0 0 100px" }}>
+              <input
+                type="number"
+                min={1}
+                value={reqAmount}
+                onChange={(e) => setReqAmount(e.target.value)}
+                placeholder="금액"
+                style={{
+                  width: "100%", height: 44, borderRadius: 10,
+                  border: "1.5px solid var(--line-strong)", padding: "0 30px 0 12px",
+                  fontSize: 16, fontWeight: 800, color: "var(--text)", outline: "none",
+                }}
+              />
+              <span style={{
+                position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                fontSize: 13, fontWeight: 800, color: "var(--amber-d)", pointerEvents: "none",
+              }}>
+                {unit}
+              </span>
+            </div>
+            <input
+              value={reqReason}
+              onChange={(e) => setReqReason(e.target.value)}
+              placeholder="이유 (예: 시험 잘 봤어요)"
+              style={{
+                flex: 1, height: 44, borderRadius: 10,
+                border: "1.5px solid var(--line-strong)", padding: "0 12px",
+                fontSize: 13.5, fontWeight: 600, color: "var(--text)", outline: "none",
+              }}
+            />
+          </div>
+          <button
+            onClick={handleRequest}
+            disabled={requesting || !reqAmount || parseInt(reqAmount) <= 0}
+            style={{
+              width: "100%", height: 42, borderRadius: 10, border: "none",
+              background: reqAmount && parseInt(reqAmount) > 0 ? "var(--green)" : "var(--line-strong)",
+              color: reqAmount && parseInt(reqAmount) > 0 ? "#fff" : "var(--faint)",
+              fontWeight: 800, fontSize: 13.5, cursor: "pointer",
+              opacity: requesting ? 0.6 : 1,
+            }}
+          >
+            {requesting ? "요청 중..." : "요청 보내기"}
+          </button>
+        </div>
+      )}
 
       {/* 적립 내역 (토글) */}
       {showHistory && (
