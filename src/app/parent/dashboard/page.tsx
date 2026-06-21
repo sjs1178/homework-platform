@@ -295,6 +295,46 @@ export default async function ParentDashboard() {
           </a>
         )}
 
+        {/* 미션 배너 */}
+        {hasChildren && (
+          <a
+            href="/parent/missions"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 16px",
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "var(--sh-md)",
+              textDecoration: "none",
+              marginTop: 14,
+            }}
+          >
+            <span
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 11,
+                background: "linear-gradient(140deg,#34D399,#16A34A)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Icon name="target" size={19} color="#fff" stroke={2} />
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)" }}>미션 관리</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, marginTop: 1 }}>
+                미션별 리워드 설정 · 진행 현황 확인
+              </div>
+            </div>
+            <Icon name="chevron-right" size={18} color="var(--faint)" stroke={2} />
+          </a>
+        )}
+
         {/* 오늘의 숙제 */}
         <TodayHomeworkList homeworks={todayHomeworks} multiChild={childrenData.length > 1} />
 

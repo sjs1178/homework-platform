@@ -91,10 +91,10 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
     return s ? s.completionRate : null;
   }
 
-  const SUBJECT_EMOJI: Record<string, string> = {
-    국어: "📖", 수학: "🔢", 영어: "🌏", 과학: "🔬", 사회: "🌍",
-    도덕: "💛", 역사: "📜", 음악: "🎵", 미술: "🎨", 체육: "⚽",
-    정보: "💻", 실과: "🔧",
+  const SUBJECT_ICON: Record<string, string> = {
+    국어: "book-open", 수학: "bar-chart-3", 영어: "book-marked", 과학: "flask-conical", 사회: "scale",
+    도덕: "heart-pulse", 역사: "clock", 음악: "mic", 미술: "palette", 체육: "zap",
+    정보: "code", 실과: "pen-line",
   };
 
   // ─── 과목별 현황 ──────────────────────────────────────
@@ -131,7 +131,12 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 20 }}>{SUBJECT_EMOJI[s.subject] ?? "📝"}</span>
+                  <span style={{
+                    width: 32, height: 32, borderRadius: 9, background: "#E9F4EC",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <Icon name={SUBJECT_ICON[s.subject] ?? "book-open"} size={18} color="#16A34A" stroke={2} />
+                  </span>
                   <span style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>{s.subject}</span>
                   <span style={{ fontSize: 12, color: "var(--faint)" }}>{s.total}회</span>
                 </div>
@@ -140,7 +145,9 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
                     <span style={{ fontWeight: 800, color: "var(--green-d)" }}>{s.avgScore}점</span>
                   )}
                   <span style={{ fontWeight: 800, color: "var(--text)" }}>{s.completionRate}%</span>
-                  <span style={{ color: "var(--faint)", fontSize: 12 }}>{isOpen ? "▲" : "▼"}</span>
+                  <span style={{ color: "var(--faint)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform .2s", display: "flex" }}>
+                    <Icon name="chevron-down" size={16} color="#B4C2BA" stroke={2} />
+                  </span>
                 </div>
               </div>
               <RateBar value={s.completionRate} peer={peerData?.avgCompletionRate} />
@@ -179,9 +186,16 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
       })}
 
       {!loading && subjects.length > 0 && (
-        <p style={{ fontSize: 12, textAlign: "center", color: "var(--faint)", marginTop: 4 }}>
-          주황 선은 동학년 평균 위치입니다
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 14, height: 8, borderRadius: 4, background: "var(--green)", display: "block" }} />
+            <span style={{ fontSize: 11.5, color: "var(--faint)", fontWeight: 600 }}>내 완료율</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 3, height: 12, borderRadius: 2, background: "var(--amber)", display: "block" }} />
+            <span style={{ fontSize: 11.5, color: "var(--faint)", fontWeight: 600 }}>동학년 평균</span>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -204,7 +218,12 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
                 cursor: "pointer", transition: "all .15s",
               }}
             >
-              <span style={{ fontSize: 24 }}>{c.emoji}</span>
+              <span style={{
+                width: 48, height: 48, borderRadius: 14, background: "#E9F4EC",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Icon name={c.icon} size={26} color="#16A34A" stroke={1.9} />
+              </span>
               <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginTop: 4 }}>{c.name}</p>
               <p style={{ fontSize: 12, color: "var(--faint)" }}>{c.shortDesc}</p>
             </button>
@@ -216,7 +235,12 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
       {selectedCareer && (
         <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <span style={{ fontSize: 30 }}>{selectedCareer.emoji}</span>
+            <span style={{
+              width: 52, height: 52, borderRadius: 16, background: "#E9F4EC",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <Icon name={selectedCareer.icon} size={28} color="#16A34A" stroke={1.9} />
+            </span>
             <div>
               <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text)" }}>{selectedCareer.name}</h3>
               {gradeLabel && (
@@ -243,7 +267,12 @@ export default function StatsView({ pairId, effectiveGrade, gradeLabel, childNam
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 18 }}>{SUBJECT_EMOJI[subject] ?? "📝"}</span>
+                    <span style={{
+                      width: 32, height: 32, borderRadius: 9, background: "#E9F4EC",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      <Icon name={SUBJECT_ICON[subject] ?? "book-open"} size={17} color="#16A34A" stroke={2} />
+                    </span>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{subject}</span>
                       <span style={{

@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getEffectiveGrade, getGradeLabel } from "@/lib/grade";
-import { getAvatar } from "@/lib/avatars";
 import StatsView from "@/app/child/stats/StatsView";
 import BackButton from "@/components/ui/BackButton";
+import BottomNav from "@/components/ui/BottomNav";
 
 export default async function ParentStatsPage() {
   const supabase = await createClient();
@@ -18,7 +18,6 @@ export default async function ParentStatsPage() {
 
   if (profile?.role !== "parent") redirect("/child/stats");
 
-  // pairs 테이블에서 부모의 첫 번째 연결된 페어 조회
   const { data: pairs } = await supabase
     .from("pairs")
     .select("id, child_id")
@@ -33,7 +32,7 @@ export default async function ParentStatsPage() {
 
   const { data: childProfile } = await supabase
     .from("user_profiles")
-    .select("display_name, avatar_id, grade, grade_school_year")
+    .select("display_name, grade, grade_school_year")
     .eq("id", activePair.child_id)
     .single();
 
@@ -42,21 +41,29 @@ export default async function ParentStatsPage() {
     childProfile?.grade_school_year as number | null
   );
   const gradeLabel = getGradeLabel(effectiveGrade);
-  const avatar = getAvatar(childProfile?.avatar_id as string | null);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-lg mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <BackButton />
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{avatar.emoji}</span>
-            <div>
-              <h1 className="text-xl font-bold">{childProfile?.display_name ?? "자녀"} 학습 통계</h1>
-              {gradeLabel && <p className="text-xs text-gray-400">{gradeLabel} 기준</p>}
-            </div>
-          </div>
+    <div
+      style={{
+        minHeight: "100svh",
+        background: "#F1F7F3",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 430,
+        margin: "0 auto",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "16px 18px 8px", flexShrink: 0 }}>
+        <BackButton />
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>
+            {childProfile?.display_name ?? "자녀"} 학습 통계
+          </h1>
+          {gradeLabel && <p style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, margin: "2px 0 0" }}>{gradeLabel} 기준</p>}
         </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <StatsView
           pairId={pairId}
           effectiveGrade={effectiveGrade ?? 0}
@@ -64,6 +71,8 @@ export default async function ParentStatsPage() {
           childName={childProfile?.display_name ?? ""}
         />
       </div>
-    </main>
+
+      <BottomNav active="홈" role="parent" />
+    </div>
   );
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getEffectiveGrade, getGradeLabel } from "@/lib/grade";
 import StatsView from "./StatsView";
 import BackButton from "@/components/ui/BackButton";
+import BottomNav from "@/components/ui/BottomNav";
 
 export default async function ChildStatsPage() {
   const supabase = await createClient();
@@ -24,15 +25,25 @@ export default async function ChildStatsPage() {
   const gradeLabel = getGradeLabel(effectiveGrade);
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-lg mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <BackButton />
-          <div>
-            <h1 className="text-xl font-bold">내 학습 통계</h1>
-            {gradeLabel && <p className="text-xs text-gray-400">{gradeLabel} 기준</p>}
-          </div>
+    <div
+      style={{
+        minHeight: "100svh",
+        background: "#F1F7F3",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: 430,
+        margin: "0 auto",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "16px 18px 8px", flexShrink: 0 }}>
+        <BackButton />
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>내 학습 통계</h1>
+          {gradeLabel && <p style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, margin: "2px 0 0" }}>{gradeLabel} 기준</p>}
         </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <StatsView
           pairId={profile.pair_id}
           effectiveGrade={effectiveGrade ?? 0}
@@ -40,6 +51,8 @@ export default async function ChildStatsPage() {
           childName={profile.display_name ?? ""}
         />
       </div>
-    </main>
+
+      <BottomNav active="홈" role="child" />
+    </div>
   );
 }

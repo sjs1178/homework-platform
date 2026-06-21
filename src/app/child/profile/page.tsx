@@ -4,6 +4,7 @@ import ProfileEditForm from "./ProfileEditForm";
 import PairInput from "@/app/child/dashboard/PairInput";
 import Icon from "@/components/ui/Icon";
 import BackButton from "@/components/ui/BackButton";
+import BottomNav from "@/components/ui/BottomNav";
 
 export default async function ChildProfilePage() {
   const supabase = await createClient();
@@ -17,14 +18,14 @@ export default async function ChildProfilePage() {
     .single();
 
   return (
-    <div style={{ minHeight: "100svh", background: "var(--bg)", maxWidth: 430, margin: "0 auto" }}>
+    <div style={{ minHeight: "100svh", background: "var(--bg)", display: "flex", flexDirection: "column", maxWidth: 430, margin: "0 auto" }}>
       {/* 헤더 */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 18px 14px", flexShrink: 0 }}>
         <BackButton />
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>내 프로필 설정</h1>
       </div>
 
-      <div style={{ padding: "0 20px 40px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <ProfileEditForm
           userId={user.id}
           displayName={profile?.display_name ?? ""}
@@ -81,6 +82,8 @@ export default async function ChildProfilePage() {
           </a>
         </div>
       </div>
+
+      <BottomNav active="내정보" role="child" />
     </div>
   );
 }

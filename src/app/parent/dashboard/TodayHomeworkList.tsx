@@ -96,8 +96,15 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: 28, marginBottom: 8 }}>📋</div>
-          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--muted)", margin: "0 0 14px" }}>오늘 숙제가 없어요</p>
+          <div style={{
+            width: 64, height: 64, borderRadius: 20, background: "#E9F4EC",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 12px",
+          }}>
+            <Icon name="clipboard-check" size={34} color="#9DB3A6" stroke={1.9} />
+          </div>
+          <p style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", margin: "0 0 4px" }}>검사할 숙제가 없어요</p>
+          <p style={{ fontSize: 12.5, color: "var(--faint)", margin: "0 0 14px", fontWeight: 600 }}>숙제를 입력하면 여기서 확인할 수 있어요</p>
           <a
             href="/parent/homework/new"
             style={{

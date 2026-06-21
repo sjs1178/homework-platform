@@ -63,6 +63,7 @@ export default async function ChildDashboard() {
   let rewardBalance = 0;
   let rewardUnit = "P";
   let nextHw: { id: string; subject: string; description: string; due_date: string; due_time: string | null } | null = null;
+  let missionDaily = { total: 0, done: 0 };
 
   if (hasPair) {
     const { monday, sunday } = getWeekRange();
@@ -115,6 +116,13 @@ export default async function ChildDashboard() {
     rewardBalance = logs.reduce((s, l) => s + (l.type === "earn" ? l.amount : -l.amount), 0);
     rewardUnit = settingsRes.data?.point_reward_unit ?? "P";
     nextHw = nextRes.data ?? null;
+
+    // 데일리 미션 진행률
+    const todayHws = weekHws.filter((h) => h.due_date === todayStr);
+    missionDaily = {
+      total: todayHws.length,
+      done: todayHws.filter((h) => h.is_completed).length,
+    };
   }
 
   return (
@@ -249,6 +257,51 @@ export default async function ChildDashboard() {
               </div>
             </div>
 
+            {/* 미션 배너 */}
+            <a
+              href="/child/missions"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "14px 16px",
+                background: "#fff",
+                borderRadius: 16,
+                boxShadow: "var(--sh-md)",
+                textDecoration: "none",
+                marginTop: 14,
+                border: missionDaily.total > 0 && missionDaily.done >= missionDaily.total
+                  ? "1.5px solid var(--green)"
+                  : "1.5px solid transparent",
+              }}
+            >
+              <span
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 11,
+                  background: "linear-gradient(140deg,#34D399,#16A34A)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon name="target" size={19} color="#fff" stroke={2} />
+              </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text)" }}>오늘의 미션</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, marginTop: 1 }}>
+                  {missionDaily.total === 0
+                    ? "오늘 숙제가 없어요"
+                    : missionDaily.done >= missionDaily.total
+                      ? "달성 완료! 리워드를 받으세요"
+                      : `${missionDaily.done}/${missionDaily.total} 완료`}
+                </div>
+              </div>
+              <Icon name="chevron-right" size={18} color="var(--faint)" stroke={2} />
+            </a>
+
             {/* 다음 숙제 카드 */}
             <div style={{ margin: "20px 4px 11px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>다음 숙제</h2>
@@ -315,9 +368,18 @@ export default async function ChildDashboard() {
                   boxShadow: "var(--sh-sm)", marginBottom: 16,
                 }}
               >
-                <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--muted)" }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: 20, background: "#E9F4EC",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 12px",
+                }}>
+                  <Icon name="party-popper" size={34} color="#9DB3A6" stroke={1.9} />
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 800, color: "var(--text)" }}>
                   남은 숙제가 없어요!
+                </p>
+                <p style={{ fontSize: 12.5, color: "var(--faint)", fontWeight: 600, marginTop: 4 }}>
+                  오늘 할 일을 모두 마쳤어요
                 </p>
               </div>
             )}

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CalendarView from "./CalendarView";
 import BackButton from "@/components/ui/BackButton";
+import BottomNav from "@/components/ui/BottomNav";
 import NotificationSetup from "@/components/NotificationSetup";
 
 export default async function ChildCalendarPage() {
@@ -70,7 +71,7 @@ export default async function ChildCalendarPage() {
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>숙제 캘린더</h1>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 24px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <NotificationSetup homeworks={homeworksWithCheck} />
         <CalendarView
           year={year}
@@ -80,6 +81,8 @@ export default async function ChildCalendarPage() {
           pairIds={allPairIds}
         />
       </div>
+
+      <BottomNav active="캘린더" role="child" />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { getEffectiveGradeLabel } from "@/lib/grade";
 import SettingsView from "./SettingsView";
 import Icon from "@/components/ui/Icon";
 import BackButton from "@/components/ui/BackButton";
+import BottomNav from "@/components/ui/BottomNav";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -103,7 +104,7 @@ export default async function SettingsPage() {
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>설정</h1>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 32px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <SettingsView
           parentId={user.id}
           displayName={profile?.display_name ?? ""}
@@ -114,6 +115,8 @@ export default async function SettingsPage() {
           pendingApprovals={pendingApprovals ?? []}
         />
       </div>
+
+      <BottomNav active="내정보" role="parent" />
     </div>
   );
 }

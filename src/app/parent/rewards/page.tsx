@@ -4,6 +4,7 @@ import { createClient as createAdmin } from "@supabase/supabase-js";
 import RewardsManager from "./RewardsManager";
 import Icon from "@/components/ui/Icon";
 import BackButton from "@/components/ui/BackButton";
+import BottomNav from "@/components/ui/BottomNav";
 
 export default async function ParentRewardsPage() {
   const supabase = await createClient();
@@ -82,7 +83,7 @@ export default async function ParentRewardsPage() {
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>리워드 관리</h1>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 32px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <RewardsManager
           pairId={pairId}
           childId={childId ?? ""}
@@ -108,6 +109,8 @@ export default async function ParentRewardsPage() {
           }))}
         />
       </div>
+
+      <BottomNav active="리워드" role="parent" />
     </div>
   );
 }

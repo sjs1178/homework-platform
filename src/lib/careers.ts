@@ -7,6 +7,7 @@ export interface CareerPath {
   id: string;
   name: string;
   emoji: string;
+  icon: string;
   shortDesc: string;
   coreSubjects: CareerSubjectRec[];
   elementaryTip: string;
@@ -19,6 +20,7 @@ export const CAREERS: CareerPath[] = [
     id: "medical",
     name: "의료·보건의료",
     emoji: "🏥",
+    icon: "stethoscope",
     shortDesc: "의사·치과·한의·약사·수의사",
     coreSubjects: [
       { subject: "수학", importance: "필수" },
@@ -34,6 +36,7 @@ export const CAREERS: CareerPath[] = [
     id: "nursing",
     name: "간호·보건·재활",
     emoji: "💊",
+    icon: "heart-pulse",
     shortDesc: "간호사·임상병리사·물리치료사",
     coreSubjects: [
       { subject: "과학", importance: "필수" },
@@ -49,6 +52,7 @@ export const CAREERS: CareerPath[] = [
     id: "engineering",
     name: "공학·IT·SW",
     emoji: "💻",
+    icon: "code",
     shortDesc: "개발자·AI 엔지니어·반도체",
     coreSubjects: [
       { subject: "수학", importance: "필수" },
@@ -64,6 +68,7 @@ export const CAREERS: CareerPath[] = [
     id: "science",
     name: "자연과학·연구",
     emoji: "🔬",
+    icon: "flask-conical",
     shortDesc: "기초과학·생명공학·데이터 과학자",
     coreSubjects: [
       { subject: "수학", importance: "필수" },
@@ -79,6 +84,7 @@ export const CAREERS: CareerPath[] = [
     id: "law",
     name: "법률·행정·공공",
     emoji: "⚖️",
+    icon: "scale",
     shortDesc: "변호사·판검사·공무원",
     coreSubjects: [
       { subject: "국어", importance: "필수" },
@@ -94,6 +100,7 @@ export const CAREERS: CareerPath[] = [
     id: "business",
     name: "경영·경제·금융",
     emoji: "📈",
+    icon: "trending-up",
     shortDesc: "회계사·세무사·금융·컨설팅",
     coreSubjects: [
       { subject: "수학", importance: "필수" },
@@ -109,6 +116,7 @@ export const CAREERS: CareerPath[] = [
     id: "education",
     name: "교육·인문사회",
     emoji: "📚",
+    icon: "graduation-cap",
     shortDesc: "교사·교수·연구자·작가",
     coreSubjects: [
       { subject: "국어", importance: "필수" },
@@ -124,6 +132,7 @@ export const CAREERS: CareerPath[] = [
     id: "arts",
     name: "예술·디자인·콘텐츠",
     emoji: "🎨",
+    icon: "palette",
     shortDesc: "디자이너·영상작가·뮤지션",
     coreSubjects: [
       { subject: "미술", importance: "필수" },
