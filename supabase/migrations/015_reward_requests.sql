@@ -18,6 +18,11 @@ CREATE INDEX IF NOT EXISTS idx_reward_requests_status ON reward_requests(status)
 ALTER TABLE reward_requests ENABLE ROW LEVEL SECURITY;
 
 -- 자녀: 자신의 요청 읽기/생성
+DROP POLICY IF EXISTS "child_read_own" ON reward_requests;
+DROP POLICY IF EXISTS "child_insert_own" ON reward_requests;
+DROP POLICY IF EXISTS "parent_read_pair" ON reward_requests;
+DROP POLICY IF EXISTS "parent_update_pair" ON reward_requests;
+
 CREATE POLICY "child_read_own" ON reward_requests
   FOR SELECT USING (child_id = auth.uid());
 

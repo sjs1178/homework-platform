@@ -119,12 +119,13 @@ export default function DayDetail({ date, homeworks, childId, onComplete }: Prop
                   {hw.is_completed && <Icon name="check" size={16} color="#fff" stroke={3} />}
                 </span>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5, overflow: "hidden" }}>
                     <span
                       style={{
                         fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 7,
                         background: subjectBg, color: subjectColor, whiteSpace: "nowrap",
+                        overflow: "hidden", textOverflow: "ellipsis", minWidth: 0,
                       }}
                     >
                       {hw.subject}

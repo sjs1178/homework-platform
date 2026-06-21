@@ -11,6 +11,8 @@ create table if not exists mission_settings (
 );
 
 alter table mission_settings enable row level security;
+drop policy if exists "pair members can read" on mission_settings;
+drop policy if exists "parent can upsert" on mission_settings;
 create policy "pair members can read" on mission_settings for select using (
   pair_id in (select id from pairs where parent_id = auth.uid() or child_id = auth.uid())
 );
@@ -33,6 +35,8 @@ create unique index mission_claims_unique on mission_claims(pair_id, child_id, m
 create index mission_claims_pair on mission_claims(pair_id);
 
 alter table mission_claims enable row level security;
+drop policy if exists "pair members can read" on mission_claims;
+drop policy if exists "child can insert own" on mission_claims;
 create policy "pair members can read" on mission_claims for select using (
   pair_id in (select id from pairs where parent_id = auth.uid() or child_id = auth.uid())
 );

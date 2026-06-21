@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import { checkHomework, checkHomeworkByText, CheckResult } from "@/lib/check-homework";
-import { tagCurriculum } from "@/lib/curriculum";
+import { tagCurriculum, type CurriculumMeta } from "@/lib/curriculum";
 import { getEffectiveGrade } from "@/lib/grade";
+import { updateSkillRecord } from "@/lib/skill-records";
 import type { AiProvider } from "@/lib/ai-token";
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
@@ -63,7 +64,8 @@ export async function POST(req: NextRequest) {
   }
 
   // curriculum_meta 백필
-  if (!hw.curriculum_meta) {
+  let currMeta = hw.curriculum_meta as CurriculumMeta | null;
+  if (!currMeta) {
     const { data: pair } = await admin
       .from("pairs")
       .select("child_id")
@@ -79,9 +81,9 @@ export async function POST(req: NextRequest) {
         childProfile?.grade ?? null,
         childProfile?.grade_school_year ?? null
       );
-      const meta = tagCurriculum(hw.subject, hw.description ?? "", effectiveGrade);
-      if (meta) {
-        await admin.from("homeworks").update({ curriculum_meta: meta }).eq("id", homeworkId);
+      currMeta = tagCurriculum(hw.subject, hw.description ?? "", effectiveGrade);
+      if (currMeta) {
+        await admin.from("homeworks").update({ curriculum_meta: currMeta }).eq("id", homeworkId);
       }
     }
   }
@@ -142,6 +144,11 @@ export async function POST(req: NextRequest) {
         });
       }
     }
+  }
+
+  // 스킬 숙달 기록 업데이트
+  if (currMeta && result.total > 0 && childId) {
+    updateSkillRecord(admin, hw.pair_id, childId, currMeta, result).catch(() => {});
   }
 
   return NextResponse.json({ ok: true, result, checkId: checkRow?.id ?? null });
