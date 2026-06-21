@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { KiddoloopAppicon } from "@/components/ui/Logo";
 import Icon from "@/components/ui/Icon";
@@ -87,14 +87,7 @@ export default function WalkthroughClient() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("wt_seen")) {
-      router.replace("/auth/login");
-    }
-  }, [router]);
-
   function handleStart() {
-    localStorage.setItem("wt_seen", "1");
     router.push("/auth/login");
   }
 
