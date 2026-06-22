@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import Icon from "@/components/ui/Icon";
+import { getKSTWeekdayIndex } from "@/lib/date";
 
 const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -12,7 +13,7 @@ export interface ChildData {
   gradeLabel: string;
   streak: number;
   weeklyDone: number;
-  weeklyDots: boolean[];
+  weeklyDots: { hasHomework: boolean; done: boolean }[];
   balance: number;
   unit: string;
 }
@@ -30,7 +31,7 @@ export default function ChildCarousel({ items, onSelect }: Props) {
   const touchDeltaX = useRef(0);
   const isHorizontalSwipe = useRef<boolean | null>(null);
   const animFrame = useRef(0);
-  const todayIdx = (new Date().getDay() + 6) % 7;
+  const todayIdx = getKSTWeekdayIndex();
 
   const getTranslateX = useCallback(
     (index: number, offset = 0) =>
@@ -304,7 +305,7 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
         style={{ display: "flex", justifyContent: "space-between", marginTop: 11, position: "relative", textDecoration: "none", color: "inherit" }}
       >
         {DAY_LABELS.map((label, i) => {
-          const done = child.weeklyDots[i];
+          const { hasHomework, done } = child.weeklyDots[i];
           const isToday = i === todayIdx;
           return (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -317,11 +318,12 @@ function HeroCard({ child, todayIdx }: { child: ChildData; todayIdx: number; isA
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: done ? "#fff" : isToday ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.13)",
+                  background: done ? "#fff" : hasHomework ? "rgba(255,193,7,.55)" : isToday ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.13)",
                   border: isToday && !done ? "2px dashed rgba(255,255,255,.8)" : "none",
                 }}
               >
                 {done && <Icon name="check" size={15} color="#16A34A" stroke={3} />}
+                {!done && hasHomework && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#FBBF24", display: "block" }} />}
               </span>
             </div>
           );

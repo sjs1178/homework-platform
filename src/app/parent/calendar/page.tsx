@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import { getKSTYearMonth } from "@/lib/date";
 import ParentCalendarView from "./ParentCalendarView";
 import BottomNav from "@/components/ui/BottomNav";
 import EmptyState from "@/components/ui/EmptyState";
@@ -62,9 +63,7 @@ export default async function ParentCalendarPage() {
     childNameByPairId[p.id] = profileMap[p.child_id] ?? null;
   });
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month } = getKSTYearMonth();
   const from = `${year}-${String(month).padStart(2, "0")}-01`;
   const to = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
 

@@ -9,6 +9,7 @@ import Icon from "@/components/ui/Icon";
 import AiProcessing from "@/components/ui/AiProcessing";
 import AdGateModal from "@/components/ui/AdGateModal";
 import { getStoredAiToken } from "@/lib/ai-token";
+import { toKSTDateString } from "@/lib/date";
 
 interface Props {
   pairId: string;
@@ -28,7 +29,7 @@ const SUBJECT_COLORS: Record<string, [string, string]> = {
   영어: ["#ECFEFF", "#0891B2"],
 };
 
-const today = new Date().toISOString().split("T")[0];
+const today = toKSTDateString();
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (

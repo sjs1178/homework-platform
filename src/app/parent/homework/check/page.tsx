@@ -87,7 +87,7 @@ export default async function ParentHomeworkCheckPage({
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", lineHeight: 1.1 }}>
             숙제 검사
           </h1>
-          <div style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, marginTop: 2, whiteSpace: "nowrap" }}>
+          <div style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "calc(100vw - 120px)" }}>
             {hw.subject} · {hw.description}
           </div>
         </div>

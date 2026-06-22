@@ -1,31 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { toKSTDateString, getKSTWeekRange, getKSTYearMonth } from "@/lib/date";
 import MissionBoard from "./MissionBoard";
 import BackButton from "@/components/ui/BackButton";
 import BottomNav from "@/components/ui/BottomNav";
 
-function getWeekRange() {
-  const now = new Date();
-  const day = now.getDay();
-  const mon = new Date(now);
-  mon.setDate(now.getDate() - ((day + 6) % 7));
-  mon.setHours(0, 0, 0, 0);
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
-  return {
-    from: mon.toISOString().split("T")[0],
-    to: sun.toISOString().split("T")[0],
-  };
-}
-
-function getWeekKey(date: Date): string {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const dayNum = d.getDay() || 7;
-  d.setDate(d.getDate() + 4 - dayNum);
-  const yearStart = new Date(d.getFullYear(), 0, 1);
+function getWeekKey(): string {
+  const todayStr = toKSTDateString();
+  const d = new Date(todayStr + "T12:00:00Z");
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
 }
 
 export default async function ChildMissionsPage() {
@@ -43,11 +30,9 @@ export default async function ChildMissionsPage() {
   if (allPairIds.length === 0) redirect("/child/dashboard");
   const primaryPairId = allPairIds[0];
 
-  const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
-  const { from: weekFrom, to: weekTo } = getWeekRange();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const todayStr = toKSTDateString();
+  const { mondayStr: weekFrom, sundayStr: weekTo } = getKSTWeekRange();
+  const { year, month } = getKSTYearMonth();
   const monthFrom = `${year}-${String(month).padStart(2, "0")}-01`;
   const monthTo = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
 
@@ -87,7 +72,7 @@ export default async function ChildMissionsPage() {
   const settings = settingsRes.data;
   const claims = claimsRes.data ?? [];
 
-  const weekKey = getWeekKey(now);
+  const weekKey = getWeekKey();
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
 
   const claimedSet = new Set(claims.map((c) => `${c.mission_type}:${c.period_key}`));

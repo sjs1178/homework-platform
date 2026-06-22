@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
+import { toKSTDateString } from "@/lib/date";
 
 interface Homework {
   id: string;
@@ -19,6 +20,7 @@ interface Props {
   homeworks: Homework[];
   childId: string;
   onComplete: (id: string) => void;
+  onUncomplete: (id: string) => void;
 }
 
 const SUBJECT_COLORS: Record<string, [string, string]> = {
@@ -27,9 +29,13 @@ const SUBJECT_COLORS: Record<string, [string, string]> = {
   영어: ["#ECFEFF", "#0891B2"],
 };
 
-export default function DayDetail({ date, homeworks, childId, onComplete }: Props) {
+export default function DayDetail({ date, homeworks, childId, onComplete, onUncomplete }: Props) {
   const [completing, setCompleting] = useState<string | null>(null);
   const [toast, setToast] = useState("");
+  const [detailHw, setDetailHw] = useState<Homework | null>(null);
+
+  const todayStr = toKSTDateString();
+  const isToday = date === todayStr;
 
   const label = new Date(date + "T00:00:00").toLocaleDateString("ko-KR", {
     month: "long", day: "numeric", weekday: "short",
@@ -47,7 +53,27 @@ export default function DayDetail({ date, homeworks, childId, onComplete }: Prop
 
     if (res.ok) {
       onComplete(hw.id);
-      setToast(hw.reward_amount > 0 ? `🎉 완료! +${hw.reward_amount} 적립!` : "🎉 완료!");
+      setDetailHw(null);
+      setToast(hw.reward_amount > 0 ? `완료! +${hw.reward_amount} 적립!` : "완료!");
+      setTimeout(() => setToast(""), 3000);
+    }
+    setCompleting(null);
+  }
+
+  async function handleUncomplete(hw: Homework) {
+    if (!hw.is_completed || completing) return;
+    setCompleting(hw.id);
+
+    const res = await fetch("/api/uncomplete-homework", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeworkId: hw.id }),
+    });
+
+    if (res.ok) {
+      onUncomplete(hw.id);
+      setDetailHw(null);
+      setToast("완료가 취소되었어요");
       setTimeout(() => setToast(""), 3000);
     }
     setCompleting(null);
@@ -100,15 +126,16 @@ export default function DayDetail({ date, homeworks, childId, onComplete }: Prop
             return (
               <div
                 key={hw.id}
+                onClick={() => setDetailHw(hw)}
                 style={{
                   borderRadius: 16,
                   border: `1.5px solid ${hw.is_completed ? "var(--green-200)" : "var(--line)"}`,
                   background: hw.is_completed ? "var(--green-50)" : "#FAFAF8",
                   padding: "13px 13px",
                   display: "flex", alignItems: "flex-start", gap: 12,
+                  cursor: "pointer",
                 }}
               >
-                {/* 완료 체크 */}
                 <span
                   style={{
                     width: 28, height: 28, borderRadius: "50%", flexShrink: 0, marginTop: 1,
@@ -125,7 +152,7 @@ export default function DayDetail({ date, homeworks, childId, onComplete }: Prop
                       style={{
                         fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 7,
                         background: subjectBg, color: subjectColor, whiteSpace: "nowrap",
-                        overflow: "hidden", textOverflow: "ellipsis", minWidth: 0,
+                        flexShrink: 0,
                       }}
                     >
                       {hw.subject}
@@ -146,49 +173,133 @@ export default function DayDetail({ date, homeworks, childId, onComplete }: Prop
                       fontSize: 15, fontWeight: 700, color: "var(--text)",
                       textDecoration: hw.is_completed ? "line-through" : "none",
                       opacity: hw.is_completed ? 0.5 : 1, lineHeight: 1.4,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}
                   >
                     {hw.description}
                   </div>
-
-                  {/* 결과 보기 링크 */}
-                  {hw.is_completed && hw.hasCheck && (
-                    <a
-                      href={`/child/results?id=${hw.id}`}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 4,
-                        marginTop: 6, fontSize: 12.5, fontWeight: 700,
-                        color: "var(--green-d)", textDecoration: "none",
-                      }}
-                    >
-                      <Icon name="sparkles" size={13} color="var(--green-d)" stroke={2} />
-                      채점 결과 보기
-                    </a>
-                  )}
                 </div>
 
-                {/* 완료 버튼 */}
-                {!hw.is_completed && (
-                  <button
-                    onClick={() => handleComplete(hw)}
-                    disabled={completing === hw.id}
-                    style={{
-                      height: 38, padding: "0 14px", borderRadius: 11, border: "none",
-                      background: "var(--green)", color: "#fff",
-                      fontWeight: 800, fontSize: 13.5, cursor: "pointer",
-                      boxShadow: "0 4px 10px -4px rgba(22,163,74,.6)",
-                      opacity: completing === hw.id ? 0.6 : 1, flexShrink: 0,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {completing === hw.id ? "..." : "완료"}
-                  </button>
-                )}
+                <span style={{ flexShrink: 0, marginTop: 6 }}>
+                  <Icon name="chevron-right" size={16} color="var(--faint)" stroke={2} />
+                </span>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* 상세 팝업 */}
+      {detailHw && (() => {
+        const [dBg, dColor] = SUBJECT_COLORS[detailHw.subject] ?? ["var(--green-50)", "var(--green-d)"];
+        const canUncomplete = isToday && detailHw.is_completed;
+        return (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,.45)", display: "flex",
+              alignItems: "center", justifyContent: "center", padding: 20,
+            }}
+            onClick={() => setDetailHw(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#fff", borderRadius: 24, padding: "24px 22px 22px",
+                width: "100%", maxWidth: 360, boxShadow: "var(--sh-md)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 800, padding: "3px 10px", borderRadius: 8,
+                  background: dBg, color: dColor,
+                }}>
+                  {detailHw.subject}
+                </span>
+                <button onClick={() => setDetailHw(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  <Icon name="x" size={20} color="var(--muted)" stroke={2} />
+                </button>
+              </div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.6, marginBottom: 16, wordBreak: "break-word" }}>
+                {detailHw.description}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: "var(--text-soft)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="calendar" size={15} color="var(--muted)" stroke={2} />
+                  <span style={{ fontWeight: 600 }}>
+                    {detailHw.due_date}{detailHw.due_time ? ` ${detailHw.due_time.slice(0, 5)}` : ""}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="check-circle" size={15} color={detailHw.is_completed ? "var(--green)" : "var(--faint)"} stroke={2} />
+                  <span style={{ fontWeight: 700, color: detailHw.is_completed ? "var(--green-d)" : "var(--muted)" }}>
+                    {detailHw.is_completed ? "완료" : "미완료"}
+                  </span>
+                </div>
+                {detailHw.reward_amount > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Icon name="star" size={15} color="var(--amber-d)" stroke={0} fill="var(--amber-d)" />
+                    <span style={{ fontWeight: 800, color: "var(--amber-d)" }}>+{detailHw.reward_amount}</span>
+                  </div>
+                )}
+              </div>
+
+              {detailHw.is_completed && detailHw.hasCheck && (
+                <a
+                  href={`/child/results?id=${detailHw.id}`}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green-100)", color: "var(--green-d)",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    marginTop: 18, textDecoration: "none",
+                  }}
+                >
+                  <Icon name="sparkles" size={18} color="var(--green-d)" stroke={2} />
+                  채점 결과 보기
+                </a>
+              )}
+
+              {!detailHw.is_completed && (
+                <button
+                  onClick={() => handleComplete(detailHw)}
+                  disabled={completing === detailHw.id}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green)", color: "#fff",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    boxShadow: "var(--sh-green)", marginTop: 18,
+                    opacity: completing === detailHw.id ? 0.6 : 1,
+                  }}
+                >
+                  <Icon name="check-circle" size={18} color="#fff" stroke={2} />
+                  {completing === detailHw.id ? "처리 중..." : "완료하기"}
+                </button>
+              )}
+
+              {canUncomplete && (
+                <button
+                  onClick={() => handleUncomplete(detailHw)}
+                  disabled={completing === detailHw.id}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14,
+                    border: "1.5px solid var(--line-strong)", background: "#fff",
+                    color: "var(--muted)",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    marginTop: detailHw.hasCheck ? 10 : 18,
+                    opacity: completing === detailHw.id ? 0.6 : 1,
+                  }}
+                >
+                  <Icon name="rotate-ccw" size={16} color="var(--muted)" stroke={2} />
+                  {completing === detailHw.id ? "처리 중..." : "완료 취소하기"}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {toast && (
         <div

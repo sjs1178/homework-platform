@@ -398,22 +398,41 @@ export default function HomeworkCheckForm({
     if (images.length) body.images = images.map(({ base64, mediaType }) => ({ base64, mediaType }));
     if (text.trim()) body.text = text.trim();
 
-    const res = await fetch("/api/check-homework", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      setError(json.error ?? "채점 중 오류가 발생했어요.");
-    } else {
-      setResult(json.result);
-      setScore({ score: json.result.score, total: json.result.total });
-      setCheckId(json.checkId ?? null);
-      setImages([]);
-      setText("");
-      setEditing({});
-      setIsReviewed(json.result.total === 0);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90_000);
+
+    try {
+      const res = await fetch("/api/check-homework", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        let msg = "채점 중 오류가 발생했어요.";
+        try { const json = await res.json(); msg = json.error ?? msg; } catch {
+          if (res.status === 504) msg = "요청 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.";
+        }
+        setError(msg);
+      } else {
+        const json = await res.json();
+        setResult(json.result);
+        setScore({ score: json.result.score, total: json.result.total });
+        setCheckId(json.checkId ?? null);
+        setImages([]);
+        setText("");
+        setEditing({});
+        setIsReviewed(json.result.total === 0);
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("요청 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.");
+      } else {
+        setError("네트워크 오류가 발생했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
+      }
     }
     setChecking(false);
   }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { toKSTDateString } from "@/lib/date";
 import DayDetail from "./DayDetail";
 import Icon from "@/components/ui/Icon";
 
@@ -35,10 +36,9 @@ export default function CalendarView({ year: initYear, month: initMonth, homewor
   const [month, setMonth] = useState(initMonth);
   const [homeworks, setHomeworks] = useState(initHomeworks);
   const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = toKSTDateString();
+  const [selectedDate, setSelectedDate] = useState<string | null>(todayStr);
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
 
@@ -95,6 +95,10 @@ export default function CalendarView({ year: initYear, month: initMonth, homewor
 
   function handleComplete(id: string) {
     setHomeworks((prev) => prev.map((h) => (h.id === id ? { ...h, is_completed: true } : h)));
+  }
+
+  function handleUncomplete(id: string) {
+    setHomeworks((prev) => prev.map((h) => (h.id === id ? { ...h, is_completed: false } : h)));
   }
 
   const selectedHomeworks = selectedDate ? homeworks.filter((h) => h.due_date === selectedDate) : [];
@@ -271,6 +275,7 @@ export default function CalendarView({ year: initYear, month: initMonth, homewor
           homeworks={selectedHomeworks}
           childId={childId}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
         />
       )}
     </div>

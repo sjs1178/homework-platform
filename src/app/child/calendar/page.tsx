@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getKSTYearMonth } from "@/lib/date";
 import CalendarView from "./CalendarView";
 import BackButton from "@/components/ui/BackButton";
 import BottomNav from "@/components/ui/BottomNav";
@@ -20,9 +21,7 @@ export default async function ChildCalendarPage() {
   const allPairIds = (pairs ?? []).map((p) => p.id);
   if (allPairIds.length === 0) redirect("/child/dashboard");
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month } = getKSTYearMonth();
   const from = `${year}-${String(month).padStart(2, "0")}-01`;
   const to = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
 

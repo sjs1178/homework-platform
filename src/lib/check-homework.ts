@@ -2,7 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { AiProvider } from "./ai-token";
 import { callCheckHomework } from "./ai-caller";
 
-const systemClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const systemClient = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 55_000,
+});
 
 export interface Problem {
   number: number;

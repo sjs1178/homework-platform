@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
+import { toKSTDateString, getKSTWeekRange, getKSTWeekdayIndex, getKSTWeekDates } from "@/lib/date";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
 import { LogoLockup } from "@/components/ui/Logo";
@@ -13,18 +14,6 @@ const SUBJECT_COLORS: Record<string, [string, string]> = {
   국어: ["#FEF2F2", "#E11D48"],
   영어: ["#ECFEFF", "#0891B2"],
 };
-
-function getWeekRange() {
-  const now = new Date();
-  const day = now.getDay();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((day + 6) % 7));
-  monday.setHours(0, 0, 0, 0);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
-  return { monday, sunday };
-}
 
 export default async function ChildDashboard() {
   const supabase = await createClient();
@@ -54,8 +43,8 @@ export default async function ChildDashboard() {
     profile?.grade_school_year as number | null
   );
   const childName = profile?.display_name ?? "자녀";
-  const todayIdx = (new Date().getDay() + 6) % 7;
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayIdx = getKSTWeekdayIndex();
+  const todayStr = toKSTDateString();
 
   // ── 페어링된 경우에만 데이터 로드 ────────────────────
   let weeklyDots: { hasHomework: boolean; done: boolean }[] = Array(7).fill({ hasHomework: false, done: false });
@@ -66,9 +55,7 @@ export default async function ChildDashboard() {
   let missionDaily = { total: 0, done: 0 };
 
   if (hasPair) {
-    const { monday, sunday } = getWeekRange();
-    const mondayStr = monday.toISOString().split("T")[0];
-    const sundayStr = sunday.toISOString().split("T")[0];
+    const { mondayStr, sundayStr } = getKSTWeekRange();
     // primary pair_id (리워드 설정용)
     const primaryPairId = profile?.pair_id ?? allPairIds[0];
 
@@ -104,12 +91,11 @@ export default async function ChildDashboard() {
     const completedDates = new Set(weekHws.filter((h) => h.is_completed).map((h) => h.due_date));
     const hasDates = new Set(weekHws.map((h) => h.due_date));
 
-    weeklyDots = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      const ds = d.toISOString().split("T")[0];
-      return { hasHomework: hasDates.has(ds), done: completedDates.has(ds) };
-    });
+    const weekDates = getKSTWeekDates();
+    weeklyDots = weekDates.map((ds) => ({
+      hasHomework: hasDates.has(ds),
+      done: completedDates.has(ds),
+    }));
     weeklyDone = weeklyDots.filter((d) => d.done).length;
 
     const logs = logsRes.data ?? [];
@@ -328,36 +314,25 @@ export default async function ChildDashboard() {
                   >
                     <Icon name="book-open" size={24} color="var(--green)" stroke={2} />
                   </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center", overflow: "hidden" }}>
                       {(() => {
                         const [bg, color] = SUBJECT_COLORS[nextHw.subject] ?? ["var(--green-50)", "var(--green-d)"];
                         return (
-                          <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 8, background: bg, color, whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 8, background: bg, color, whiteSpace: "nowrap", flexShrink: 0 }}>
                             {nextHw.subject}
                           </span>
                         );
                       })()}
-                      <span style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
                         {nextHw.due_date}
                         {nextHw.due_time && ` · ${nextHw.due_time.slice(0, 5)}`}
                       </span>
                     </div>
-                    <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)" }}>
+                    <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {nextHw.description}
                     </div>
                   </div>
-                </div>
-                <div
-                  style={{
-                    width: "100%", height: 42, borderRadius: 12,
-                    background: "var(--green)", color: "#fff",
-                    fontWeight: 800, fontSize: 14, marginTop: 13,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  }}
-                >
-                  캘린더에서 완료하기
-                  <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
                 </div>
               </a>
             ) : (

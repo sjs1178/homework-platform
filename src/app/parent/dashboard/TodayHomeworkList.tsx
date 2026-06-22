@@ -157,12 +157,12 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                 >
                   <Icon name={statusIcon} size={19} color={statusColor} stroke={2} />
                 </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "center", overflow: "hidden" }}>
                     <span style={{
                       display: "inline-flex", alignItems: "center", fontWeight: 700,
                       fontSize: 12, padding: "4px 9px", borderRadius: 8,
-                      background: subBg, color: subColor, whiteSpace: "nowrap",
+                      background: subBg, color: subColor, whiteSpace: "nowrap", flexShrink: 0,
                     }}>
                       {hw.subject}
                     </span>
@@ -177,7 +177,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)" }}>
+                  <div style={{ fontSize: 15.5, fontWeight: 800, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {hw.description}
                   </div>
                 </div>

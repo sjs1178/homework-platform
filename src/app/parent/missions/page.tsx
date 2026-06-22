@@ -1,23 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import { toKSTDateString, getKSTWeekRange, getKSTYearMonth } from "@/lib/date";
 import MissionSettings from "./MissionSettings";
 import BackButton from "@/components/ui/BackButton";
 import BottomNav from "@/components/ui/BottomNav";
-
-function getWeekRange() {
-  const now = new Date();
-  const day = now.getDay();
-  const mon = new Date(now);
-  mon.setDate(now.getDate() - ((day + 6) % 7));
-  mon.setHours(0, 0, 0, 0);
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
-  return {
-    from: mon.toISOString().split("T")[0],
-    to: sun.toISOString().split("T")[0],
-  };
-}
 
 export default async function ParentMissionsPage() {
   const supabase = await createClient();
@@ -64,14 +51,12 @@ export default async function ParentMissionsPage() {
 
   const unit = rewardSettings?.point_reward_unit ?? "P";
 
-  // 현재 미션 진행 현황
-  const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
-  const { from: weekFrom, to: weekTo } = getWeekRange();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const todayStr = toKSTDateString();
+  const { mondayStr: weekFrom, sundayStr: weekTo } = getKSTWeekRange();
+  const { year, month } = getKSTYearMonth();
   const monthFrom = `${year}-${String(month).padStart(2, "0")}-01`;
-  const monthTo = `${year}-${String(month).padStart(2, "0")}-${new Date(year, month, 0).getDate()}`;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const monthTo = `${year}-${String(month).padStart(2, "0")}-${daysInMonth}`;
 
   const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
     admin.from("homeworks").select("id, is_completed").eq("pair_id", pairId).eq("due_date", todayStr),

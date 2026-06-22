@@ -102,14 +102,21 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     const raw = err instanceof Error ? err.message : "";
+    const name = err instanceof Error ? err.name : "";
     const lower = raw.toLowerCase();
     let msg = "채점 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.";
-    if (lower.includes("quota") || lower.includes("rate") || lower.includes("429"))
+    if (name === "APIConnectionTimeoutError" || name === "AbortError" || lower.includes("timeout") || lower.includes("timed out"))
+      msg = "AI 응답 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.";
+    else if (lower.includes("request too large") || lower.includes("413") || lower.includes("payload"))
+      msg = "이미지 용량이 너무 커요. 사진 수를 줄이거나 작은 이미지를 사용해 주세요.";
+    else if (lower.includes("quota") || lower.includes("rate") || lower.includes("429"))
       msg = "API 키의 사용 한도가 초과되었어요. 잠시 후 다시 시도하거나, 다른 AI 키를 사용해 주세요.";
     else if (lower.includes("invalid") && lower.includes("key"))
       msg = "API 키가 유효하지 않아요. 설정에서 키를 다시 확인해 주세요.";
     else if (lower.includes("unauthorized") || lower.includes("401") || lower.includes("403"))
       msg = "API 키 인증에 실패했어요. 설정에서 키를 다시 확인해 주세요.";
+    else if (lower.includes("overloaded") || lower.includes("529"))
+      msg = "AI 서비스가 일시적으로 과부하 상태예요. 잠시 후 다시 시도해 주세요.";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 

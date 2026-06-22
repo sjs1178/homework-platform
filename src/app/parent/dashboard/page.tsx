@@ -3,23 +3,12 @@ import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
+import { toKSTDateString, getKSTWeekRange, getKSTWeekDates } from "@/lib/date";
 import ChildCarousel, { type ChildData } from "./ChildCarousel";
 import TodayHomeworkList from "./TodayHomeworkList";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
 import { LogoLockup } from "@/components/ui/Logo";
-
-function getWeekRange() {
-  const now = new Date();
-  const day = now.getDay();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((day + 6) % 7));
-  monday.setHours(0, 0, 0, 0);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
-  return { monday, sunday };
-}
 
 export default async function ParentDashboard() {
   const supabase = await createClient();
@@ -75,9 +64,7 @@ export default async function ParentDashboard() {
     );
 
     // 주간 숙제 배치 조회
-    const { monday, sunday } = getWeekRange();
-    const mondayStr = monday.toISOString().split("T")[0];
-    const sundayStr = sunday.toISOString().split("T")[0];
+    const { mondayStr, sundayStr } = getKSTWeekRange();
 
     const { data: weekHws } = await admin
       .from("homeworks")
@@ -122,22 +109,23 @@ export default async function ParentDashboard() {
       const childPairIds = childPairMap[pair.child_id!] ?? [pair.id];
       const childWeek = (weekHws ?? []).filter((h) => childPairIds.includes(h.pair_id));
       const completedDays = new Set(childWeek.filter((h) => h.is_completed).map((h) => h.due_date));
-      const weeklyDots = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        return completedDays.has(d.toISOString().split("T")[0]);
-      });
+      const hwDays = new Set(childWeek.map((h) => h.due_date));
+      const weekDates = getKSTWeekDates();
+      const weeklyDots = weekDates.map((ds) => ({
+        hasHomework: hwDays.has(ds),
+        done: completedDays.has(ds),
+      }));
 
       // 스트릭 (자녀의 모든 페어 통합)
       const pairCompleted = (allCompleted ?? [])
         .filter((h) => childPairIds.includes(h.pair_id))
         .map((h) => h.due_date);
       const completedSet = new Set(pairCompleted);
-      const today = new Date();
+      const kstToday = new Date(toKSTDateString() + "T12:00:00Z");
       let streak = 0;
       for (let i = 1; i <= 365; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
+        const d = new Date(kstToday);
+        d.setUTCDate(kstToday.getUTCDate() - i);
         if (completedSet.has(d.toISOString().split("T")[0])) streak++;
         else break;
       }
@@ -153,7 +141,7 @@ export default async function ParentDashboard() {
         childAvatar: avatar.emoji,
         gradeLabel,
         streak,
-        weeklyDone: weeklyDots.filter(Boolean).length,
+        weeklyDone: weeklyDots.filter((d) => d.done).length,
         weeklyDots,
         balance: earned - spent,
         unit: settingsMap[pair.id]?.point_reward_unit ?? "P",
@@ -161,7 +149,7 @@ export default async function ParentDashboard() {
     });
 
     // 오늘의 숙제 (전체 자녀 통합, 모든 부모 페어 포함)
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = toKSTDateString();
     const { data: todayHws } = await admin
       .from("homeworks")
       .select("id, pair_id, subject, description, due_date, due_time, is_completed")

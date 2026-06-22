@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { toKSTDateString } from "@/lib/date";
 import Icon from "@/components/ui/Icon";
 
 interface Homework {
@@ -34,7 +35,7 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
   const [month, setMonth] = useState(initMonth);
   const [homeworks, setHomeworks] = useState(initHomeworks);
   const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(toKSTDateString());
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [detailHw, setDetailHw] = useState<Homework | null>(null);
@@ -64,8 +65,7 @@ export default function ParentCalendarView({ year: initYear, month: initMonth, h
     setDeleting(null);
   }
 
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = toKSTDateString();
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
 

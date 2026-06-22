@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CurriculumMeta } from "./curriculum";
 import type { CheckResult } from "./check-homework";
+import { toKSTDateString } from "./date";
 
 interface AccuracyEntry {
   date: string;
@@ -16,7 +17,7 @@ export async function updateSkillRecord(
   meta: CurriculumMeta,
   result: CheckResult,
 ) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = toKSTDateString();
   const accuracy = Math.round((result.score / result.total) * 1000) / 1000;
 
   const { data: existing } = await admin
