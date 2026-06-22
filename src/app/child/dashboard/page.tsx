@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
 import { toKSTDateString, getKSTWeekRange, getKSTWeekdayIndex, getKSTWeekDates } from "@/lib/date";
+import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
 import { LogoLockup } from "@/components/ui/Logo";
@@ -131,7 +132,7 @@ export default async function ChildDashboard() {
           }}
         >
           <LogoLockup height={26} badge="child" />
-          <a
+          <Link
             href="/child/profile"
             style={{
               width: 40, height: 40, borderRadius: "50%",
@@ -141,7 +142,7 @@ export default async function ChildDashboard() {
             }}
           >
             {avatar.emoji}
-          </a>
+          </Link>
         </div>
 
         {!hasPair ? (
@@ -244,7 +245,7 @@ export default async function ChildDashboard() {
             </div>
 
             {/* 미션 배너 */}
-            <a
+            <Link
               href="/child/missions"
               style={{
                 display: "flex",
@@ -286,7 +287,7 @@ export default async function ChildDashboard() {
                 </div>
               </div>
               <Icon name="chevron-right" size={18} color="var(--faint)" stroke={2} />
-            </a>
+            </Link>
 
             {/* 다음 숙제 카드 */}
             <div style={{ margin: "20px 4px 11px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -294,7 +295,7 @@ export default async function ChildDashboard() {
             </div>
 
             {nextHw ? (
-              <a
+              <Link
                 href="/child/calendar"
                 style={{
                   display: "block", textDecoration: "none",
@@ -334,7 +335,7 @@ export default async function ChildDashboard() {
                     </div>
                   </div>
                 </div>
-              </a>
+              </Link>
             ) : (
               <div
                 style={{
@@ -365,7 +366,7 @@ export default async function ChildDashboard() {
                 ["calendar", "숙제 캘린더", "linear-gradient(140deg,#34D399,#16A34A)", "/child/calendar"],
                 ["gift", "내 리워드", "linear-gradient(140deg,#FBBF24,#F59E0B)", "/child/rewards"],
               ] as const).map(([icon, label, grad, href]) => (
-                <a
+                <Link
                   key={label}
                   href={href}
                   style={{
@@ -387,7 +388,7 @@ export default async function ChildDashboard() {
                   <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-soft)", whiteSpace: "nowrap" }}>
                     {label}
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
 

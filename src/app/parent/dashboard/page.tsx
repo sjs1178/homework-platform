@@ -6,6 +6,7 @@ import { getEffectiveGradeLabel } from "@/lib/grade";
 import { toKSTDateString, getKSTWeekRange, getKSTWeekDates } from "@/lib/date";
 import ChildCarousel, { type ChildData } from "./ChildCarousel";
 import TodayHomeworkList from "./TodayHomeworkList";
+import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";
 import { LogoLockup } from "@/components/ui/Logo";
@@ -208,7 +209,7 @@ export default async function ParentDashboard() {
         >
           <LogoLockup height={26} badge="parent" />
           <div style={{ display: "flex", gap: 8 }}>
-            <a
+            <Link
               href="/parent/notifications"
               style={{
                 width: 40,
@@ -238,8 +239,8 @@ export default async function ParentDashboard() {
                   }}
                 />
               )}
-            </a>
-            <a
+            </Link>
+            <Link
               href="/parent/settings"
               style={{
                 width: 40,
@@ -254,7 +255,7 @@ export default async function ParentDashboard() {
               }}
             >
               <Icon name="settings" size={19} color="var(--text-soft)" />
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -262,7 +263,7 @@ export default async function ParentDashboard() {
         {hasChildren ? (
           <ChildCarousel items={childrenData} />
         ) : (
-          <a
+          <Link
             href="/parent/settings"
             style={{
               display: "block",
@@ -280,12 +281,12 @@ export default async function ParentDashboard() {
             <div style={{ fontSize: 13, opacity: 0.75, marginTop: 6, fontWeight: 600 }}>
               설정 → 자녀 관리에서 초대 코드로 연결 →
             </div>
-          </a>
+          </Link>
         )}
 
         {/* 미션 배너 */}
         {hasChildren && (
-          <a
+          <Link
             href="/parent/missions"
             style={{
               display: "flex",
@@ -320,7 +321,7 @@ export default async function ParentDashboard() {
               </div>
             </div>
             <Icon name="chevron-right" size={18} color="var(--faint)" stroke={2} />
-          </a>
+          </Link>
         )}
 
         {/* 오늘의 숙제 */}
@@ -332,7 +333,7 @@ export default async function ParentDashboard() {
             ["square-pen", "숙제 입력", "linear-gradient(140deg,#34D399,#16A34A)", "/parent/homework/new"],
             ["gift", "리워드", "linear-gradient(140deg,#FBBF24,#F59E0B)", "/parent/rewards"],
           ] as const).map(([icon, label, grad, href]) => (
-            <a
+            <Link
               key={label}
               href={href}
               style={{
@@ -364,13 +365,13 @@ export default async function ParentDashboard() {
               <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-soft)", whiteSpace: "nowrap" }}>
                 {label}
               </span>
-            </a>
+            </Link>
           ))}
         </div>
 
         {/* 학습 통계 링크 */}
         {hasChildren && (
-          <a
+          <Link
             href="/parent/stats"
             style={{
               marginTop: 11,
@@ -389,7 +390,7 @@ export default async function ParentDashboard() {
             <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-soft)", whiteSpace: "nowrap" }}>
               학습 통계 · 직업군 가이드
             </span>
-          </a>
+          </Link>
         )}
       </div>
 

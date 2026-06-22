@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 
 interface TodayHomework {
@@ -105,7 +106,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
           </div>
           <p style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", margin: "0 0 4px" }}>검사할 숙제가 없어요</p>
           <p style={{ fontSize: 12.5, color: "var(--faint)", margin: "0 0 14px", fontWeight: 600 }}>숙제를 입력하면 여기서 확인할 수 있어요</p>
-          <a
+          <Link
             href="/parent/homework/new"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -116,7 +117,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
           >
             <Icon name="plus" size={15} stroke={2.5} color="#fff" />
             숙제 입력하기
-          </a>
+          </Link>
         </div>
       ) : (
         homeworks.map((hw) => {
@@ -206,7 +207,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                           minWidth: 150,
                         }}
                       >
-                        <a
+                        <Link
                           href={`/parent/homework/check?id=${hw.id}`}
                           onClick={closeMenu}
                           style={{
@@ -218,7 +219,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                         >
                           <Icon name="clipboard-check" size={17} color="var(--green)" stroke={2} />
                           완료 / 검사
-                        </a>
+                        </Link>
                         <button
                           onClick={() => handleDelete(hw.id)}
                           style={{
@@ -238,7 +239,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
               </div>
 
               {hw.hasCheck ? (
-                <a
+                <Link
                   href={`/parent/homework/check?id=${hw.id}`}
                   style={{
                     width: "100%", height: 38, borderRadius: 12,
@@ -250,9 +251,9 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                 >
                   <Icon name="sparkles" size={15} color="var(--green-d)" stroke={2} />
                   검사 결과 보기
-                </a>
+                </Link>
               ) : hw.is_completed ? (
-                <a
+                <Link
                   href={`/parent/homework/check?id=${hw.id}`}
                   style={{
                     width: "100%", height: 38, borderRadius: 12,
@@ -264,7 +265,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                 >
                   지금 검사하기
                   <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
-                </a>
+                </Link>
               ) : (
                 <div
                   style={{

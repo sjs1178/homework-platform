@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Icon from "./Icon";
 
 type Tab = "홈" | "캘린더" | "리워드" | "내정보";
@@ -39,7 +40,7 @@ export default function BottomNav({ active, role = "child" }: Props) {
       {TABS.map(([icon, label, href]) => {
         const on = label === active;
         return (
-          <a
+          <Link
             key={label}
             href={href}
             style={{
@@ -67,7 +68,7 @@ export default function BottomNav({ active, role = "child" }: Props) {
             >
               {label}
             </span>
-          </a>
+          </Link>
         );
       })}
     </div>
