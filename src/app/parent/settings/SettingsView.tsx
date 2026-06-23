@@ -33,6 +33,13 @@ interface PendingApproval {
   expires_at: string;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  childName: string;
+  childAvatar: string;
+  createdAt: string;
+}
+
 interface Props {
   parentId: string;
   displayName: string;
@@ -41,6 +48,7 @@ interface Props {
   rewardName: string;
   rewardUnit: string;
   pendingApprovals: PendingApproval[];
+  withdrawalRequests: WithdrawalRequest[];
 }
 
 const SCHOOL_LEVELS = ["초등", "중등", "고등"] as const;
@@ -101,6 +109,7 @@ export default function SettingsView({
   parentId, displayName, pairs: initialPairs, pairId: initialPairId,
   rewardName: initRewardName, rewardUnit: initRewardUnit,
   pendingApprovals: initialPendingApprovals,
+  withdrawalRequests: initialWithdrawalRequests,
 }: Props) {
   const router = useRouter();
   const supabase = createClient();
@@ -258,6 +267,23 @@ export default function SettingsView({
     setPendingApprovals((prev) => prev.filter((a) => a.id !== approvalId));
   }
 
+  // ── 자녀 탈퇴 요청 ───────────────────────────────────
+  const [withdrawals, setWithdrawals] = useState(initialWithdrawalRequests);
+  const [withdrawalProcessing, setWithdrawalProcessing] = useState<string | null>(null);
+
+  async function handleWithdrawalAction(requestId: string, action: "approve" | "reject") {
+    const label = action === "approve" ? "승인" : "거절";
+    if (!confirm(`자녀의 탈퇴 요청을 ${label}하시겠어요?${action === "approve" ? "\n\n승인 시 자녀의 모든 데이터가 즉시 삭제됩니다." : ""}`)) return;
+    setWithdrawalProcessing(requestId);
+    await fetch("/api/withdrawal-approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId, action }),
+    });
+    setWithdrawals((prev) => prev.filter((w) => w.id !== requestId));
+    setWithdrawalProcessing(null);
+  }
+
   // ── 로그아웃 ─────────────────────────────────────────
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -338,6 +364,71 @@ export default function SettingsView({
                       </button>
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── 자녀 탈퇴 요청 ──────────────────────────── */}
+      {withdrawals.length > 0 && (
+        <>
+          <SectionHeader>자녀 탈퇴 요청</SectionHeader>
+          <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", overflow: "hidden" }}>
+            {withdrawals.map((wr, idx) => {
+              const isProcessing = withdrawalProcessing === wr.id;
+              return (
+                <div
+                  key={wr.id}
+                  style={{
+                    padding: 16,
+                    borderBottom: idx < withdrawals.length - 1 ? "1px solid var(--line)" : "none",
+                    background: "#FEF2F2",
+                    opacity: isProcessing ? 0.5 : 1,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                    <span style={{ fontSize: 28 }}>{wr.childAvatar}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text)" }}>
+                        {wr.childName}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: "#E11D48", fontWeight: 600, marginTop: 2 }}>
+                        탈퇴를 요청했어요
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#E11D48", background: "#FFF1F2", border: "1px solid #FECDD3", padding: "3px 8px", borderRadius: 999 }}>
+                      승인 대기
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "#7F1D1D", fontWeight: 600, lineHeight: 1.6, marginBottom: 12, padding: "8px 12px", background: "#FFF1F2", borderRadius: 10, border: "1px solid #FECDD3" }}>
+                    승인 시 자녀의 계정과 모든 데이터(숙제·리워드·미션)가 즉시 삭제됩니다.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => handleWithdrawalAction(wr.id, "reject")}
+                      disabled={isProcessing}
+                      style={{
+                        flex: 1, height: 40, borderRadius: 10,
+                        border: "1.5px solid var(--line-strong)", background: "#fff",
+                        color: "var(--text-soft)", fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+                      }}
+                    >
+                      거절
+                    </button>
+                    <button
+                      onClick={() => handleWithdrawalAction(wr.id, "approve")}
+                      disabled={isProcessing}
+                      style={{
+                        flex: 1, height: 40, borderRadius: 10, border: "none",
+                        background: "#E11D48", color: "#fff",
+                        fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+                      }}
+                    >
+                      {isProcessing ? "처리 중..." : "승인 (탈퇴 처리)"}
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -704,6 +795,12 @@ export default function SettingsView({
           label="로그아웃"
           danger
           onClick={() => setShowLogoutConfirm(true)}
+        />
+        <SettingRow
+          icon="user-x"
+          label="회원 탈퇴"
+          danger
+          onClick={() => router.push("/account-deletion")}
         />
       </div>
 

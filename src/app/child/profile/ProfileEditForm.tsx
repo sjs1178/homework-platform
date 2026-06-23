@@ -136,6 +136,7 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 12,
               padding: "14px 16px", background: "none", border: "none", cursor: "pointer",
+              borderBottom: "1px solid var(--line)",
             }}
           >
             <span style={{
@@ -146,6 +147,22 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
               <Icon name="log-out" size={22} color="#DC2626" stroke={2} />
             </span>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#E11D48" }}>로그아웃</span>
+          </button>
+          <button
+            onClick={() => router.push("/account-deletion")}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 12,
+              padding: "14px 16px", background: "none", border: "none", cursor: "pointer",
+            }}
+          >
+            <span style={{
+              width: 42, height: 42, borderRadius: 12,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "#FEF2F2", flexShrink: 0,
+            }}>
+              <Icon name="trash-2" size={22} color="#DC2626" stroke={2} />
+            </span>
+            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#E11D48" }}>회원 탈퇴</span>
           </button>
         </div>
       </div>

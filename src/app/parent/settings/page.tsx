@@ -88,6 +88,27 @@ export default async function SettingsPage() {
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
+  // 자녀 탈퇴 요청 목록
+  const pairIds = pairsWithChild.map((p) => p.id);
+  let withdrawalRequests: { id: string; childName: string; childAvatar: string; createdAt: string }[] = [];
+  if (pairIds.length > 0) {
+    const { data: wrs } = await pendingAdminClient
+      .from("withdrawal_requests")
+      .select("id, child_id, pair_id, created_at")
+      .in("pair_id", pairIds)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    withdrawalRequests = (wrs ?? []).map((wr) => {
+      const pair = pairsWithChild.find((p) => p.id === wr.pair_id);
+      return {
+        id: wr.id,
+        childName: pair?.childName ?? "자녀",
+        childAvatar: pair?.childAvatar ?? "🧒",
+        createdAt: wr.created_at,
+      };
+    });
+  }
+
   return (
     <div
       style={{
@@ -113,6 +134,7 @@ export default async function SettingsPage() {
           rewardName={rwSettings?.point_reward_name ?? "리워드"}
           rewardUnit={rwSettings?.point_reward_unit ?? "P"}
           pendingApprovals={pendingApprovals ?? []}
+          withdrawalRequests={withdrawalRequests}
         />
       </div>
 

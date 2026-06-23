@@ -86,10 +86,9 @@ const SECTIONS: Section[] = [
           <div style={{ padding: 14, borderRadius: 12, background: "#EFF6FF", border: "1px solid #BFDBFE" }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#1D4ED8", marginBottom: 8 }}>👨‍👩‍👧 부모 계정</div>
             <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: "#1e40af", lineHeight: 1.8 }}>
-              <li>숙제 등록·수정·삭제</li>
-              <li>자녀 완료 현황 확인</li>
+              <li>숙제 등록·삭제</li>
               <li>AI 또는 직접 숙제 검사</li>
-              <li>리워드 설정 및 지급</li>
+              <li>리워드·미션 설정</li>
               <li>과목별 통계 열람</li>
               <li>자녀 계정 연결 관리</li>
             </ul>
@@ -98,10 +97,10 @@ const SECTIONS: Section[] = [
             <div style={{ fontSize: 13, fontWeight: 800, color: "#15803D", marginBottom: 8 }}>🧒 자녀 계정</div>
             <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: "#166534", lineHeight: 1.8 }}>
               <li>오늘의 숙제 확인</li>
-              <li>완료 처리·사진 제출</li>
+              <li>숙제 완료·완료 취소</li>
+              <li>미션 달성·리워드 받기</li>
               <li>리워드 내역 조회</li>
-              <li>내 통계·성취 확인</li>
-              <li>프로필 설정</li>
+              <li>프로필·아바타 설정</li>
             </ul>
           </div>
         </div>
@@ -133,12 +132,12 @@ const SECTIONS: Section[] = [
     content: (
       <div style={{ paddingTop: 14 }}>
         <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text)", marginBottom: 8 }}>연결하기</div>
-        <Step num={1}>부모 계정 <b>설정 → 자녀 관리</b>에서 초대 코드(6자리)를 확인합니다.</Step>
+        <Step num={1}>부모 계정 <b>내정보 → 자녀 관리</b>에서 초대 코드(6자리)를 확인합니다.</Step>
         <Step num={2}>자녀에게 코드를 알려줍니다.</Step>
         <Step num={3}>자녀가 대시보드 <b>초대 코드 입력</b>란에 입력하면 즉시 연결됩니다.</Step>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text)", margin: "16px 0 8px" }}>해제하기</div>
-        <Step num={1}>부모 계정 <b>설정 → 자녀 관리</b>에서 연결된 자녀를 선택합니다.</Step>
+        <Step num={1}>부모 계정 <b>내정보 → 자녀 관리</b>에서 연결된 자녀를 선택합니다.</Step>
         <Step num={2}><b>연결 해제</b>를 탭하면 즉시 해제됩니다.</Step>
         <Tip>부모 한 명이 여러 자녀와, 자녀도 여러 부모(공동 양육)와 연결할 수 있습니다.</Tip>
       </div>
@@ -152,32 +151,30 @@ const SECTIONS: Section[] = [
       <div style={{ paddingTop: 14 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
           <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="blue">상단 요약</Label> 연결된 자녀별 오늘 숙제 완료 현황을 한눈에 표시
+            <Label color="green">히어로 카드</Label> 자녀별 이번 주 숙제 현황 · 스트릭 · 리워드 잔액 표시
           </div>
           <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="green">숙제 목록</Label> 날짜별 등록 숙제와 완료 상태 표시
+            <Label color="blue">오늘의 숙제</Label> 오늘 숙제 목록 · 카드를 탭하면 상세 팝업
           </div>
           <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="orange">+ 숙제 추가</Label> 텍스트 또는 이미지로 새 숙제 등록
+            <Label color="orange">퀵 액션</Label> 숙제 입력 · 리워드 · 미션 관리 · 학습 통계 바로가기
           </div>
         </div>
-        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>오늘 할 일 보는 법</div>
-        <Step num={1}>대시보드 상단에 <b>오늘의 숙제</b> 섹션이 바로 표시됩니다.</Step>
-        <Step num={2}>캘린더 탭 → 오늘 날짜를 탭하면 해당 날 전체 숙제 목록을 확인할 수 있습니다.</Step>
+        <Note>주간 요일 표시에서 노란 점은 숙제가 있는 날, 초록 체크는 완료된 날을 의미합니다.</Note>
       </div>
     ),
   },
   {
     id: "homework-input",
     icon: "✏️",
-    title: "부모: 숙제 입력 및 관리",
+    title: "부모: 숙제 입력 방법",
     content: (
       <div style={{ paddingTop: 14 }}>
         <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>① 텍스트 자연어 입력</div>
-        <Step num={1}>대시보드 <b>+ 숙제 추가</b>를 탭합니다.</Step>
+        <Step num={1}>대시보드 <b>숙제 입력</b> 버튼을 탭합니다.</Step>
         <Step num={2}>
           자유롭게 입력합니다.<br />
-          <span style={{ fontFamily: "monospace", fontSize: 12.5, background: "#F1F5F9", padding: "2px 6px", borderRadius: 6 }}>"내일까지 수학 4단원 연습문제 1-10번"</span>
+          <span style={{ fontFamily: "monospace", fontSize: 12.5, background: "#F1F5F9", padding: "2px 6px", borderRadius: 6 }}>&quot;내일까지 수학 4단원 연습문제 1-10번&quot;</span>
         </Step>
         <Step num={3}>AI가 과목·마감일·내용을 자동 분석해 미리보기를 보여줍니다.</Step>
         <Step num={4}>확인 후 <b>저장</b>합니다.</Step>
@@ -189,7 +186,7 @@ const SECTIONS: Section[] = [
         <Tip>피아노 연습, 받아쓰기처럼 매주 반복되는 숙제는 한 번만 설정하면 됩니다.</Tip>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>③ 가정통신문·인쇄물 이미지로 등록</div>
-        <Step num={1}>숙제 추가 화면에서 <b>이미지 첨부</b> 아이콘을 탭합니다.</Step>
+        <Step num={1}>숙제 입력 화면에서 <b>이미지 첨부</b> 아이콘을 탭합니다.</Step>
         <Step num={2}>카메라로 촬영하거나 갤러리에서 선택합니다.</Step>
         <Step num={3}>AI가 이미지 속 텍스트를 분석해 숙제 내용·마감일을 자동 추출합니다.</Step>
         <Step num={4}>내용을 확인·수정하고 저장합니다.</Step>
@@ -200,58 +197,103 @@ const SECTIONS: Section[] = [
   {
     id: "child-complete",
     icon: "✅",
-    title: "자녀: 숙제 확인·완료·사진 제출",
+    title: "자녀: 숙제 확인·완료·취소",
     content: (
       <div style={{ paddingTop: 14 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>오늘 할 일 확인</div>
-        <Step num={1}>대시보드를 열면 <b>오늘의 숙제</b>가 가장 먼저 표시됩니다.</Step>
-        <Step num={2}>캘린더 탭에서 오늘 날짜(동그라미)를 탭해도 확인할 수 있습니다.</Step>
+        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>숙제 확인하기</div>
+        <Step num={1}>대시보드에서 <b>다음 숙제</b> 카드를 확인하거나, <b>숙제 캘린더</b>에서 날짜별로 확인합니다.</Step>
+        <Step num={2}>숙제 카드를 탭하면 과목·내용·마감일이 담긴 <b>상세 팝업</b>이 나타납니다.</Step>
 
-        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>완료 처리</div>
-        <Step num={1}>숙제 항목 오른쪽 <b>완료</b> 버튼을 탭합니다.</Step>
-        <Step num={2}>완료와 동시에 리워드가 자동 적립됩니다. 🎉</Step>
+        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>완료 처리하기</div>
+        <Step num={1}>캘린더에서 숙제 카드를 탭합니다.</Step>
+        <Step num={2}>상세 팝업 하단의 <b>완료하기</b> 버튼을 탭합니다.</Step>
+        <Step num={3}>완료와 동시에 리워드가 자동 적립됩니다.</Step>
 
-        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>사진 찍어 제출하기</div>
-        <Step num={1}>완료 처리 후 <b>사진 올리기</b> 버튼을 탭합니다.</Step>
-        <Step num={2}>카메라로 노트·문제집 풀이를 촬영하거나 갤러리에서 선택합니다.</Step>
-        <Step num={3}>업로드 완료되면 부모님이 앱에서 확인하고 AI 검사 또는 직접 채점합니다.</Step>
-        <Tip>사진은 밝은 곳에서 글씨가 잘 보이도록 찍어주세요. AI 검사 정확도가 높아집니다.</Tip>
-      </div>
-    ),
-  },
-  {
-    id: "profile",
-    icon: "🧑‍🎨",
-    title: "자녀: 프로필 관리",
-    content: (
-      <div style={{ paddingTop: 14 }}>
-        <Step num={1}>자녀 대시보드 상단의 <b>아바타 아이콘</b>을 탭합니다.</Step>
-        <Step num={2}><b>이름</b>과 <b>아바타 캐릭터</b>를 원하는 것으로 변경할 수 있습니다.</Step>
-        <Step num={3}>저장하면 대시보드에 즉시 반영됩니다.</Step>
-        <Note>아바타는 남자아이·여자아이·동물 카테고리 중에서 선택할 수 있습니다.</Note>
+        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>완료 취소하기</div>
+        <Step num={1}><b>오늘 날짜</b>에 완료된 숙제 카드를 탭합니다.</Step>
+        <Step num={2}>상세 팝업 하단의 <b>완료 취소하기</b> 버튼을 탭합니다.</Step>
+        <Step num={3}>적립된 리워드도 함께 차감됩니다.</Step>
+        <Note>완료 취소는 오늘 날짜 숙제만 가능합니다. 지난 날짜의 숙제는 취소할 수 없습니다.</Note>
       </div>
     ),
   },
   {
     id: "homework-check",
     icon: "🔍",
-    title: "부모: 완료된 숙제 검사 방법",
+    title: "부모: 숙제 검사 방법",
     content: (
       <div style={{ paddingTop: 14 }}>
         <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600 }}>
-          자녀가 사진을 올리면 부모 대시보드에 <b>검사 대기</b> 알림이 표시됩니다.
+          자녀가 숙제를 완료하면 대시보드에 <b>검사 대기</b> 상태로 표시됩니다. 숙제 카드를 탭해 상세 팝업에서 검사 화면으로 이동합니다.
         </p>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>① AI 자동 검사</div>
-        <Step num={1}>검사할 숙제 항목을 탭하고 <b>AI 검사</b> 버튼을 탭합니다.</Step>
-        <Step num={2}>AI가 사진을 분석해 문항별 정답·오답을 자동 판별하고 점수를 산출합니다.</Step>
-        <Step num={3}>결과를 확인하고, 필요하면 수정 후 저장합니다.</Step>
+        <Step num={1}>검사 화면에서 숙제 풀이 사진을 업로드합니다.</Step>
+        <Step num={2}><b>AI 검사</b> 버튼을 탭합니다.</Step>
+        <Step num={3}>AI가 사진을 분석해 문항별 정답·오답을 자동 판별하고 점수를 산출합니다.</Step>
+        <Step num={4}>결과를 확인하고, 필요하면 수정 후 저장합니다.</Step>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>② 직접 검사</div>
-        <Step num={1}>숙제 항목을 탭해 자녀가 올린 사진을 확인합니다.</Step>
-        <Step num={2}><b>직접 검사</b>를 선택하면 문항 목록이 표시됩니다.</Step>
-        <Step num={3}>각 문항에 ○ / ✕ 버튼으로 직접 채점합니다.</Step>
-        <Step num={4}>저장하면 점수가 자녀 통계에 반영됩니다.</Step>
+        <Step num={1}>검사 화면에서 <b>직접 검사</b>를 선택합니다.</Step>
+        <Step num={2}>각 문항에 ○ / ✕ 버튼으로 직접 채점합니다.</Step>
+        <Step num={3}>저장하면 점수가 자녀 통계에 반영됩니다.</Step>
+
+        <Tip>AI 검사 시 사진은 밝은 곳에서 글씨가 잘 보이도록 찍어주세요. 사진이 4장 이상이면 처리 시간이 길어질 수 있습니다.</Tip>
+      </div>
+    ),
+  },
+  {
+    id: "mission",
+    icon: "🎯",
+    title: "미션 시스템",
+    content: (
+      <div style={{ paddingTop: 14 }}>
+        <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
+          숙제를 꾸준히 완료하면 미션을 달성하고 추가 리워드를 받을 수 있습니다. 미션은 3단계입니다.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="green">일별 미션</Label> 오늘의 숙제를 모두 완료하면 달성
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="blue">주간 미션</Label> 이번 주 숙제를 모두 완료하면 달성
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="purple">월간 미션</Label> 이번 달 숙제를 모두 완료하면 달성
+          </div>
+        </div>
+        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>자녀: 미션 리워드 받기</div>
+        <Step num={1}>대시보드의 <b>오늘의 미션</b> 배너를 탭합니다.</Step>
+        <Step num={2}>달성된 미션의 <b>리워드 받기</b> 버튼을 탭합니다.</Step>
+
+        <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>부모: 미션 리워드 설정</div>
+        <Step num={1}>대시보드의 <b>미션 관리</b> 배너를 탭합니다.</Step>
+        <Step num={2}>일별·주간·월간 미션별 리워드 금액을 설정합니다.</Step>
+        <Tip>미션 리워드는 숙제 완료 리워드와 별도로 추가 적립됩니다.</Tip>
+      </div>
+    ),
+  },
+  {
+    id: "reward",
+    icon: "🎁",
+    title: "리워드 시스템",
+    content: (
+      <div style={{ paddingTop: 14 }}>
+        <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
+          자녀가 숙제를 완료하면 부모가 설정한 리워드 포인트가 자동으로 적립됩니다.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="green">자동 적립</Label> 숙제 완료 시 설정된 포인트가 즉시 적립
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="blue">검사 연동</Label> AI/직접 검사 점수 기반 적립도 가능 (점수당 리워드)
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="orange">수동 지급·차감</Label> 부모가 리워드 화면에서 직접 지급하거나 차감 가능
+          </div>
+        </div>
+        <Tip>부모 내정보 → 리워드 설정에서 이름과 단위를 원하는 대로 바꿀 수 있습니다. (예: &quot;별★&quot;, &quot;쿠키🍪&quot;)</Tip>
       </div>
     ),
   },
@@ -262,40 +304,37 @@ const SECTIONS: Section[] = [
     content: (
       <div style={{ paddingTop: 14 }}>
         <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
-          kiddoloop의 AI 기능(자연어 숙제 파싱·이미지 분석·자동 검사)은 본인의 API 키로 작동합니다. 아래 3개 AI 중 하나를 선택해 사용할 수 있습니다.
+          kiddoloop의 AI 기능(숙제 파싱·이미지 분석·자동 검사)은 본인의 API 키로 작동합니다. 아래 3개 AI 중 하나를 선택해 사용할 수 있습니다.
         </p>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>API 토큰 입력 방법</div>
-        <Step num={1}>부모 계정 <b>설정 → AI 설정</b>으로 이동합니다.</Step>
+        <Step num={1}>부모 계정 <b>내정보 → AI 설정</b>으로 이동합니다.</Step>
         <Step num={2}>AI 제공사를 선택합니다 (Claude / ChatGPT / Gemini).</Step>
         <Step num={3}>아래 안내에 따라 발급받은 API 키를 입력합니다.</Step>
         <Step num={4}>저장하면 즉시 AI 기능이 활성화됩니다.</Step>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>① Google Gemini (무료로 시작 가능)</div>
         <div style={{ padding: "12px 14px", borderRadius: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", fontSize: 13, color: "#1D4ED8", lineHeight: 1.75, marginBottom: 10 }}>
-          Google 계정만 있으면 <b>무료로 API 키를 발급</b>받아 바로 사용할 수 있습니다. 별도 결제나 충전이 필요 없습니다.<br /><br />
+          Google 계정만 있으면 <b>무료로 API 키를 발급</b>받아 바로 사용할 수 있습니다.<br /><br />
           <b>발급 방법:</b><br />
           1. <b>aistudio.google.com</b>에 Google 계정으로 로그인<br />
           2. 왼쪽 메뉴에서 <b>API keys</b> 클릭<br />
           3. <b>Create API key</b> 버튼 클릭 → 키 복사<br />
-          4. kiddoloop AI 설정에서 <b>Gemini</b> 탭 선택 후 붙여넣기<br /><br />
-          <b>무료 사용량:</b> 분당 요청 수와 일일 요청 수에 제한이 있습니다. 일반적인 숙제 관리 용도로는 충분합니다. 한도 초과 시 잠시 후 다시 시도하면 됩니다.
+          4. kiddoloop AI 설정에서 <b>Gemini</b> 탭 선택 후 붙여넣기
         </div>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>② Anthropic Claude (유료, 가장 정확)</div>
         <div style={{ padding: "12px 14px", borderRadius: 12, background: "#F5F3FF", border: "1px solid #DDD6FE", fontSize: 13, color: "#5B21B6", lineHeight: 1.75, marginBottom: 10 }}>
-          숙제 분석과 채점 정확도가 가장 높습니다. 유료 API로, 사용한 만큼 과금됩니다.<br /><br />
+          숙제 분석과 채점 정확도가 가장 높습니다.<br /><br />
           <b>발급 방법:</b><br />
           1. <b>console.anthropic.com</b>에서 회원가입<br />
           2. 결제 수단 등록 후 크레딧 충전 ($5부터)<br />
           3. <b>API Keys</b> 메뉴에서 키 생성 → 복사<br />
-          4. kiddoloop AI 설정에서 <b>Claude</b> 탭 선택 후 붙여넣기<br /><br />
-          <b>비용:</b> 숙제 1건 파싱에 약 $0.01 이하. 월 $1~2 수준으로 충분합니다.
+          4. kiddoloop AI 설정에서 <b>Claude</b> 탭 선택 후 붙여넣기
         </div>
 
         <div style={{ fontSize: 13.5, fontWeight: 800, margin: "16px 0 8px" }}>③ OpenAI ChatGPT (유료)</div>
         <div style={{ padding: "12px 14px", borderRadius: 12, background: "#F0FDF4", border: "1px solid #BBF7D0", fontSize: 13, color: "#166534", lineHeight: 1.75, marginBottom: 10 }}>
-          ChatGPT를 사용 중이라면 같은 API 키를 활용할 수 있습니다.<br /><br />
           <b>발급 방법:</b><br />
           1. <b>platform.openai.com</b>에서 로그인<br />
           2. 결제 수단 등록 후 크레딧 충전 ($5부터)<br />
@@ -318,58 +357,65 @@ const SECTIONS: Section[] = [
     ),
   },
   {
-    id: "reward",
-    icon: "🎁",
-    title: "리워드 시스템",
+    id: "profile",
+    icon: "🧑‍🎨",
+    title: "자녀: 프로필 관리",
     content: (
       <div style={{ paddingTop: 14 }}>
-        <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
-          자녀가 숙제를 완료하면 부모가 설정한 리워드(포인트 또는 게임시간)가 자동으로 적립됩니다.
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
-          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="orange">포인트</Label> 용돈처럼 쌓이는 리워드. 이름·단위를 자유롭게 설정 가능
-          </div>
-          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="purple">게임시간</Label> 분 단위로 적립되는 리워드. 허용 스크린 타임과 연계 가능
-          </div>
-        </div>
-        <Tip>부모 설정 → 리워드 설정에서 이름과 단위를 원하는 대로 바꿀 수 있습니다. (예: "별★", "쿠키🍪")</Tip>
+        <Step num={1}>하단 네비게이션의 <b>내정보</b>를 탭합니다.</Step>
+        <Step num={2}><b>이름</b>과 <b>아바타 캐릭터</b>를 원하는 것으로 변경할 수 있습니다.</Step>
+        <Step num={3}>저장하면 대시보드에 즉시 반영됩니다.</Step>
+        <Note>아바타는 남자아이·여자아이·동물 카테고리 중에서 선택할 수 있습니다.</Note>
       </div>
     ),
   },
   {
     id: "stats",
     icon: "📊",
-    title: "통계·커리큘럼 분석으로 아이디어 얻기",
+    title: "학습 통계 보기",
     content: (
       <div style={{ paddingTop: 14 }}>
         <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
-          제출 사진과 검사 결과를 바탕으로 과목·영역별 통계가 자동 생성됩니다.
+          숙제 검사 결과를 바탕으로 과목·영역별 통계가 자동 생성됩니다.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
           <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="blue">과목별 정답률</Label> 수학·국어·영어 등 과목별 누적 정답률 그래프
+            <Label color="blue">과목별 정답률</Label> 수학·국어·영어 등 과목별 누적 정답률
           </div>
           <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="orange">영역별 취약점</Label> 연산·독해·문법 등 세부 영역에서 반복 오답 유형 분석
-          </div>
-          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
-            <Label color="green">완료율 추이</Label> 주별·월별 숙제 완료율 변화로 학습 습관 추세 파악
+            <Label color="orange">직업군 가이드</Label> 학습 패턴 기반 진로 탐색 가이드
           </div>
         </div>
 
-        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>커리큘럼 기준 보완 아이디어</div>
-        <Step num={1}>통계 탭 → <b>커리큘럼 분석</b> 섹션으로 이동합니다.</Step>
-        <Step num={2}>학년·학기 교육과정과 실제 숙제 이력이 자동으로 대조됩니다.</Step>
-        <Step num={3}><b>아직 다루지 않은 단원</b> 또는 <b>취약도가 높은 영역</b>을 목록으로 확인합니다.</Step>
-        <Step num={4}>추천된 보완 학습 아이템을 참고해 다음 숙제를 계획합니다.</Step>
+        <div style={{ fontSize: 13.5, fontWeight: 800, marginBottom: 8 }}>통계 화면 이동</div>
+        <Step num={1}>부모: 대시보드 하단의 <b>학습 통계 · 직업군 가이드</b> 배너를 탭합니다.</Step>
+        <Step num={2}>자녀: 대시보드 하단의 퀵 액션 또는 캘린더에서 확인할 수 있습니다.</Step>
         <Tip>통계는 검사 데이터가 쌓일수록 정확해집니다. 꾸준히 AI 또는 직접 검사를 진행해주세요.</Tip>
-
-        <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, background: "#EFF6FF", border: "1px solid #BFDBFE", fontSize: 13, color: "#1D4ED8", lineHeight: 1.65 }}>
-          <b>통계 화면 이동</b><br />
-          부모: 하단 탭 → 📊 통계<br />
-          자녀: 하단 탭 → 📊 내 성취
+      </div>
+    ),
+  },
+  {
+    id: "navigation",
+    icon: "📱",
+    title: "화면 구성 및 네비게이션",
+    content: (
+      <div style={{ paddingTop: 14 }}>
+        <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--muted)", fontWeight: 600, lineHeight: 1.7 }}>
+          하단 네비게이션 바를 통해 주요 화면을 이동할 수 있습니다.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="green">홈</Label> 대시보드 · 오늘 숙제 현황 · 퀵 액션
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="blue">캘린더</Label> 월간 숙제 달력 · 날짜별 숙제 상세
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="orange">리워드</Label> 포인트 잔액 · 적립/사용 내역
+          </div>
+          <div style={{ padding: "10px 14px", background: "#F8FAFC", borderRadius: 10, fontSize: 13.5, lineHeight: 1.7 }}>
+            <Label color="purple">내정보</Label> 프로필 · 자녀 관리 · AI 설정 · 로그아웃
+          </div>
         </div>
       </div>
     ),
@@ -397,13 +443,21 @@ export default function HelpContent() {
       {/* 인트로 */}
       <div style={{ background: "linear-gradient(135deg, #F0FDF4, #EFF6FF)", borderRadius: 16, padding: "18px", marginBottom: 20, border: "1px solid #BFDBFE" }}>
         <div style={{ fontSize: 22, marginBottom: 6 }}>📖</div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>kiddoloop 시작 가이드</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>kiddoloop 사용 가이드</div>
         <div style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 600, lineHeight: 1.65 }}>궁금한 항목을 탭하면 자세한 설명을 볼 수 있어요.</div>
       </div>
 
       {SECTIONS.map((s) => (
         <Accordion key={s.id} section={s} />
       ))}
+
+      {/* 문의 안내 */}
+      <div style={{ marginTop: 20, padding: "16px 18px", background: "#fff", borderRadius: 16, boxShadow: "0 1px 6px rgba(0,0,0,.06)", textAlign: "center" }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>더 궁금한 점이 있으신가요?</p>
+        <p style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, marginBottom: 0 }}>
+          contact@kiddoloop.com 으로 문의해주세요.
+        </p>
+      </div>
     </div>
   );
 }

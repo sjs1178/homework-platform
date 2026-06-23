@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { ADMIN_COOKIE, ADMIN_TOKEN } from "@/lib/admin-auth";
 
-const PUBLIC_PATHS = ["/notices", "/terms", "/privacy", "/ads.txt", "/help", "/walkthrough"];
+const PUBLIC_PATHS = ["/notices", "/terms", "/privacy", "/ads.txt", "/help", "/walkthrough", "/account-deletion"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
