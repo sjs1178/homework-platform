@@ -259,7 +259,11 @@ export default function SettingsView({
   }
 
   // ── 로그아웃 ─────────────────────────────────────────
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
   async function handleLogout() {
+    setLoggingOut(true);
     await supabase.auth.signOut();
     router.push("/auth/login");
   }
@@ -699,7 +703,7 @@ export default function SettingsView({
           icon="log-out"
           label="로그아웃"
           danger
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
         />
       </div>
 
@@ -745,6 +749,61 @@ export default function SettingsView({
       </div>
 
       <div style={{ height: 24 }} />
+
+      {/* 로그아웃 확인 팝업 */}
+      {showLogoutConfirm && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(0,0,0,.45)", display: "flex",
+            alignItems: "center", justifyContent: "center", padding: 20,
+          }}
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 24, padding: "28px 24px 22px",
+              width: "100%", maxWidth: 320, boxShadow: "var(--sh-md)",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <Icon name="log-out" size={28} color="#E11D48" stroke={2} />
+            </div>
+            <p style={{ fontSize: 17, fontWeight: 800, color: "var(--text)", marginBottom: 8 }}>
+              로그아웃 하시겠어요?
+            </p>
+            <p style={{ fontSize: 13.5, color: "var(--muted)", fontWeight: 600, lineHeight: 1.5, marginBottom: 22 }}>
+              다시 로그인하려면 Google 계정이 필요해요
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                style={{
+                  flex: 1, height: 46, borderRadius: 14,
+                  border: "1.5px solid var(--line-strong)", background: "#fff",
+                  color: "var(--text-soft)", fontWeight: 800, fontSize: 14, cursor: "pointer",
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                style={{
+                  flex: 1, height: 46, borderRadius: 14, border: "none",
+                  background: "#E11D48", color: "#fff",
+                  fontWeight: 800, fontSize: 14, cursor: "pointer",
+                  opacity: loggingOut ? 0.6 : 1,
+                }}
+              >
+                {loggingOut ? "로그아웃 중..." : "로그아웃"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

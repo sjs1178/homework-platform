@@ -30,6 +30,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
   const [homeworks, setHomeworks] = useState(init);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [detailHw, setDetailHw] = useState<TodayHomework | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setMenuOpenId(null), []);
@@ -131,6 +132,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
           return (
             <div
               key={hw.id}
+              onClick={() => setDetailHw(hw)}
               style={{
                 background: "#fff",
                 borderRadius: "var(--r-card)",
@@ -141,6 +143,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                 opacity: isDeleting ? 0.4 : 1,
                 transition: "opacity .2s",
                 position: "relative",
+                cursor: "pointer",
               }}
             >
               <div style={{ display: "flex", gap: 13 }}>
@@ -185,7 +188,7 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
 
                 {/* 미완료 숙제 더보기 메뉴 */}
                 {!hw.is_completed && (
-                  <div style={{ position: "relative", flexShrink: 0 }}>
+                  <div style={{ position: "relative", flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => setMenuOpenId(menuOpenId === hw.id ? null : hw.id)}
                       style={{
@@ -238,52 +241,139 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                 )}
               </div>
 
-              {hw.hasCheck ? (
+              <div
+                style={{
+                  marginTop: 10, fontSize: 12.5, fontWeight: 700, display: "flex",
+                  alignItems: "center", gap: 6, justifyContent: "space-between",
+                }}
+              >
+                <span style={{ color: hw.hasCheck ? "var(--green-d)" : hw.is_completed ? "var(--amber-d)" : "var(--faint)" }}>
+                  {hw.hasCheck ? "검사 완료" : hw.is_completed ? "완료 · 검사 대기" : "미완료"}
+                </span>
+                <Icon name="chevron-right" size={14} color="var(--faint)" stroke={2} />
+              </div>
+            </div>
+          );
+        })
+      )}
+
+      {/* 숙제 상세 팝업 */}
+      {detailHw && (() => {
+        const [dBg, dColor] = SUBJECT_MAP[detailHw.subject] ?? ["var(--green-50)", "var(--green-d)"];
+        return (
+          <div
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,.45)", display: "flex",
+              alignItems: "center", justifyContent: "center", padding: 20,
+            }}
+            onClick={() => setDetailHw(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#fff", borderRadius: 24, padding: "24px 22px 22px",
+                width: "100%", maxWidth: 360, boxShadow: "var(--sh-md)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: 800, padding: "3px 10px", borderRadius: 8,
+                    background: dBg, color: dColor,
+                  }}>
+                    {detailHw.subject}
+                  </span>
+                  {multiChild && (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green-d)", background: "var(--green-50)", padding: "2px 8px", borderRadius: 6 }}>
+                      {detailHw.childName}
+                    </span>
+                  )}
+                </div>
+                <button onClick={() => setDetailHw(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  <Icon name="x" size={20} color="var(--muted)" stroke={2} />
+                </button>
+              </div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.6, marginBottom: 16, wordBreak: "break-word" }}>
+                {detailHw.description}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5, color: "var(--text-soft)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="calendar" size={15} color="var(--muted)" stroke={2} />
+                  <span style={{ fontWeight: 600 }}>
+                    {detailHw.due_date}{detailHw.due_time ? ` ${detailHw.due_time.slice(0, 5)}` : ""}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="check-circle" size={15} color={detailHw.is_completed ? "var(--green)" : "var(--faint)"} stroke={2} />
+                  <span style={{ fontWeight: 700, color: detailHw.is_completed ? "var(--green-d)" : "var(--muted)" }}>
+                    {detailHw.hasCheck ? "검사 완료" : detailHw.is_completed ? "완료 (검사 대기)" : "미완료"}
+                  </span>
+                </div>
+              </div>
+
+              {detailHw.hasCheck ? (
                 <Link
-                  href={`/parent/homework/check?id=${hw.id}`}
+                  href={`/parent/homework/check?id=${detailHw.id}`}
+                  onClick={() => setDetailHw(null)}
                   style={{
-                    width: "100%", height: 38, borderRadius: 12,
-                    border: "1.5px solid var(--green-200)", background: "var(--green-50)",
-                    color: "var(--green-d)", fontWeight: 800, fontSize: 13,
-                    marginTop: 12, display: "flex", alignItems: "center",
-                    justifyContent: "center", gap: 7, textDecoration: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green-100)", color: "var(--green-d)",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    marginTop: 18, textDecoration: "none",
                   }}
                 >
-                  <Icon name="sparkles" size={15} color="var(--green-d)" stroke={2} />
+                  <Icon name="sparkles" size={18} color="var(--green-d)" stroke={2} />
                   검사 결과 보기
                 </Link>
-              ) : hw.is_completed ? (
+              ) : detailHw.is_completed ? (
                 <Link
-                  href={`/parent/homework/check?id=${hw.id}`}
+                  href={`/parent/homework/check?id=${detailHw.id}`}
+                  onClick={() => setDetailHw(null)}
                   style={{
-                    width: "100%", height: 38, borderRadius: 12,
-                    border: "none", background: "var(--green)",
-                    color: "#fff", fontWeight: 800, fontSize: 13,
-                    marginTop: 12, display: "flex", alignItems: "center",
-                    justifyContent: "center", gap: 7, textDecoration: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    width: "100%", height: 48, borderRadius: 14, border: "none",
+                    background: "var(--green)", color: "#fff",
+                    fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    boxShadow: "var(--sh-green)", marginTop: 18, textDecoration: "none",
                   }}
                 >
                   지금 검사하기
                   <Icon name="arrow-right" size={16} stroke={2.4} color="#fff" />
                 </Link>
               ) : (
-                <div
-                  style={{
-                    width: "100%", height: 38, borderRadius: 12,
-                    border: "1.5px solid var(--line)", background: "#FAFAF8",
-                    color: "var(--muted)", fontWeight: 700, fontSize: 13,
-                    marginTop: 12, display: "flex", alignItems: "center",
-                    justifyContent: "center", gap: 7,
-                  }}
-                >
-                  <Icon name="clock" size={14} color="var(--faint)" stroke={2} />
-                  자녀가 아직 완료하지 않았어요
+                <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+                  <Link
+                    href={`/parent/homework/check?id=${detailHw.id}`}
+                    onClick={() => setDetailHw(null)}
+                    style={{
+                      flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                      height: 48, borderRadius: 14, border: "none",
+                      background: "var(--green)", color: "#fff",
+                      fontWeight: 800, fontSize: 14, cursor: "pointer",
+                      boxShadow: "var(--sh-green)", textDecoration: "none",
+                    }}
+                  >
+                    <Icon name="clipboard-check" size={17} color="#fff" stroke={2} />
+                    완료 / 검사
+                  </Link>
+                  <button
+                    onClick={() => { setDetailHw(null); handleDelete(detailHw.id); }}
+                    style={{
+                      height: 48, padding: "0 16px", borderRadius: 14,
+                      border: "1.5px solid #FECDD3", background: "#FFF1F2",
+                      color: "#E11D48", fontWeight: 800, fontSize: 14, cursor: "pointer",
+                    }}
+                  >
+                    <Icon name="trash-2" size={17} color="#E11D48" stroke={2} />
+                  </button>
                 </div>
               )}
             </div>
-          );
-        })
-      )}
+          </div>
+        );
+      })()}
     </>
   );
 }
