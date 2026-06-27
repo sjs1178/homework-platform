@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
 import RewardBody from "./RewardBody";
 
+export const dynamic = "force-dynamic";
+
 export default async function ChildRewardsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -35,6 +37,13 @@ export default async function ChildRewardsPage() {
     .eq("pair_id", profile.pair_id)
     .order("cost", { ascending: true });
 
+  const { data: pendingReqs } = await supabase
+    .from("reward_requests")
+    .select("*")
+    .eq("pair_id", profile.pair_id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
   const totalEarned = (logs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
   const totalSpent = (logs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
   const balance = totalEarned - totalSpent;
@@ -54,10 +63,19 @@ export default async function ChildRewardsPage() {
         <RewardBody
           childName={profile.display_name ?? "자녀"}
           balance={balance}
-          logs={(logs ?? []).slice(0, 20)}
+          totalEarned={totalEarned}
+          totalSpent={totalSpent}
+          logs={logs ?? []}
           catalog={catalogRaw ?? []}
           pairId={profile.pair_id}
           unit={settings?.point_reward_unit ?? "P"}
+          rewardName={settings?.point_reward_name ?? "리워드"}
+          pendingRequests={(pendingReqs ?? []).map((r) => ({
+            id: r.id,
+            amount: r.amount,
+            reason: r.reason,
+            created_at: r.created_at,
+          }))}
         />
       </div>
       <BottomNav active="리워드" />

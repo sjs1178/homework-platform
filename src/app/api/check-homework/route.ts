@@ -105,19 +105,31 @@ export async function POST(req: NextRequest) {
     const name = err instanceof Error ? err.name : "";
     const lower = raw.toLowerCase();
     let msg = "채점 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.";
-    if (name === "APIConnectionTimeoutError" || name === "AbortError" || lower.includes("timeout") || lower.includes("timed out"))
+    let errorCode = "unknown";
+    if (name === "APIConnectionTimeoutError" || name === "AbortError" || lower.includes("timeout") || lower.includes("timed out")) {
       msg = "AI 응답 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.";
-    else if (lower.includes("request too large") || lower.includes("413") || lower.includes("payload"))
+      errorCode = "timeout";
+    } else if (lower.includes("request too large") || lower.includes("413") || lower.includes("payload")) {
       msg = "이미지 용량이 너무 커요. 사진 수를 줄이거나 작은 이미지를 사용해 주세요.";
-    else if (lower.includes("quota") || lower.includes("rate") || lower.includes("429"))
+      errorCode = "payload_too_large";
+    } else if (lower.includes("quota") || lower.includes("rate") || lower.includes("429")) {
       msg = "API 키의 사용 한도가 초과되었어요. 잠시 후 다시 시도하거나, 다른 AI 키를 사용해 주세요.";
-    else if (lower.includes("invalid") && lower.includes("key"))
+      errorCode = "rate_limit";
+    } else if (lower.includes("invalid") && lower.includes("key")) {
       msg = "API 키가 유효하지 않아요. 설정에서 키를 다시 확인해 주세요.";
-    else if (lower.includes("unauthorized") || lower.includes("401") || lower.includes("403"))
+      errorCode = "invalid_key";
+    } else if (lower.includes("unauthorized") || lower.includes("401") || lower.includes("403")) {
       msg = "API 키 인증에 실패했어요. 설정에서 키를 다시 확인해 주세요.";
-    else if (lower.includes("overloaded") || lower.includes("529"))
+      errorCode = "auth_failed";
+    } else if (lower.includes("overloaded") || lower.includes("529")) {
       msg = "AI 서비스가 일시적으로 과부하 상태예요. 잠시 후 다시 시도해 주세요.";
-    return NextResponse.json({ error: msg }, { status: 500 });
+      errorCode = "overloaded";
+    } else if (lower.includes("파싱")) {
+      msg = "AI 응답을 처리하지 못했어요. 사진이 너무 흐리거나 글씨가 잘 안 보일 수 있어요.";
+      errorCode = "parse_failed";
+    }
+    console.error("[check-homework] error:", name, raw);
+    return NextResponse.json({ error: msg, errorCode }, { status: 500 });
   }
 
   // 미완료 숙제를 부모가 검사하면 완료 처리

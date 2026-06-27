@@ -54,7 +54,11 @@ Return ONLY a JSON object in this exact format:
 }
 
 Rules:
-- If student answer is blank/missing, mark as incorrect
+- If student answer is blank/missing, mark as incorrect with studentAnswer "미작성"
+- If student handwriting is unreadable, mark as incorrect with studentAnswer "판독 불가" and explanation "손글씨를 인식하지 못했어요. 부모님이 직접 확인해 주세요."
+- If a problem's text is partially visible or cut off, still include it with what you can read, set question to what is visible
+- If an image is blurry or too dark to read at all, still return valid JSON with problems you CAN read from other images. Set feedback to mention which image was hard to read
+- NEVER fail or refuse. Always return valid JSON with at least the problems you could identify
 - explanation must be null when isCorrect is true
 - explanation must be in Korean when isCorrect is false
 - feedback must be encouraging even when score is low

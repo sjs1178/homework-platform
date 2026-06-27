@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { createClient as createAdmin } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
 import RewardsManager from "./RewardsManager";
 import Icon from "@/components/ui/Icon";
 import BackButton from "@/components/ui/BackButton";

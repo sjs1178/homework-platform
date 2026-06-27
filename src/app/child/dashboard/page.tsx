@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
 import { toKSTDateString, getKSTWeekRange, getKSTWeekdayIndex, getKSTWeekDates } from "@/lib/date";
+
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import Icon from "@/components/ui/Icon";

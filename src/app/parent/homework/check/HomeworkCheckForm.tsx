@@ -354,6 +354,7 @@ export default function HomeworkCheckForm({
   const [checkId, setCheckId] = useState<string | null>(initialCheckId);
   const [isReviewed, setIsReviewed] = useState(initialReviewed);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [editing, setEditing] = useState<Record<number, EditState>>({});
   const [savedMsg, setSavedMsg] = useState("");
 
@@ -361,6 +362,14 @@ export default function HomeworkCheckForm({
   const [showRewardModal, setShowRewardModal] = useState(false);
   const [rewardAmount, setRewardAmount] = useState(String(defaultRewardAmount || 10));
   const [rewardDone, setRewardDone] = useState(false);
+
+  // Add problem manually
+  const [showAddProblem, setShowAddProblem] = useState(false);
+  const [addQuestion, setAddQuestion] = useState("");
+  const [addStudentAnswer, setAddStudentAnswer] = useState("");
+  const [addCorrectAnswer, setAddCorrectAnswer] = useState("");
+  const [addIsCorrect, setAddIsCorrect] = useState(false);
+  const [addExplanation, setAddExplanation] = useState("");
 
   // Ad gate
   const [showAdGate, setShowAdGate] = useState(false);
@@ -412,10 +421,19 @@ export default function HomeworkCheckForm({
 
       if (!res.ok) {
         let msg = "채점 중 오류가 발생했어요.";
-        try { const json = await res.json(); msg = json.error ?? msg; } catch {
-          if (res.status === 504) msg = "요청 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.";
+        let code = "unknown";
+        try {
+          const json = await res.json();
+          msg = json.error ?? msg;
+          code = json.errorCode ?? "unknown";
+        } catch {
+          if (res.status === 504) {
+            msg = "요청 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.";
+            code = "timeout";
+          }
         }
         setError(msg);
+        setErrorCode(code);
       } else {
         const json = await res.json();
         setResult(json.result);
@@ -430,8 +448,10 @@ export default function HomeworkCheckForm({
       clearTimeout(timeoutId);
       if (err instanceof DOMException && err.name === "AbortError") {
         setError("요청 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.");
+        setErrorCode("timeout");
       } else {
         setError("네트워크 오류가 발생했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
+        setErrorCode("network");
       }
     }
     setChecking(false);
@@ -538,6 +558,32 @@ export default function HomeworkCheckForm({
       setTimeout(() => setSavedMsg(""), 3000);
     }
     setSaving(false);
+  }
+
+  function handleAddProblem() {
+    if (!result || !addQuestion.trim()) return;
+    const nextNum = result.problems.length > 0
+      ? Math.max(...result.problems.map((p) => p.number)) + 1
+      : 1;
+    const newProblem: Problem = {
+      number: nextNum,
+      question: addQuestion.trim(),
+      studentAnswer: addStudentAnswer.trim() || "미작성",
+      correctAnswer: addCorrectAnswer.trim(),
+      isCorrect: addIsCorrect,
+      explanation: addIsCorrect ? null : (addExplanation.trim() || null),
+    };
+    const updatedProblems = [...result.problems, newProblem];
+    const newScore = updatedProblems.filter((p) => p.isCorrect).length;
+    setResult({ ...result, problems: updatedProblems, score: newScore, total: updatedProblems.length });
+    setScore({ score: newScore, total: updatedProblems.length });
+    setShowAddProblem(false);
+    setAddQuestion("");
+    setAddStudentAnswer("");
+    setAddCorrectAnswer("");
+    setAddIsCorrect(false);
+    setAddExplanation("");
+    setIsReviewed(false);
   }
 
   async function handleRewardComplete() {
@@ -720,6 +766,121 @@ export default function HomeworkCheckForm({
           />
         ))}
 
+        {/* 문제 추가 */}
+        {!isManualResult && (
+          showAddProblem ? (
+            <div style={{
+              background: "#fff", borderRadius: "var(--r-card)", padding: 16,
+              boxShadow: "var(--sh-md)", border: "2px solid var(--green-100)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                <Icon name="plus-circle" size={16} color="var(--green-d)" stroke={2} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: "var(--green-d)" }}>문제 추가</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <input
+                  value={addQuestion}
+                  onChange={(e) => setAddQuestion(e.target.value)}
+                  placeholder="문제 내용"
+                  style={{
+                    width: "100%", border: "1.5px solid var(--line-strong)", borderRadius: 10,
+                    padding: "9px 12px", fontSize: 13.5, color: "var(--text)", outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    value={addStudentAnswer}
+                    onChange={(e) => setAddStudentAnswer(e.target.value)}
+                    placeholder="학생 답"
+                    style={{
+                      flex: 1, border: "1.5px solid var(--line-strong)", borderRadius: 10,
+                      padding: "9px 12px", fontSize: 13.5, color: "var(--text)", outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <input
+                    value={addCorrectAnswer}
+                    onChange={(e) => setAddCorrectAnswer(e.target.value)}
+                    placeholder="정답"
+                    style={{
+                      flex: 1, border: "1.5px solid var(--line-strong)", borderRadius: 10,
+                      padding: "9px 12px", fontSize: 13.5, color: "var(--text)", outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[true, false].map((val) => (
+                    <button
+                      key={String(val)}
+                      onClick={() => setAddIsCorrect(val)}
+                      style={{
+                        flex: 1, height: 36, borderRadius: 10, fontWeight: 800, fontSize: 13.5,
+                        border: `2px solid ${addIsCorrect === val ? (val ? "var(--green)" : "#F2607D") : "var(--line-strong)"}`,
+                        background: addIsCorrect === val ? (val ? "var(--green)" : "#F2607D") : "#fff",
+                        color: addIsCorrect === val ? "#fff" : "var(--muted)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {val ? "O 정답" : "X 오답"}
+                    </button>
+                  ))}
+                </div>
+                {!addIsCorrect && (
+                  <input
+                    value={addExplanation}
+                    onChange={(e) => setAddExplanation(e.target.value)}
+                    placeholder="풀이 설명 (선택)"
+                    style={{
+                      width: "100%", border: "1.5px solid var(--line-strong)", borderRadius: 10,
+                      padding: "9px 12px", fontSize: 13.5, color: "var(--text)", outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                )}
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <button
+                    onClick={() => setShowAddProblem(false)}
+                    style={{
+                      flex: 1, height: 40, borderRadius: 10,
+                      border: "1.5px solid var(--line-strong)", background: "#fff",
+                      color: "var(--muted)", fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+                    }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleAddProblem}
+                    disabled={!addQuestion.trim()}
+                    style={{
+                      flex: 1, height: 40, borderRadius: 10, border: "none",
+                      background: addQuestion.trim() ? "var(--green)" : "var(--line-strong)",
+                      color: addQuestion.trim() ? "#fff" : "var(--faint)",
+                      fontWeight: 800, fontSize: 13.5, cursor: "pointer",
+                    }}
+                  >
+                    추가하기
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAddProblem(true)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                height: 44, borderRadius: 14,
+                border: "1.5px dashed var(--line-strong)", background: "var(--surface-2)",
+                color: "var(--green-d)", fontWeight: 700, fontSize: 13.5, cursor: "pointer",
+              }}
+            >
+              <Icon name="plus" size={16} color="var(--green-d)" stroke={2.5} />
+              인식되지 않은 문제 추가
+            </button>
+          )
+        )}
+
         {hasEdits && (
           <button
             onClick={saveCorrections}
@@ -784,6 +945,7 @@ export default function HomeworkCheckForm({
               style={{
                 background: "#fff", borderRadius: 24, padding: "28px 24px 24px",
                 width: "100%", maxWidth: 340, boxShadow: "var(--sh-md)",
+                boxSizing: "border-box",
               }}
             >
               <div style={{ textAlign: "center", marginBottom: 20 }}>
@@ -814,6 +976,7 @@ export default function HomeworkCheckForm({
                     flex: 1, height: 44, border: "1.5px solid var(--line-strong)",
                     borderRadius: 10, padding: "0 12px", fontSize: 22, fontWeight: 800,
                     color: "var(--text)", outline: "none", textAlign: "center", background: "#fff",
+                    boxSizing: "border-box", minWidth: 0,
                   }}
                 />
                 <span style={{ fontSize: 16, fontWeight: 800, color: "var(--muted)", flexShrink: 0 }}>
@@ -962,7 +1125,48 @@ export default function HomeworkCheckForm({
             />
           </div>
 
-          {error && <p style={{ color: "var(--red)", fontSize: 13.5, textAlign: "center" }}>{error}</p>}
+          {error && (
+            <div style={{
+              background: "#FEF2F2", borderRadius: 14, padding: "14px 16px",
+              border: "1px solid #FECACA",
+            }}>
+              <p style={{ color: "#DC2626", fontSize: 13.5, fontWeight: 600, lineHeight: 1.5, marginBottom: 10 }}>
+                {error}
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(errorCode === "timeout" || errorCode === "payload_too_large") && images.length > 1 && (
+                  <button
+                    onClick={() => {
+                      setImages((prev) => prev.slice(0, Math.ceil(prev.length / 2)));
+                      setError("");
+                      setErrorCode("");
+                    }}
+                    style={{
+                      flex: 1, height: 36, borderRadius: 10, border: "1px solid #FECACA",
+                      background: "#fff", color: "#DC2626", fontWeight: 700, fontSize: 12.5,
+                      cursor: "pointer", whiteSpace: "nowrap",
+                    }}
+                  >
+                    사진 줄여서 재시도
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setCheckMode("manual");
+                    setError("");
+                    setErrorCode("");
+                  }}
+                  style={{
+                    flex: 1, height: 36, borderRadius: 10, border: "1px solid var(--line-strong)",
+                    background: "#fff", color: "var(--text-soft)", fontWeight: 700, fontSize: 12.5,
+                    cursor: "pointer", whiteSpace: "nowrap",
+                  }}
+                >
+                  직접 입력으로 전환
+                </button>
+              </div>
+            </div>
+          )}
 
           {checking ? (
             <AiProcessing label="AI가 채점하고 있어요" />
