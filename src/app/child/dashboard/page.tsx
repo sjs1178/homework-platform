@@ -81,7 +81,6 @@ export default async function ChildDashboard() {
       supabase
         .from("reward_logs")
         .select("type, amount")
-        .in("pair_id", allPairIds)
         .eq("child_id", user.id),
       supabase
         .from("reward_settings")

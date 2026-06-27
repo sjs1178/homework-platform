@@ -51,17 +51,18 @@ export default async function ParentRewardsPage() {
     childName = cp?.display_name ?? "자녀";
   }
 
+  // 리워드는 child_id 기준으로 집계 — 공동양육자 모두 동일한 잔액·내역 조회
   const { data: logs } = await supabase
     .from("reward_logs")
     .select("*, homeworks(subject, description)")
-    .eq("pair_id", pairId)
+    .eq("child_id", childId)
     .order("created_at", { ascending: false })
     .limit(50);
 
   const { data: pendingReqs } = await supabase
     .from("reward_requests")
     .select("*")
-    .eq("pair_id", pairId)
+    .eq("child_id", childId)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 

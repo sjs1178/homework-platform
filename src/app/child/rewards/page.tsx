@@ -18,10 +18,17 @@ export default async function ChildRewardsPage() {
 
   if (!profile?.pair_id) redirect("/child/dashboard");
 
+  // 연결된 모든 부모(공동양육자)의 pair를 포함해 리워드를 child_id 기준으로 집계
+  const { data: myPairs } = await supabase
+    .from("pairs")
+    .select("id")
+    .eq("child_id", user.id)
+    .eq("status", "active");
+  const pairIds = (myPairs ?? []).map((p) => p.id);
+
   const { data: logs } = await supabase
     .from("reward_logs")
     .select("*")
-    .eq("pair_id", profile.pair_id)
     .eq("child_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -34,13 +41,13 @@ export default async function ChildRewardsPage() {
   const { data: catalogRaw } = await supabase
     .from("reward_catalog")
     .select("*")
-    .eq("pair_id", profile.pair_id)
+    .in("pair_id", pairIds.length ? pairIds : [profile.pair_id])
     .order("cost", { ascending: true });
 
   const { data: pendingReqs } = await supabase
     .from("reward_requests")
     .select("*")
-    .eq("pair_id", profile.pair_id)
+    .eq("child_id", user.id)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 

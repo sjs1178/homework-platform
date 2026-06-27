@@ -230,11 +230,12 @@ export default function SettingsView({
   async function saveRewardSettings() {
     if (!pairId) return;
     setSavingReward(true);
-    await supabase.from("reward_settings").upsert({
-      pair_id: pairId,
-      point_reward_name: rewardName,
-      point_reward_unit: rewardUnit,
-    }, { onConflict: "pair_id" });
+    // 자녀의 모든 연결 pair에 단위/이름 전파 (자녀·공동양육자 단위 일치)
+    await fetch("/api/reward-settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pairId, rewardName, rewardUnit }),
+    });
     setRewardSaved(true);
     setTimeout(() => setRewardSaved(false), 2500);
     setSavingReward(false);

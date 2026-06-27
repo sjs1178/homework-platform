@@ -13,13 +13,24 @@ export async function POST(req: NextRequest) {
 
   const { data: request } = await supabase
     .from("reward_requests")
-    .select("*, pairs(parent_id, child_id)")
+    .select("*")
     .eq("id", requestId)
     .eq("status", "pending")
     .single();
 
   if (!request) return NextResponse.json({ error: "요청을 찾을 수 없어요" }, { status: 404 });
-  if (request.pairs?.parent_id !== user.id) {
+
+  // 해당 자녀와 연결된 부모(공동양육자 포함) 누구나 승인/거절 가능
+  const { data: parentPair } = await supabase
+    .from("pairs")
+    .select("id")
+    .eq("parent_id", user.id)
+    .eq("child_id", request.child_id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (!parentPair) {
     return NextResponse.json({ error: "권한 없음" }, { status: 403 });
   }
 
