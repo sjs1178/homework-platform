@@ -131,10 +131,10 @@ export default async function ParentDashboard() {
         else break;
       }
 
-      // 리워드
-      const pairLogs = (allLogs ?? []).filter((l) => l.pair_id === pair.id);
-      const earned = pairLogs.filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
-      const spent = pairLogs.filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
+      // 리워드 — 자녀의 모든 페어(공동양육자 포함) 통합 집계
+      const childLogs = (allLogs ?? []).filter((l) => childPairIds.includes(l.pair_id));
+      const earned = childLogs.filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
+      const spent = childLogs.filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
 
       return {
         pairId: pair.id,

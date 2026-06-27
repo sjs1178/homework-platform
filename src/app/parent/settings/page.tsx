@@ -56,6 +56,18 @@ export default async function SettingsPage() {
     );
   }
 
+  // 자녀별 리워드 설정 (pair_id 기준)
+  const allPairIds = (pairs ?? []).map((p) => p.id);
+  const { data: rwSettingsAll } = allPairIds.length
+    ? await supabase
+        .from("reward_settings")
+        .select("pair_id, point_reward_name, point_reward_unit")
+        .in("pair_id", allPairIds)
+    : { data: [] };
+  const rwMap = Object.fromEntries(
+    (rwSettingsAll ?? []).map((s) => [s.pair_id, s])
+  );
+
   const pairsWithChild = (pairs ?? []).map((p) => ({
     id: p.id,
     invite_code: p.invite_code as string,
@@ -64,17 +76,11 @@ export default async function SettingsPage() {
     childName: p.child_id ? (childProfiles[p.child_id]?.name ?? "자녀") : null,
     childAvatar: p.child_id ? (childProfiles[p.child_id]?.avatarEmoji ?? "🧒") : null,
     childGrade: p.child_id ? (childProfiles[p.child_id]?.gradeLabel ?? "") : "",
+    rewardName: rwMap[p.id]?.point_reward_name ?? "리워드",
+    rewardUnit: rwMap[p.id]?.point_reward_unit ?? "P",
   }));
 
-  // 리워드 설정
   const pairId = pairsWithChild[0]?.id ?? null;
-  const { data: rwSettings } = pairId
-    ? await supabase
-        .from("reward_settings")
-        .select("point_reward_name, point_reward_unit")
-        .eq("pair_id", pairId)
-        .single()
-    : { data: null };
 
   // 자녀 가입 승인 대기 목록 (service role로 이메일 기반 조회)
   const pendingAdminClient = createAdmin(
@@ -131,8 +137,6 @@ export default async function SettingsPage() {
           displayName={profile?.display_name ?? ""}
           pairs={pairsWithChild}
           pairId={pairId}
-          rewardName={rwSettings?.point_reward_name ?? "리워드"}
-          rewardUnit={rwSettings?.point_reward_unit ?? "P"}
           pendingApprovals={pendingApprovals ?? []}
           withdrawalRequests={withdrawalRequests}
         />

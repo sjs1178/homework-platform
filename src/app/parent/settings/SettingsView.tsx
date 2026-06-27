@@ -22,6 +22,8 @@ interface Pair {
   childName: string | null;
   childAvatar: string | null;
   childGrade: string;
+  rewardName: string;
+  rewardUnit: string;
 }
 
 interface PendingApproval {
@@ -45,8 +47,6 @@ interface Props {
   displayName: string;
   pairs: Pair[];
   pairId: string | null;
-  rewardName: string;
-  rewardUnit: string;
   pendingApprovals: PendingApproval[];
   withdrawalRequests: WithdrawalRequest[];
 }
@@ -105,9 +105,90 @@ function SettingRow({
   );
 }
 
+function RewardSettingCard({
+  pairId, childName, childAvatar, initialName, initialUnit, onSaved,
+}: {
+  pairId: string;
+  childName: string;
+  childAvatar: string;
+  initialName: string;
+  initialUnit: string;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [unit, setUnit] = useState(initialUnit);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    // 자녀의 모든 연결 pair에 단위/이름 전파 (자녀·공동양육자 단위 일치)
+    await fetch("/api/reward-settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pairId, rewardName: name, rewardUnit: unit }),
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    setSaving(false);
+    onSaved();
+  }
+
+  return (
+    <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px", marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ fontSize: 20 }}>{childAvatar}</span>
+        <span style={{ fontSize: 14.5, fontWeight: 800, color: "var(--text)" }}>{childName}</span>
+      </div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>리워드 이름</p>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="포인트"
+            style={{
+              width: "100%", height: 42, borderRadius: 10,
+              border: "1.5px solid var(--line-strong)", padding: "0 12px",
+              fontSize: 14, fontWeight: 600, color: "var(--text)", outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+        <div style={{ width: 90 }}>
+          <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>단위</p>
+          <input
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="P"
+            style={{
+              width: "100%", height: 42, borderRadius: 10,
+              border: "1.5px solid var(--line-strong)", padding: "0 12px",
+              fontSize: 14, fontWeight: 700, color: "var(--text)", outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+      </div>
+      <button
+        onClick={save}
+        disabled={saving}
+        style={{
+          width: "100%", height: 44, borderRadius: 12,
+          border: saved ? "1.5px solid var(--green-200)" : "none",
+          background: saved ? "var(--green-50)" : "var(--green)",
+          color: saved ? "var(--green-d)" : "#fff",
+          fontWeight: 800, fontSize: 14, cursor: "pointer",
+        }}
+      >
+        {saved ? "저장됐습니다 ✓" : saving ? "저장 중..." : "설정 저장"}
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsView({
   parentId, displayName, pairs: initialPairs, pairId: initialPairId,
-  rewardName: initRewardName, rewardUnit: initRewardUnit,
   pendingApprovals: initialPendingApprovals,
   withdrawalRequests: initialWithdrawalRequests,
 }: Props) {
@@ -158,12 +239,8 @@ export default function SettingsView({
     setAiTokenInput("");
   }
 
-  // ── 리워드 설정 ────────────────────────────────────────
+  // ── 리워드 설정 (자녀별) ─────────────────────────────────
   const [pairId] = useState(initialPairId);
-  const [rewardName, setRewardName] = useState(initRewardName);
-  const [rewardUnit, setRewardUnit] = useState(initRewardUnit);
-  const [savingReward, setSavingReward] = useState(false);
-  const [rewardSaved, setRewardSaved] = useState(false);
 
   // ── 자녀 추가 ─────────────────────────────────────────
   async function addChild() {
@@ -224,22 +301,6 @@ export default function SettingsView({
     navigator.clipboard.writeText(code);
     setCopied(code);
     setTimeout(() => setCopied(null), 2000);
-  }
-
-  // ── 리워드 저장 ────────────────────────────────────────
-  async function saveRewardSettings() {
-    if (!pairId) return;
-    setSavingReward(true);
-    // 자녀의 모든 연결 pair에 단위/이름 전파 (자녀·공동양육자 단위 일치)
-    await fetch("/api/reward-settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pairId, rewardName, rewardUnit }),
-    });
-    setRewardSaved(true);
-    setTimeout(() => setRewardSaved(false), 2500);
-    setSavingReward(false);
-    router.refresh();
   }
 
   // ── 자녀 가입 승인 ────────────────────────────────────
@@ -600,67 +661,73 @@ export default function SettingsView({
         </button>
       </div>
 
-      {/* ── 리워드 설정 ─────────────────────────────── */}
+      {/* ── 리워드 설정 (자녀별) ─────────────────────── */}
       <SectionHeader>리워드 설정</SectionHeader>
-      <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px" }}>
-        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>리워드 이름</p>
-            <input
-              value={rewardName}
-              onChange={(e) => setRewardName(e.target.value)}
-              placeholder="포인트"
-              style={{
-                width: "100%", height: 42, borderRadius: 10,
-                border: "1.5px solid var(--line-strong)", padding: "0 12px",
-                fontSize: 14, fontWeight: 600, color: "var(--text)", outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-          <div style={{ width: 90 }}>
-            <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>단위</p>
-            <input
-              value={rewardUnit}
-              onChange={(e) => setRewardUnit(e.target.value)}
-              placeholder="P"
-              style={{
-                width: "100%", height: 42, borderRadius: 10,
-                border: "1.5px solid var(--line-strong)", padding: "0 12px",
-                fontSize: 14, fontWeight: 700, color: "var(--text)", outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-        </div>
-        <button
-          onClick={saveRewardSettings}
-          disabled={savingReward || !pairId}
-          style={{
-            width: "100%", height: 44, borderRadius: 12,
-            border: rewardSaved ? "1.5px solid var(--green-200)" : "none",
-            background: rewardSaved ? "var(--green-50)" : "var(--green)",
-            color: rewardSaved ? "var(--green-d)" : "#fff",
-            fontWeight: 800, fontSize: 14, cursor: "pointer",
-            opacity: !pairId ? 0.4 : 1,
-          }}
-        >
-          {rewardSaved ? "저장됐습니다 ✓" : savingReward ? "저장 중..." : "설정 저장"}
-        </button>
-        {!pairId && (
-          <p style={{ fontSize: 12, color: "var(--faint)", textAlign: "center", marginTop: 6 }}>
+      {pairs.filter((p) => p.child_id).length === 0 ? (
+        <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px" }}>
+          <p style={{ fontSize: 12.5, color: "var(--faint)", textAlign: "center" }}>
             자녀를 먼저 연결해주세요
           </p>
-        )}
-      </div>
+        </div>
+      ) : (
+        <>
+          <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, margin: "0 4px 10px", lineHeight: 1.5 }}>
+            자녀마다 리워드 이름과 단위(예: 분, P)를 따로 설정할 수 있어요.
+          </p>
+          {pairs.filter((p) => p.child_id).map((p) => (
+            <RewardSettingCard
+              key={p.id}
+              pairId={p.id}
+              childName={p.childName ?? "자녀"}
+              childAvatar={p.childAvatar ?? "🧒"}
+              initialName={p.rewardName}
+              initialUnit={p.rewardUnit}
+              onSaved={() => router.refresh()}
+            />
+          ))}
+        </>
+      )}
 
       {/* ── AI 설정 ──────────────────────────────── */}
       <SectionHeader>AI 설정</SectionHeader>
       <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px" }}>
-        <p style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600, marginBottom: 12, lineHeight: 1.6 }}>
-          본인의 AI API 토큰을 입력하면 AI 기능을 무제한으로 이용할 수 있어요.
-          토큰이 없으면 광고 시청 후 1회 이용이 가능합니다.
-        </p>
+        {/* 이용 방법 2가지 안내 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          <div style={{
+            display: "flex", gap: 10, alignItems: "flex-start",
+            background: "var(--green-50)", border: "1.5px solid var(--green-200)",
+            borderRadius: 12, padding: "12px 14px",
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="key" size={17} color="var(--green-d)" stroke={2.2} />
+            </span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: "var(--green-d)", marginBottom: 2 }}>
+                방법 1 · 내 API 키 입력 (무제한)
+              </p>
+              <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, lineHeight: 1.55, margin: 0 }}>
+                아래 3개 중 하나의 AI API 키를 입력하면 광고 없이 무제한으로 이용할 수 있어요.
+              </p>
+            </div>
+          </div>
+          <div style={{
+            display: "flex", gap: 10, alignItems: "flex-start",
+            background: "var(--surface-2)", border: "1.5px solid var(--line)",
+            borderRadius: 12, padding: "12px 14px",
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="zap" size={17} color="var(--muted)" stroke={2.2} />
+            </span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: "var(--text-soft)", marginBottom: 2 }}>
+                방법 2 · 광고 보고 AI 활용하기 (키 없이)
+              </p>
+              <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, lineHeight: 1.55, margin: 0 }}>
+                API 키를 입력하지 않아도 돼요. 숙제 검사·입력 시 짧은 광고를 보면 AI 기능을 이용할 수 있어요.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* AI 제공사 선택 */}
         <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 8 }}>AI 제공사</p>
