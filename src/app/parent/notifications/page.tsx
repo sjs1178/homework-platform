@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { createClient as createAdmin } from "@supabase/supabase-js";
+import { materializeDueReminders } from "@/lib/notify";
 import Icon from "@/components/ui/Icon";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -22,6 +23,9 @@ export default async function ParentNotifications() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+
+  // 지난 숙제 리마인더를 인앱 이력으로 보강 (로컬 알림은 기기에서만 울리므로)
+  await materializeDueReminders(admin, user.id);
 
   const { data: notifications } = await admin
     .from("notifications")

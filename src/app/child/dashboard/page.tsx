@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdmin } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
 import { toKSTDateString, getKSTWeekRange, getKSTWeekdayIndex, getKSTWeekDates } from "@/lib/date";
+import { materializeDueReminders } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 import Link from "next/link";
@@ -112,6 +114,13 @@ export default async function ChildDashboard() {
       done: todayHws.filter((h) => h.is_completed).length,
     };
   }
+
+  // 지난 숙제 리마인더를 인앱 이력으로 보강 (벨 뱃지 반영)
+  const notifyAdmin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  await materializeDueReminders(notifyAdmin, user.id);
 
   // 읽지 않은 알림 수
   const { count: unreadCount } = await supabase

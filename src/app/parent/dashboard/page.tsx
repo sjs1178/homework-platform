@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getAvatar } from "@/lib/avatars";
 import { getEffectiveGradeLabel } from "@/lib/grade";
 import { toKSTDateString, getKSTWeekRange, getKSTWeekDates } from "@/lib/date";
+import { materializeDueReminders } from "@/lib/notify";
 import ChildCarousel, { type ChildData } from "./ChildCarousel";
 import TodayHomeworkList from "./TodayHomeworkList";
 import Link from "next/link";
@@ -178,6 +179,9 @@ export default async function ParentDashboard() {
       }));
     }
   }
+
+  // 지난 숙제 리마인더를 인앱 이력으로 보강 (벨 뱃지 반영)
+  await materializeDueReminders(admin, user.id);
 
   // 읽지 않은 알림 수
   const { count: unreadCount } = await admin
