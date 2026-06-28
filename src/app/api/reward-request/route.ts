@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdmin } from "@supabase/supabase-js";
+import { notifyUsers, getPrefsMap, getParentIdsOfChild } from "@/lib/notify";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -24,6 +26,36 @@ export async function POST(req: NextRequest) {
   }).select("id").single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 리워드 요청 알림: 연결된 부모 중 reward_change 켠 사람에게
+  try {
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data: childProfile } = await admin
+      .from("user_profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    const childName = childProfile?.display_name ?? "자녀";
+    const parentIds = await getParentIdsOfChild(admin, user.id);
+    if (parentIds.length) {
+      const prefs = await getPrefsMap(admin, parentIds);
+      const targets = parentIds.filter((pid) => prefs[pid].reward_change);
+      if (targets.length) {
+        await notifyUsers(admin, targets, {
+          title: "리워드 요청",
+          body: `${childName}님이 리워드 ${amount}을(를) 요청했어요${reason.trim() ? `: ${reason.trim()}` : ""}.`,
+          type: "reward_change",
+          link: "/parent/rewards",
+        });
+      }
+    }
+  } catch (e) {
+    console.error("[reward-request] notify failed:", e);
+  }
+
   return NextResponse.json({ ok: true, id: data.id });
 }
 

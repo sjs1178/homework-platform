@@ -5,6 +5,7 @@ import { checkHomework, checkHomeworkByText, CheckResult } from "@/lib/check-hom
 import { tagCurriculum, type CurriculumMeta } from "@/lib/curriculum";
 import { getEffectiveGrade } from "@/lib/grade";
 import { updateSkillRecord } from "@/lib/skill-records";
+import { notifyUsers, getPrefsMap } from "@/lib/notify";
 import type { AiProvider } from "@/lib/ai-token";
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
@@ -168,6 +169,24 @@ export async function POST(req: NextRequest) {
   // 스킬 숙달 기록 업데이트
   if (currMeta && result.total > 0 && childId) {
     updateSkillRecord(admin, hw.pair_id, childId, currMeta, result).catch(() => {});
+  }
+
+  // 검사 완료 알림: 자녀가 check_complete 켰으면
+  if (childId) {
+    try {
+      const prefs = await getPrefsMap(admin, [childId]);
+      if (prefs[childId].check_complete) {
+        const scoreText = result.total > 0 ? ` (${result.score}/${result.total})` : "";
+        await notifyUsers(admin, [childId], {
+          title: "숙제 검사 완료",
+          body: `'${hw.subject}' 숙제 검사가 완료됐어요${scoreText}.`,
+          type: "check_complete",
+          link: "/child/dashboard",
+        });
+      }
+    } catch (e) {
+      console.error("[check-homework] notify failed:", e);
+    }
   }
 
   return NextResponse.json({ ok: true, result, checkId: checkRow?.id ?? null });

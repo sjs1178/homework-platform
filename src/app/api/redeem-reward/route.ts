@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
+import { notifyUsers, getPrefsMap, getParentIdsOfChild } from "@/lib/notify";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -51,6 +52,31 @@ export async function POST(req: NextRequest) {
     amount: cost,
     note: `${catalog.title ?? "리워드"} 교환`,
   });
+
+  // 리워드 변경 알림: 자녀가 교환하면 reward_change 켠 부모에게
+  try {
+    const { data: childProfile } = await admin
+      .from("user_profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    const childName = childProfile?.display_name ?? "자녀";
+    const parentIds = await getParentIdsOfChild(admin, user.id);
+    if (parentIds.length) {
+      const prefs = await getPrefsMap(admin, parentIds);
+      const targets = parentIds.filter((pid) => prefs[pid].reward_change);
+      if (targets.length) {
+        await notifyUsers(admin, targets, {
+          title: "리워드 교환",
+          body: `${childName}님이 '${catalog.title ?? "리워드"}'을(를) 교환했어요.`,
+          type: "reward_change",
+          link: "/parent/rewards",
+        });
+      }
+    }
+  } catch (e) {
+    console.error("[redeem-reward] notify failed:", e);
+  }
 
   return NextResponse.json({ ok: true, newBalance: balance - cost });
 }

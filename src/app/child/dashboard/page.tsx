@@ -113,6 +113,13 @@ export default async function ChildDashboard() {
     };
   }
 
+  // 읽지 않은 알림 수
+  const { count: unreadCount } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_read", false);
+
   return (
     <div
       style={{
@@ -133,17 +140,36 @@ export default async function ChildDashboard() {
           }}
         >
           <LogoLockup height={26} badge="child" />
-          <Link
-            href="/child/profile"
-            style={{
-              width: 40, height: 40, borderRadius: "50%",
-              background: "#fff", boxShadow: "var(--sh-sm)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0, textDecoration: "none", fontSize: 20,
-            }}
-          >
-            {avatar.emoji}
-          </Link>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Link
+              href="/child/notifications"
+              style={{
+                width: 40, height: 40, borderRadius: "50%",
+                background: "#fff", boxShadow: "var(--sh-sm)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, textDecoration: "none", position: "relative",
+              }}
+            >
+              <Icon name="bell" size={19} color="var(--text-soft)" />
+              {(unreadCount ?? 0) > 0 && (
+                <span style={{
+                  position: "absolute", top: 6, right: 6, width: 9, height: 9,
+                  borderRadius: "50%", background: "#E11D48", border: "2px solid #fff",
+                }} />
+              )}
+            </Link>
+            <Link
+              href="/child/profile"
+              style={{
+                width: 40, height: 40, borderRadius: "50%",
+                background: "#fff", boxShadow: "var(--sh-sm)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, textDecoration: "none", fontSize: 20,
+              }}
+            >
+              {avatar.emoji}
+            </Link>
+          </div>
         </div>
 
         {!hasPair ? (

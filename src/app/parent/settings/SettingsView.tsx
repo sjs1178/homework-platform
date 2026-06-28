@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { GRADES, currentSchoolYear } from "@/lib/grade";
 import Icon from "@/components/ui/Icon";
+import NotificationPrefs from "@/components/NotificationPrefs";
 import {
   type AiProvider,
   AI_PROVIDER_LABELS,
@@ -213,6 +214,7 @@ export default function SettingsView({
   const [showToken, setShowToken] = useState(false);
   const [savedTokenMask, setSavedTokenMask] = useState<string | null>(null);
   const [aiSaved, setAiSaved] = useState(false);
+  const [adMode, setAdMode] = useState(false);
 
   useEffect(() => {
     const stored = getStoredAiToken();
@@ -688,56 +690,25 @@ export default function SettingsView({
         </>
       )}
 
+      {/* ── 알림 설정 ─────────────────────────────── */}
+      <SectionHeader>알림 설정</SectionHeader>
+      <NotificationPrefs role="parent" />
+
       {/* ── AI 설정 ──────────────────────────────── */}
       <SectionHeader>AI 설정</SectionHeader>
       <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px" }}>
-        {/* 이용 방법 2가지 안내 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-          <div style={{
-            display: "flex", gap: 10, alignItems: "flex-start",
-            background: "var(--green-50)", border: "1.5px solid var(--green-200)",
-            borderRadius: 12, padding: "12px 14px",
-          }}>
-            <span style={{ flexShrink: 0, marginTop: 1 }}>
-              <Icon name="key" size={17} color="var(--green-d)" stroke={2.2} />
-            </span>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 800, color: "var(--green-d)", marginBottom: 2 }}>
-                방법 1 · 내 API 키 입력 (무제한)
-              </p>
-              <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, lineHeight: 1.55, margin: 0 }}>
-                아래 3개 중 하나의 AI API 키를 입력하면 광고 없이 무제한으로 이용할 수 있어요.
-              </p>
-            </div>
-          </div>
-          <div style={{
-            display: "flex", gap: 10, alignItems: "flex-start",
-            background: "var(--surface-2)", border: "1.5px solid var(--line)",
-            borderRadius: 12, padding: "12px 14px",
-          }}>
-            <span style={{ flexShrink: 0, marginTop: 1 }}>
-              <Icon name="zap" size={17} color="var(--muted)" stroke={2.2} />
-            </span>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 800, color: "var(--text-soft)", marginBottom: 2 }}>
-                방법 2 · 광고 보고 AI 활용하기 (키 없이)
-              </p>
-              <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, lineHeight: 1.55, margin: 0 }}>
-                API 키를 입력하지 않아도 돼요. 숙제 검사·입력 시 짧은 광고를 보면 AI 기능을 이용할 수 있어요.
-              </p>
-            </div>
-          </div>
-        </div>
+        <p style={{ fontSize: 12.5, color: "var(--muted)", fontWeight: 600, marginBottom: 12, lineHeight: 1.55 }}>
+          AI 키를 입력하면 광고 없이 무제한, 키가 없으면 광고를 보고 이용할 수 있어요.
+        </p>
 
-        {/* AI 제공사 선택 */}
-        <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 8 }}>AI 제공사</p>
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        {/* AI 제공사 + 광고 이용 선택 */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
           {(["claude", "openai", "gemini"] as AiProvider[]).map((p) => {
-            const on = aiProvider === p;
+            const on = !adMode && aiProvider === p;
             return (
               <button
                 key={p}
-                onClick={() => { setAiProvider(p); setAiTokenInput(""); }}
+                onClick={() => { setAdMode(false); setAiProvider(p); setAiTokenInput(""); }}
                 style={{
                   flex: 1, height: 38, borderRadius: 10, fontSize: 12.5, fontWeight: 700,
                   border: `2px solid ${on ? "var(--green)" : "var(--line-strong)"}`,
@@ -750,8 +721,37 @@ export default function SettingsView({
               </button>
             );
           })}
+          <button
+            onClick={() => setAdMode(true)}
+            style={{
+              flexBasis: "100%", height: 40, borderRadius: 10, fontSize: 13, fontWeight: 800,
+              border: `2px solid ${adMode ? "var(--green)" : "var(--line-strong)"}`,
+              background: adMode ? "var(--green-50)" : "#fff",
+              color: adMode ? "var(--green-d)" : "var(--muted)",
+              cursor: "pointer", whiteSpace: "nowrap",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            }}
+          >
+            <Icon name="zap" size={15} color={adMode ? "var(--green-d)" : "var(--muted)"} stroke={2.2} />
+            광고보고 AI이용하기
+          </button>
         </div>
 
+        {adMode && (
+          <div style={{
+            background: "var(--surface-2)", borderRadius: 10, padding: "12px 14px",
+            display: "flex", gap: 8, alignItems: "flex-start",
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="zap" size={15} color="var(--muted)" stroke={2.2} />
+            </span>
+            <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, lineHeight: 1.55, margin: 0 }}>
+              API 키 없이 이용해요. 숙제 검사·입력 시 짧은 광고를 보면 AI 기능을 사용할 수 있어요.
+            </p>
+          </div>
+        )}
+
+        {!adMode && (<>
         {/* 현재 저장 상태 */}
         {savedTokenMask && (
           <div
@@ -848,6 +848,7 @@ export default function SettingsView({
             AI 호출 시에만 HTTPS를 통해 전달된 뒤 즉시 폐기됩니다.
           </p>
         </div>
+        </>)}
       </div>
 
       {/* ── 계정 ──────────────────────────────────── */}

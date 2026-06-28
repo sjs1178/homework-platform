@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AVATARS, getAvatar } from "@/lib/avatars";
 import Icon from "@/components/ui/Icon";
+import NotificationPrefs from "@/components/NotificationPrefs";
 
 interface Props {
   userId: string;
@@ -124,6 +125,14 @@ export default function ProfileEditForm({ userId, displayName, avatarId }: Props
       >
         {saved ? "저장됨 ✓" : saving ? "저장 중..." : "저장하기"}
       </button>
+
+      {/* 알림 설정 */}
+      <div>
+        <p style={{ fontSize: 12, fontWeight: 800, color: "var(--faint)", letterSpacing: "0.04em", textTransform: "uppercase", margin: "4px 4px 8px" }}>
+          알림 설정
+        </p>
+        <NotificationPrefs role="child" />
+      </div>
 
       {/* 계정 */}
       <div>
