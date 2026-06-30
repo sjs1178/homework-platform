@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { CheckResult, Problem } from "@/lib/check-homework";
 import Icon from "@/components/ui/Icon";
 import AiProcessing from "@/components/ui/AiProcessing";
@@ -344,6 +345,7 @@ export default function HomeworkCheckForm({
   homeworkId, checkId: initialCheckId, existingResult, existingScore, isReviewed: initialReviewed, subject,
   pairId, childId, rewardName, rewardUnit, defaultRewardAmount,
 }: Props) {
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [checkMode, setCheckMode] = useState<"ai" | "manual">("ai");
   const [images, setImages] = useState<{ base64: string; mediaType: MediaType; preview: string }[]>([]);
@@ -444,6 +446,7 @@ export default function HomeworkCheckForm({
         setText("");
         setEditing({});
         setIsReviewed(json.result.total === 0);
+        router.refresh(); // 대시보드 등 캐시 무효화 → 돌아갔을 때 검사 상태 반영
       }
     } catch (err) {
       clearTimeout(timeoutId);
@@ -516,6 +519,7 @@ export default function HomeworkCheckForm({
       setScore({ score: json.result.score, total: json.result.total });
       setCheckId(json.checkId ?? null);
       setIsReviewed(true);
+      router.refresh();
     }
     setSaving(false);
   }
@@ -557,6 +561,7 @@ export default function HomeworkCheckForm({
       setIsReviewed(true);
       setSavedMsg("수정 내용이 저장됐습니다");
       setTimeout(() => setSavedMsg(""), 3000);
+      router.refresh();
     }
     setSaving(false);
   }
@@ -608,6 +613,7 @@ export default function HomeworkCheckForm({
     setSavedMsg(`검사 완료! ${amt > 0 ? `${rewardName} ${amt}${rewardUnit} 지급` : ""}`);
     setTimeout(() => setSavedMsg(""), 4000);
     setSaving(false);
+    router.refresh(); // 대시보드 캐시 무효화 → 돌아가면 검사 완료 반영
   }
 
   const hasEdits = Object.keys(editing).length > 0;
