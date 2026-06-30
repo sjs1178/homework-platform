@@ -52,7 +52,7 @@ export default async function ParentDashboard() {
   }
 
   let childrenData: ChildData[] = [];
-  let todayHomeworks: { id: string; subject: string; description: string; due_date: string; due_time: string | null; is_completed: boolean; hasCheck: boolean; childName: string }[] = [];
+  let todayHomeworks: { id: string; subject: string; description: string; due_date: string; due_time: string | null; is_completed: boolean; hasCheck: boolean; childName: string; isToday: boolean }[] = [];
 
   if (hasChildren) {
     // 자녀 프로필 배치 조회
@@ -152,18 +152,33 @@ export default async function ParentDashboard() {
 
     // 오늘의 숙제 (전체 자녀 통합, 모든 부모 페어 포함)
     const todayStr = toKSTDateString();
-    const { data: todayHws } = await admin
-      .from("homeworks")
-      .select("id, pair_id, subject, description, due_date, due_time, is_completed")
-      .in("pair_id", allPairIds)
-      .eq("due_date", todayStr)
-      .order("due_time", { ascending: true, nullsFirst: false });
+    const HW_FIELDS = "id, pair_id, subject, description, due_date, due_time, is_completed, completed_at";
+    const thirtyAgoStr = toKSTDateString(new Date(Date.now() - 30 * 24 * 3600 * 1000));
 
-    if (todayHws?.length) {
+    // 오늘 숙제 + 최근 완료된 숙제(검사 대기 후보, 날짜 무관)
+    const [todayRes, completedRes] = await Promise.all([
+      admin.from("homeworks").select(HW_FIELDS)
+        .in("pair_id", allPairIds)
+        .eq("due_date", todayStr)
+        .order("due_time", { ascending: true, nullsFirst: false }),
+      admin.from("homeworks").select(HW_FIELDS)
+        .in("pair_id", allPairIds)
+        .eq("is_completed", true)
+        .neq("due_date", todayStr)
+        .gte("due_date", thirtyAgoStr)
+        .order("completed_at", { ascending: false }),
+    ]);
+
+    const todayHws = todayRes.data ?? [];
+    const todayIds = new Set(todayHws.map((h) => h.id));
+    const otherCompleted = (completedRes.data ?? []).filter((h) => !todayIds.has(h.id));
+    const candidates = [...todayHws, ...otherCompleted];
+
+    if (candidates.length) {
       const { data: checks } = await admin
         .from("homework_checks")
         .select("homework_id")
-        .in("homework_id", todayHws.map((h) => h.id));
+        .in("homework_id", candidates.map((h) => h.id));
       const checkedIds = new Set(checks?.map((c) => c.homework_id) ?? []);
 
       const pairChildMap: Record<string, string> = {};
@@ -172,11 +187,20 @@ export default async function ParentDashboard() {
         pIds.forEach((pid) => { pairChildMap[pid] = name; });
       });
 
-      todayHomeworks = todayHws.map((h) => ({
-        ...h,
-        hasCheck: checkedIds.has(h.id),
-        childName: pairChildMap[h.pair_id] ?? "자녀",
-      }));
+      // 오늘 숙제는 모두, 다른 날 숙제는 '완료·검사 대기'인 것만 포함
+      todayHomeworks = candidates
+        .filter((h) => todayIds.has(h.id) || !checkedIds.has(h.id))
+        .map((h) => ({
+          id: h.id,
+          subject: h.subject,
+          description: h.description,
+          due_date: h.due_date,
+          due_time: h.due_time,
+          is_completed: h.is_completed,
+          hasCheck: checkedIds.has(h.id),
+          childName: pairChildMap[h.pair_id] ?? "자녀",
+          isToday: todayIds.has(h.id),
+        }));
     }
   }
 

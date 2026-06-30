@@ -13,6 +13,12 @@ interface TodayHomework {
   is_completed: boolean;
   hasCheck: boolean;
   childName: string;
+  isToday: boolean;
+}
+
+function shortDate(iso: string): string {
+  const [, m, d] = iso.split("-");
+  return `${Number(m)}/${Number(d)}`;
 }
 
 const SUBJECT_MAP: Record<string, [string, string]> = {
@@ -173,6 +179,11 @@ export default function TodayHomeworkList({ homeworks: init, multiChild }: Props
                     {multiChild && (
                       <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green-d)", background: "var(--green-50)", padding: "2px 7px", borderRadius: 6 }}>
                         {hw.childName}
+                      </span>
+                    )}
+                    {!hw.isToday && (
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--amber-d)", background: "var(--amber-50)", padding: "2px 7px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                        {shortDate(hw.due_date)}
                       </span>
                     )}
                     {hw.due_time && (
