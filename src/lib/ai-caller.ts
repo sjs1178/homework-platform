@@ -13,7 +13,7 @@ export async function callParseText(
     const client = new Anthropic({ apiKey, timeout: 55_000 });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: userText }],
     });
@@ -29,7 +29,7 @@ export async function callParseText(
           { role: "system", content: systemPrompt },
           { role: "user", content: userText },
         ],
-        max_tokens: 2048,
+        max_tokens: 4096,
       }),
     });
     const json = await res.json();
@@ -44,7 +44,7 @@ export async function callParseText(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: `${systemPrompt}\n\n${userText}` }] }],
-        generationConfig: { maxOutputTokens: 2048 },
+        generationConfig: { maxOutputTokens: 4096 },
       }),
     }
   );
@@ -66,7 +66,7 @@ export async function callParseImage(
     const client = new Anthropic({ apiKey, timeout: 55_000 });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{
         role: "user",
@@ -94,7 +94,7 @@ export async function callParseImage(
             ],
           },
         ],
-        max_tokens: 2048,
+        max_tokens: 4096,
       }),
     });
     const json = await res.json();
@@ -114,7 +114,7 @@ export async function callParseImage(
             { text: `${systemPrompt}\n\n${imageText}` },
           ],
         }],
-        generationConfig: { maxOutputTokens: 2048 },
+        generationConfig: { maxOutputTokens: 4096 },
       }),
     }
   );
@@ -142,7 +142,7 @@ export async function callParseMulti(
     }));
     content.push({ type: "text", text: textContent });
     const res = await client.messages.create({
-      model: "claude-sonnet-4-6", max_tokens: 2048, system: systemPrompt,
+      model: "claude-sonnet-4-6", max_tokens: 4096, system: systemPrompt,
       messages: [{ role: "user", content }],
     });
     return (res.content[0] as { type: string; text: string }).text;
@@ -157,7 +157,7 @@ export async function callParseMulti(
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model: "gpt-4o", max_tokens: 2048,
+        model: "gpt-4o", max_tokens: 4096,
         messages: [{ role: "system", content: systemPrompt }, { role: "user", content }],
       }),
     });
@@ -178,7 +178,7 @@ export async function callParseMulti(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts }],
-        generationConfig: { maxOutputTokens: 2048 },
+        generationConfig: { maxOutputTokens: 4096 },
       }),
     }
   );

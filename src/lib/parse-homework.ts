@@ -54,7 +54,7 @@ export async function parseHomeworkText(
   } else {
     const response = await systemClient.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       system: [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }] as any,
       messages: [{ role: "user", content: text }],
@@ -80,7 +80,7 @@ export async function parseHomeworkImage(
   } else {
     const response = await systemClient.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       system: [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }] as any,
       messages: [{
@@ -120,7 +120,7 @@ export async function parseHomeworkMulti(
 
     const response = await systemClient.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       system: [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }] as any,
       messages: [{ role: "user", content }],
@@ -133,12 +133,23 @@ export async function parseHomeworkMulti(
 
 function parseResponse(raw: string): HomeworkItem[] {
   const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const arrayMatch = raw.match(/(\[[\s\S]*\])/);
-  const jsonStr = fenceMatch ? fenceMatch[1].trim() : arrayMatch ? arrayMatch[1].trim() : raw;
+  const arrayMatch = raw.match(/\[[\s\S]*\]/);
+  const jsonStr = (fenceMatch ? fenceMatch[1] : arrayMatch ? arrayMatch[0] : raw).trim();
+
+  let parsed: unknown;
   try {
-    return JSON.parse(jsonStr) as HomeworkItem[];
+    parsed = JSON.parse(jsonStr);
   } catch {
-    console.error("Parse homework returned invalid JSON:", raw);
-    return [];
+    // 출력이 잘렸거나 JSON이 아님 → '못 찾음'과 구분해서 에러로 surface (로그 포함)
+    console.error("Parse homework: invalid JSON (rawLen=%d):", raw.length, raw.slice(0, 600));
+    throw new Error("PARSE_FAIL");
   }
+
+  if (Array.isArray(parsed)) return parsed as HomeworkItem[];
+  // 모델이 { items: [...] } 형태로 감싼 경우 허용
+  if (parsed && typeof parsed === "object" && Array.isArray((parsed as { items?: unknown }).items)) {
+    return (parsed as { items: HomeworkItem[] }).items;
+  }
+  // 유효 JSON이지만 배열이 아님 → 항목 없음
+  return [];
 }

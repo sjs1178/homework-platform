@@ -8,6 +8,8 @@ export const maxDuration = 60;
 
 function toUserFriendlyError(msg: string): string {
   const lower = msg.toLowerCase();
+  if (msg.includes("PARSE_FAIL"))
+    return "AI가 응답을 제대로 만들지 못했어요. 사진이 흐리면 더 선명하게 찍어 다시 시도해 주세요.";
   if (lower.includes("quota") || lower.includes("rate") || lower.includes("429"))
     return "API 키의 사용 한도가 초과되었어요. 잠시 후 다시 시도하거나, 다른 AI 키를 사용해 주세요.";
   if (lower.includes("invalid") && lower.includes("key"))
