@@ -10,7 +10,7 @@ export async function callParseText(
 ): Promise<string> {
   if (provider === "claude") {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, timeout: 55_000 });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
@@ -63,7 +63,7 @@ export async function callParseImage(
   const imageText = "이 숙제 이미지에서 숙제 일정을 추출해줘.";
   if (provider === "claude") {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, timeout: 55_000 });
     const res = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
@@ -135,7 +135,7 @@ export async function callParseMulti(
 
   if (provider === "claude") {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, timeout: 55_000 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const content: any[] = images.map((img) => ({
       type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 },
@@ -203,7 +203,7 @@ export async function callCheckHomework(
 
   if (provider === "claude") {
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, timeout: 55_000 });
     const content =
       payload.type === "text"
         ? `다음 숙제 내용을 검사해줘:\n\n${payload.text}`

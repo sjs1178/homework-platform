@@ -139,18 +139,39 @@ export default function HomeworkInputForm({
     }
     if (text.trim()) extra.text = text.trim();
 
-    const res = await fetch("/api/parse-homework", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildApiBody(extra)),
-    });
-    const json = await res.json();
-    if (!res.ok || !json.items?.length) {
-      setError(json.error ?? "숙제를 찾지 못했어요. 다시 입력해보세요.");
-    } else {
-      setParsed(json.items);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 70_000);
+
+    try {
+      const res = await fetch("/api/parse-homework", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildApiBody(extra)),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      let json: { items?: unknown[]; error?: string } | null = null;
+      try { json = await res.json(); } catch { json = null; }
+
+      if (!res.ok || !json?.items?.length) {
+        const fallback = res.status === 504
+          ? "AI 응답 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요."
+          : "숙제를 찾지 못했어요. 다시 입력해보세요.";
+        setError(json?.error ?? fallback);
+      } else {
+        setParsed(json.items as typeof parsed);
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("AI 응답 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.");
+      } else {
+        setError("네트워크 오류가 발생했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
+      }
+    } finally {
+      setParsing(false);
     }
-    setParsing(false);
   }
 
   function handleParse() {

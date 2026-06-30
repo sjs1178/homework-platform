@@ -3,7 +3,7 @@ import type { HomeworkItem, SubjectRule } from "./types";
 import type { AiProvider } from "./ai-token";
 import { callParseText, callParseImage, callParseMulti } from "./ai-caller";
 
-const systemClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const systemClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 55_000 });
 
 function buildSystemPrompt(rules: SubjectRule[]): string {
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });

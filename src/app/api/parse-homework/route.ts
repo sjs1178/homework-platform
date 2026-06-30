@@ -3,6 +3,9 @@ import { parseHomeworkText, parseHomeworkImage, parseHomeworkMulti } from "@/lib
 import type { SubjectRule } from "@/lib/types";
 import type { AiProvider } from "@/lib/ai-token";
 
+// Vercel 함수 실행 한도 (기본 10초면 AI 파싱 중 강제 종료 → 504). Hobby 최대 60초.
+export const maxDuration = 60;
+
 function toUserFriendlyError(msg: string): string {
   const lower = msg.toLowerCase();
   if (lower.includes("quota") || lower.includes("rate") || lower.includes("429"))

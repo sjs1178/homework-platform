@@ -8,6 +8,9 @@ import { updateSkillRecord } from "@/lib/skill-records";
 import { notifyUsers, getPrefsMap } from "@/lib/notify";
 import type { AiProvider } from "@/lib/ai-token";
 
+// Vercel 함수 실행 한도 (기본 10초면 AI 채점 중 강제 종료 → 504). Hobby 최대 60초.
+export const maxDuration = 60;
+
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
 const MANUAL_RESULT: CheckResult = {
