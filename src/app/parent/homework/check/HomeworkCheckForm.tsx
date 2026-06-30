@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import AiProcessing from "@/components/ui/AiProcessing";
 import AdGateModal from "@/components/ui/AdGateModal";
 import { getStoredAiToken } from "@/lib/ai-token";
+import { compressImageFile } from "@/lib/image";
 
 type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
@@ -374,21 +375,18 @@ export default function HomeworkCheckForm({
   // Ad gate
   const [showAdGate, setShowAdGate] = useState(false);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setImages((prev) => [...prev, {
-          base64: dataUrl.split(",")[1],
-          mediaType: file.type as MediaType,
-          preview: dataUrl,
-        }]);
-      };
-      reader.readAsDataURL(file);
-    });
     e.target.value = "";
+    for (const file of files) {
+      // 업로드 전 리사이즈·압축 (Vercel 요청 본문 4.5MB 한도 회피 → 여러 장 첨부 가능)
+      const img = await compressImageFile(file);
+      setImages((prev) => [...prev, {
+        base64: img.base64,
+        mediaType: img.mediaType as MediaType,
+        preview: img.preview,
+      }]);
+    }
   }
 
   function buildApiBody(extra: Record<string, unknown> = {}) {
@@ -430,6 +428,9 @@ export default function HomeworkCheckForm({
           if (res.status === 504) {
             msg = "요청 시간이 초과되었어요. 사진 수를 줄이거나 잠시 후 다시 시도해 주세요.";
             code = "timeout";
+          } else if (res.status === 413) {
+            msg = "이미지 용량이 너무 커요. 사진 수를 줄이거나 작은 사진을 사용해 주세요.";
+            code = "payload_too_large";
           }
         }
         setError(msg);
