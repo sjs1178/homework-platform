@@ -29,17 +29,7 @@ export async function POST(req: NextRequest) {
     .update({ is_completed: false, completed_at: null })
     .eq("id", homeworkId);
 
-  if (hw.reward_trigger !== "score" && hw.reward_amount > 0) {
-    await supabase.from("reward_logs").insert({
-      pair_id: hw.pair_id,
-      child_id: user.id,
-      homework_id: hw.id,
-      type: "spend",
-      reward_type: "point",
-      amount: hw.reward_amount,
-      note: `${hw.subject} 완료 취소`,
-    });
-  }
+  // 완료 시 리워드를 지급하지 않으므로 취소 시 차감도 없음 (지급은 부모 검사 완료 시에만)
 
   return NextResponse.json({ ok: true });
 }

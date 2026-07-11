@@ -25,18 +25,7 @@ export async function POST(req: NextRequest) {
     .update({ is_completed: true, completed_at: new Date().toISOString() })
     .eq("id", homeworkId);
 
-  // 완료 시 지급 설정일 때만 바로 적립
-  if (hw.reward_trigger !== "score" && hw.reward_amount > 0) {
-    await supabase.from("reward_logs").insert({
-      pair_id: hw.pair_id,
-      child_id: user.id,
-      homework_id: hw.id,
-      type: "earn",
-      reward_type: "point",
-      amount: hw.reward_amount,
-      note: `${hw.subject} 완료`,
-    });
-  }
+  // 리워드는 부모가 검사 완료할 때만 지급 (자녀 완료 시 자동 지급하지 않음)
 
   // 검사 요청 알림: 자녀와 연결된 부모 중 check_request 켠 사람에게
   try {

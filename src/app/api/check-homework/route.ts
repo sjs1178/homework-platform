@@ -150,24 +150,7 @@ export async function POST(req: NextRequest) {
     is_reviewed: result.total === 0,
   }, { onConflict: "homework_id" }).select("id").single();
 
-  // 점수 기반 리워드
-  if (result.total > 0 && hw.reward_trigger === "score" && hw.reward_amount > 0) {
-    const { data: pair } = await admin.from("pairs").select("child_id").eq("id", hw.pair_id).single();
-    if (pair?.child_id) {
-      const amount = result.score * hw.reward_amount;
-      if (amount > 0) {
-        await admin.from("reward_logs").insert({
-          pair_id: hw.pair_id,
-          child_id: pair.child_id,
-          homework_id: homeworkId,
-          type: "earn",
-          reward_type: "point",
-          amount,
-          note: `${hw.subject} 검사 (${result.score}/${result.total}점)`,
-        });
-      }
-    }
-  }
+  // 리워드는 부모가 '검사 완료'를 눌러 지급 (채점 시 자동 지급하지 않음)
 
   // 스킬 숙달 기록 업데이트
   if (currMeta && result.total > 0 && childId) {

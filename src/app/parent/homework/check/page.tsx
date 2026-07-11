@@ -107,6 +107,7 @@ export default async function ParentHomeworkCheckPage({
           rewardName={rwSettings?.point_reward_name ?? "리워드"}
           rewardUnit={rwSettings?.point_reward_unit ?? "P"}
           defaultRewardAmount={hw.reward_amount ?? 0}
+          rewardTrigger={hw.reward_trigger === "score" ? "score" : "completion"}
         />
       </div>
     </div>

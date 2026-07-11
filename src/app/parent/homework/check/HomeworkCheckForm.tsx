@@ -23,6 +23,7 @@ interface Props {
   rewardName: string;
   rewardUnit: string;
   defaultRewardAmount: number;
+  rewardTrigger: "completion" | "score";
 }
 
 interface EditState {
@@ -343,7 +344,7 @@ function QCard({
 
 export default function HomeworkCheckForm({
   homeworkId, checkId: initialCheckId, existingResult, existingScore, isReviewed: initialReviewed, subject,
-  pairId, childId, rewardName, rewardUnit, defaultRewardAmount,
+  pairId, childId, rewardName, rewardUnit, defaultRewardAmount, rewardTrigger,
 }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -905,7 +906,13 @@ export default function HomeworkCheckForm({
 
         {!hasEdits && !rewardDone && (
           <button
-            onClick={() => setShowRewardModal(true)}
+            onClick={() => {
+              // 점수 기반이면 (맞은 개수 × 개당 리워드)로 제안 금액 미리 채움
+              if (rewardTrigger === "score" && score && score.total > 0) {
+                setRewardAmount(String(score.score * defaultRewardAmount));
+              }
+              setShowRewardModal(true);
+            }}
             style={{
               width: "100%", height: 54, borderRadius: 16, border: "none",
               background: "var(--green)", color: "#fff",

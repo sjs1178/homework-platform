@@ -54,7 +54,7 @@ export default function DayDetail({ date, homeworks, childId, onComplete, onUnco
     if (res.ok) {
       onComplete(hw.id);
       setDetailHw(null);
-      setToast(hw.reward_amount > 0 ? `완료! +${hw.reward_amount} 적립!` : "완료!");
+      setToast(hw.reward_amount > 0 ? "완료! 부모님 검사 후 리워드를 받아요" : "완료!");
       setTimeout(() => setToast(""), 3000);
     }
     setCompleting(null);
