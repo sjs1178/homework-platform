@@ -83,11 +83,11 @@ export default async function ParentDashboard() {
       .eq("is_completed", true)
       .order("due_date", { ascending: false });
 
-    // 리워드 배치 조회
+    // 리워드 배치 조회 — 리워드 페이지와 동일하게 child_id 기준으로 집계
     const { data: allLogs } = await admin
       .from("reward_logs")
-      .select("pair_id, type, amount")
-      .in("pair_id", allPairIds);
+      .select("child_id, type, amount")
+      .in("child_id", childIds);
 
     const { data: allSettings } = await admin
       .from("reward_settings")
@@ -132,8 +132,8 @@ export default async function ParentDashboard() {
         else break;
       }
 
-      // 리워드 — 자녀의 모든 페어(공동양육자 포함) 통합 집계
-      const childLogs = (allLogs ?? []).filter((l) => childPairIds.includes(l.pair_id));
+      // 리워드 — child_id 기준 통합 집계 (공동양육자 페어 모두 포함)
+      const childLogs = (allLogs ?? []).filter((l) => l.child_id === pair.child_id);
       const earned = childLogs.filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
       const spent = childLogs.filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
 

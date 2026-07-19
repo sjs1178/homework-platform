@@ -51,13 +51,15 @@ export default async function ParentRewardsPage() {
     childName = cp?.display_name ?? "자녀";
   }
 
-  // 리워드는 child_id 기준으로 집계 — 공동양육자 모두 동일한 잔액·내역 조회
-  const { data: logs } = await supabase
+  // 리워드는 child_id 기준으로 집계 — 공동양육자 모두 동일한 잔액·내역 조회.
+  // 잔액은 전체 로그로 계산해야 하므로 limit 없이 조회하고, 표시만 잘라낸다.
+  const { data: allLogs } = await supabase
     .from("reward_logs")
-    .select("*, homeworks(subject, description)")
+    .select("id, type, amount, note, created_at")
     .eq("child_id", childId)
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .order("created_at", { ascending: false });
+
+  const logs = (allLogs ?? []).slice(0, 50);
 
   const { data: pendingReqs } = await supabase
     .from("reward_requests")
@@ -66,8 +68,8 @@ export default async function ParentRewardsPage() {
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
-  const totalEarned = (logs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
-  const totalSpent = (logs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
+  const totalEarned = (allLogs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
+  const totalSpent = (allLogs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
   const balance = totalEarned - totalSpent;
 
   return (
