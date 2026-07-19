@@ -72,6 +72,14 @@ export default async function ChildMissionsPage() {
   const settings = settingsRes.data;
   const claims = claimsRes.data ?? [];
 
+  // 미션 달성 조건 = 부모 검사 완료 (자녀의 완료 표시만으로는 보상 없음)
+  const allHwIds = [...new Set([...dailyHws, ...weeklyHws, ...monthlyHws].map((h) => h.id))];
+  const { data: checks } = allHwIds.length
+    ? await supabase.from("homework_checks").select("homework_id").in("homework_id", allHwIds)
+    : { data: [] };
+  const checkedIds = new Set((checks ?? []).map((c) => c.homework_id));
+  const doneCount = (hws: { id: string }[]) => hws.filter((h) => checkedIds.has(h.id)).length;
+
   const weekKey = getWeekKey();
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
 
@@ -81,9 +89,9 @@ export default async function ChildMissionsPage() {
     {
       type: "daily" as const,
       label: "데일리 미션",
-      desc: "오늘의 숙제를 모두 완료하세요",
+      desc: "오늘 숙제를 모두 검사받으세요",
       total: dailyHws.length,
-      done: dailyHws.filter((h) => h.is_completed).length,
+      done: doneCount(dailyHws),
       reward: settings?.daily_reward ?? 5,
       claimed: claimedSet.has(`daily:${todayStr}`),
       periodKey: todayStr,
@@ -91,9 +99,9 @@ export default async function ChildMissionsPage() {
     {
       type: "weekly" as const,
       label: "위클리 미션",
-      desc: "이번 주 숙제를 모두 완료하세요",
+      desc: "이번 주 숙제를 모두 검사받으세요",
       total: weeklyHws.length,
-      done: weeklyHws.filter((h) => h.is_completed).length,
+      done: doneCount(weeklyHws),
       reward: settings?.weekly_reward ?? 30,
       claimed: claimedSet.has(`weekly:${weekKey}`),
       periodKey: weekKey,
@@ -101,9 +109,9 @@ export default async function ChildMissionsPage() {
     {
       type: "monthly" as const,
       label: "먼슬리 미션",
-      desc: "이번 달 숙제를 모두 완료하세요",
+      desc: "이번 달 숙제를 모두 검사받으세요",
       total: monthlyHws.length,
-      done: monthlyHws.filter((h) => h.is_completed).length,
+      done: doneCount(monthlyHws),
       reward: settings?.monthly_reward ?? 100,
       claimed: claimedSet.has(`monthly:${monthKey}`),
       periodKey: monthKey,

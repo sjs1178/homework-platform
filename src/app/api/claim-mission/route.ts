@@ -62,8 +62,20 @@ export async function POST(req: NextRequest) {
   if (!hws?.length) {
     return NextResponse.json({ error: "해당 기간에 숙제가 없어요" }, { status: 400 });
   }
-  if (hws.some((h) => !h.is_completed)) {
-    return NextResponse.json({ error: "아직 완료하지 않은 숙제가 있어요" }, { status: 400 });
+
+  // 적립은 부모 검사를 거친 뒤에만 — 자녀의 완료 표시만으로는 미션 보상을 받을 수 없다
+  const { data: checks } = await supabase
+    .from("homework_checks")
+    .select("homework_id")
+    .in("homework_id", hws.map((h) => h.id));
+  const checkedIds = new Set((checks ?? []).map((c) => c.homework_id));
+  const pending = hws.filter((h) => !checkedIds.has(h.id)).length;
+
+  if (pending > 0) {
+    return NextResponse.json(
+      { error: `아직 검사받지 않은 숙제가 ${pending}건 있어요` },
+      { status: 400 }
+    );
   }
 
   const { data: settings } = await supabase
@@ -90,11 +102,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: claimErr.message }, { status: 500 });
   }
 
+  const { data: mSetting } = await supabase
+    .from("reward_settings").select("primary_kind").eq("pair_id", pairId).maybeSingle();
+
   await supabase.from("reward_logs").insert({
     pair_id: pairId,
     child_id: user.id,
     type: "earn",
-    reward_type: "point",
+    reward_type: mSetting?.primary_kind === "time" ? "time" : "point",
+    entry_kind: "mission",
     amount: rewardAmount,
     note: `미션 달성: ${missionType === "daily" ? "데일리" : missionType === "weekly" ? "위클리" : "먼슬리"}`,
   });

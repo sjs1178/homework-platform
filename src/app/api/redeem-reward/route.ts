@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     child_id: user.id,
     type: "spend",
     reward_type: "point",
+    entry_kind: "redeem",
     amount: cost,
     note: `${catalog.title ?? "리워드"} 교환`,
   });

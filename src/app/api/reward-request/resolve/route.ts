@@ -42,11 +42,15 @@ export async function POST(req: NextRequest) {
     .eq("id", requestId);
 
   if (action === "approved") {
+    const { data: rSetting } = await supabase
+      .from("reward_settings").select("primary_kind").eq("pair_id", request.pair_id).maybeSingle();
+
     await supabase.from("reward_logs").insert({
       pair_id: request.pair_id,
       child_id: request.child_id,
       type: "earn",
-      reward_type: "point",
+      reward_type: rSetting?.primary_kind === "time" ? "time" : "point",
+      entry_kind: "request",
       amount: request.amount,
       note: request.reason ? `요청: ${request.reason}` : "자녀 요청 승인",
     });

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient as createAdmin } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
+import { currenciesFrom } from "@/lib/reward";
 import RewardsManager from "./RewardsManager";
 import Icon from "@/components/ui/Icon";
 import BackButton from "@/components/ui/BackButton";
@@ -30,10 +31,9 @@ export default async function ParentRewardsPage() {
     .from("reward_settings")
     .select("*")
     .eq("pair_id", pairId)
-    .single();
+    .maybeSingle();
 
-  const unit = settings?.point_reward_unit ?? "P";
-  const rewardName = settings?.point_reward_name ?? "리워드";
+  const currencies = currenciesFrom(settings);
 
   // 자녀 이름 (service role — RLS 우회)
   let childName = "자녀";
@@ -55,11 +55,9 @@ export default async function ParentRewardsPage() {
   // 잔액은 전체 로그로 계산해야 하므로 limit 없이 조회하고, 표시만 잘라낸다.
   const { data: allLogs } = await supabase
     .from("reward_logs")
-    .select("id, type, amount, note, created_at")
+    .select("id, type, reward_type, entry_kind, category, amount, note, created_at")
     .eq("child_id", childId)
     .order("created_at", { ascending: false });
-
-  const logs = (allLogs ?? []).slice(0, 50);
 
   const { data: pendingReqs } = await supabase
     .from("reward_requests")
@@ -68,9 +66,11 @@ export default async function ParentRewardsPage() {
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
-  const totalEarned = (allLogs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
-  const totalSpent = (allLogs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
-  const balance = totalEarned - totalSpent;
+  const { data: goalRows } = await supabase
+    .from("habit_goals")
+    .select("kind, daily_limit, weekly_limit, monthly_budget, saving_goal")
+    .eq("child_id", childId);
+  const goals = Object.fromEntries((goalRows ?? []).map((g) => [g.kind, g]));
 
   return (
     <div
@@ -93,14 +93,14 @@ export default async function ParentRewardsPage() {
           pairId={pairId}
           childId={childId ?? ""}
           childName={childName}
-          unit={unit}
-          rewardName={rewardName}
-          balance={balance}
-          totalEarned={totalEarned}
-          totalSpent={totalSpent}
-          logs={(logs ?? []).map((l) => ({
+          currencies={currencies}
+          goals={goals}
+          logs={(allLogs ?? []).map((l) => ({
             id: l.id,
             type: l.type,
+            reward_type: l.reward_type,
+            entry_kind: l.entry_kind,
+            category: l.category,
             amount: l.amount,
             note: l.note,
             created_at: l.created_at,

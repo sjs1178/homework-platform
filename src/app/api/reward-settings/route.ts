@@ -1,24 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdmin } from "@supabase/supabase-js";
+import type { RewardKind } from "@/lib/reward";
 
+// 리워드 통화 구성(주 통화, 이름·단위, 두 번째 통화 사용 여부)을
+// 해당 자녀와 연결된 모든 pair에 동일하게 전파한다.
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const { pairId, rewardName, rewardUnit } = await req.json() as {
-    pairId: string;
-    rewardName: string;
-    rewardUnit: string;
-  };
+  const { pairId, primaryKind, secondaryEnabled, timeName, timeUnit, moneyName, moneyUnit } =
+    await req.json() as {
+      pairId: string;
+      primaryKind: RewardKind;
+      secondaryEnabled: boolean;
+      timeName: string;
+      timeUnit: string;
+      moneyName: string;
+      moneyUnit: string;
+    };
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // 부모가 해당 pair의 소유자인지 확인 후 child_id 도출
   const { data: pair } = await admin
     .from("pairs")
     .select("parent_id, child_id")
@@ -32,7 +39,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "자녀가 연결되지 않았어요" }, { status: 400 });
   }
 
-  // 자녀와 연결된 모든 pair(공동양육자 포함)에 동일한 단위/이름 적용
   const { data: childPairs } = await admin
     .from("pairs")
     .select("id")
@@ -44,8 +50,12 @@ export async function POST(req: NextRequest) {
 
   const rows = targetPairIds.map((id) => ({
     pair_id: id,
-    point_reward_name: rewardName,
-    point_reward_unit: rewardUnit,
+    primary_kind: primaryKind === "time" ? "time" : "money",
+    secondary_enabled: !!secondaryEnabled,
+    time_reward_name: timeName?.trim() || "게임시간",
+    time_reward_unit: timeUnit?.trim() || "분",
+    point_reward_name: moneyName?.trim() || "리워드",
+    point_reward_unit: moneyUnit?.trim() || "P",
   }));
 
   const { error } = await admin

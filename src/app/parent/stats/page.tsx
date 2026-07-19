@@ -2,8 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getEffectiveGrade, getGradeLabel } from "@/lib/grade";
 import StatsView from "@/app/child/stats/StatsView";
+import StatsTabs from "@/components/StatsTabs";
+import { currenciesFrom } from "@/lib/reward";
 import BackButton from "@/components/ui/BackButton";
 import BottomNav from "@/components/ui/BottomNav";
+
+export const dynamic = "force-dynamic";
 
 export default async function ParentStatsPage() {
   const supabase = await createClient();
@@ -42,6 +46,28 @@ export default async function ParentStatsPage() {
   );
   const gradeLabel = getGradeLabel(effectiveGrade);
 
+  // 리워드 사용 통계용 데이터 (child_id 기준)
+  const [settingsRes, logsRes, goalsRes] = await Promise.all([
+    supabase
+      .from("reward_settings")
+      .select("primary_kind, secondary_enabled, time_reward_name, time_reward_unit, point_reward_name, point_reward_unit")
+      .eq("pair_id", pairId)
+      .maybeSingle(),
+    supabase
+      .from("reward_logs")
+      .select("type, reward_type, entry_kind, category, amount, created_at")
+      .eq("child_id", activePair.child_id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("habit_goals")
+      .select("kind, daily_limit, weekly_limit, monthly_budget, saving_goal")
+      .eq("child_id", activePair.child_id),
+  ]);
+
+  const currencies = currenciesFrom(settingsRes.data);
+  const logs = logsRes.data;
+  const goals = Object.fromEntries((goalsRes.data ?? []).map((g) => [g.kind, g]));
+
   return (
     <div
       style={{
@@ -57,18 +83,25 @@ export default async function ParentStatsPage() {
         <BackButton />
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", margin: 0 }}>
-            {childProfile?.display_name ?? "자녀"} 학습 통계
+            {childProfile?.display_name ?? "자녀"} 통계
           </h1>
           {gradeLabel && <p style={{ fontSize: 12, color: "var(--faint)", fontWeight: 600, margin: "2px 0 0" }}>{gradeLabel} 기준</p>}
         </div>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
-        <StatsView
-          pairId={pairId}
-          effectiveGrade={effectiveGrade ?? 0}
-          gradeLabel={gradeLabel}
-          childName={childProfile?.display_name ?? ""}
+        <StatsTabs
+          currencies={currencies}
+          logs={logs ?? []}
+          goals={goals}
+          learning={
+            <StatsView
+              pairId={pairId}
+              effectiveGrade={effectiveGrade ?? 0}
+              gradeLabel={gradeLabel}
+              childName={childProfile?.display_name ?? ""}
+            />
+          }
         />
       </div>
 

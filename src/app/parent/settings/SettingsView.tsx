@@ -15,6 +15,13 @@ import {
   clearStoredAiToken,
 } from "@/lib/ai-token";
 
+interface GoalRow {
+  daily_limit: number | null;
+  weekly_limit: number | null;
+  monthly_budget: number | null;
+  saving_goal: number | null;
+}
+
 interface Pair {
   id: string;
   invite_code: string;
@@ -23,8 +30,13 @@ interface Pair {
   childName: string | null;
   childAvatar: string | null;
   childGrade: string;
-  rewardName: string;
-  rewardUnit: string;
+  primaryKind: "time" | "money";
+  secondaryEnabled: boolean;
+  timeName: string;
+  timeUnit: string;
+  moneyName: string;
+  moneyUnit: string;
+  goals: Record<string, GoalRow>;
 }
 
 interface PendingApproval {
@@ -106,34 +118,146 @@ function SettingRow({
   );
 }
 
+const fieldStyle: React.CSSProperties = {
+  width: "100%", height: 42, borderRadius: 10,
+  border: "1.5px solid var(--line-strong)", padding: "0 12px",
+  fontSize: 14, fontWeight: 600, color: "var(--text)", outline: "none",
+  boxSizing: "border-box",
+};
+
+function Field({
+  label, value, onChange, placeholder, numeric, width,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; numeric?: boolean; width?: number;
+}) {
+  return (
+    <div style={width ? { width } : { flex: 1 }}>
+      <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>{label}</p>
+      <input
+        value={value}
+        type={numeric ? "number" : "text"}
+        min={numeric ? 0 : undefined}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={fieldStyle}
+      />
+    </div>
+  );
+}
+
+interface CurrencyState {
+  name: string; unit: string;
+  a: string; // time: 하루 한도 / money: 월 예산
+  b: string; // time: 주간 한도 / money: 저축 목표
+}
+
+function CurrencySection({
+  kind, isPrimary, state, onChange,
+}: {
+  kind: "time" | "money";
+  isPrimary: boolean;
+  state: CurrencyState;
+  onChange: (patch: Partial<CurrencyState>) => void;
+}) {
+  const isTime = kind === "time";
+  return (
+    <div style={{
+      border: "1.5px solid var(--line)", borderRadius: 12,
+      padding: 12, marginBottom: 10, background: "var(--surface-2)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <Icon name={isTime ? "clock" : "gift"} size={15} color="var(--green-d)" stroke={2.2} />
+        <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text)" }}>
+          {isTime ? "게임시간" : "용돈"}
+        </span>
+        {isPrimary && (
+          <span style={{
+            fontSize: 10.5, fontWeight: 800, color: "var(--green-d)",
+            background: "var(--green-50)", padding: "2px 6px", borderRadius: 5,
+          }}>
+            숙제 보상
+          </span>
+        )}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        <Field label="이름" value={state.name} onChange={(v) => onChange({ name: v })}
+          placeholder={isTime ? "게임시간" : "용돈"} />
+        <Field label="단위" value={state.unit} onChange={(v) => onChange({ unit: v })}
+          placeholder={isTime ? "분" : "원"} width={80} />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Field numeric label={isTime ? "하루 한도" : "월 예산"} value={state.a}
+          onChange={(v) => onChange({ a: v })} placeholder={isTime ? "60" : "20000"} />
+        <Field numeric label={isTime ? "주간 한도" : "저축 목표"} value={state.b}
+          onChange={(v) => onChange({ b: v })} placeholder={isTime ? "300" : "5000"} />
+      </div>
+    </div>
+  );
+}
+
 function RewardSettingCard({
-  pairId, childName, childAvatar, initialName, initialUnit, onSaved,
+  pairId, childId, childName, childAvatar, init, onSaved,
 }: {
   pairId: string;
+  childId: string | null;
   childName: string;
   childAvatar: string;
-  initialName: string;
-  initialUnit: string;
+  init: Pair;
   onSaved: () => void;
 }) {
-  const [name, setName] = useState(initialName);
-  const [unit, setUnit] = useState(initialUnit);
+  const g = (k: string) => init.goals?.[k];
+  const [primaryKind, setPrimaryKind] = useState<"time" | "money">(init.primaryKind);
+  const [secondary, setSecondary] = useState(init.secondaryEnabled);
+  const [time, setTime] = useState<CurrencyState>({
+    name: init.timeName, unit: init.timeUnit,
+    a: g("time")?.daily_limit?.toString() ?? "",
+    b: g("time")?.weekly_limit?.toString() ?? "",
+  });
+  const [money, setMoney] = useState<CurrencyState>({
+    name: init.moneyName, unit: init.moneyUnit,
+    a: g("money")?.monthly_budget?.toString() ?? "",
+    b: g("money")?.saving_goal?.toString() ?? "",
+  });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   async function save() {
     setSaving(true);
-    // 자녀의 모든 연결 pair에 단위/이름 전파 (자녀·공동양육자 단위 일치)
+    // 자녀의 모든 연결 pair에 통화 구성 전파 (자녀·공동양육자 일치)
     await fetch("/api/reward-settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pairId, rewardName: name, rewardUnit: unit }),
+      body: JSON.stringify({
+        pairId, primaryKind, secondaryEnabled: secondary,
+        timeName: time.name, timeUnit: time.unit,
+        moneyName: money.name, moneyUnit: money.unit,
+      }),
     });
+
+    if (childId) {
+      const active: ("time" | "money")[] = secondary
+        ? ["time", "money"]
+        : [primaryKind];
+      await Promise.all(active.map((kind) =>
+        fetch("/api/habit-goals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(kind === "time"
+            ? { childId, kind, daily_limit: time.a, weekly_limit: time.b }
+            : { childId, kind, monthly_budget: money.a, saving_goal: money.b }),
+        })
+      ));
+    }
+
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
     setSaving(false);
     onSaved();
   }
+
+  const order: ("time" | "money")[] = primaryKind === "time" ? ["time", "money"] : ["money", "time"];
+  const visible = secondary ? order : [order[0]];
 
   return (
     <div style={{ background: "#fff", borderRadius: "var(--r-card)", boxShadow: "var(--sh-md)", padding: "16px 16px 18px", marginBottom: 10 }}>
@@ -141,36 +265,59 @@ function RewardSettingCard({
         <span style={{ fontSize: 20 }}>{childAvatar}</span>
         <span style={{ fontSize: 14.5, fontWeight: 800, color: "var(--text)" }}>{childName}</span>
       </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>리워드 이름</p>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="포인트"
-            style={{
-              width: "100%", height: 42, borderRadius: 10,
-              border: "1.5px solid var(--line-strong)", padding: "0 12px",
-              fontSize: 14, fontWeight: 600, color: "var(--text)", outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-        <div style={{ width: 90 }}>
-          <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 5 }}>단위</p>
-          <input
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            placeholder="P"
-            style={{
-              width: "100%", height: 42, borderRadius: 10,
-              border: "1.5px solid var(--line-strong)", padding: "0 12px",
-              fontSize: 14, fontWeight: 700, color: "var(--text)", outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
+
+      {/* 숙제 보상으로 지급할 통화 */}
+      <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700, marginBottom: 6 }}>
+        숙제 보상 통화
+      </p>
+      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+        {(["time", "money"] as const).map((k) => {
+          const on = primaryKind === k;
+          return (
+            <button
+              key={k}
+              onClick={() => setPrimaryKind(k)}
+              style={{
+                flex: 1, height: 38, borderRadius: 10, fontSize: 13, fontWeight: 800,
+                border: `2px solid ${on ? "var(--green)" : "var(--line-strong)"}`,
+                background: on ? "var(--green-50)" : "#fff",
+                color: on ? "var(--green-d)" : "var(--muted)", cursor: "pointer",
+              }}
+            >
+              {k === "time" ? "게임시간" : "용돈"}
+            </button>
+          );
+        })}
       </div>
+
+      {visible.map((k) => (
+        <CurrencySection
+          key={k}
+          kind={k}
+          isPrimary={k === primaryKind}
+          state={k === "time" ? time : money}
+          onChange={(patch) => k === "time"
+            ? setTime((p) => ({ ...p, ...patch }))
+            : setMoney((p) => ({ ...p, ...patch }))}
+        />
+      ))}
+
+      {/* 두 번째 통화 토글 */}
+      <button
+        onClick={() => setSecondary((v) => !v)}
+        style={{
+          width: "100%", height: 40, borderRadius: 10, marginBottom: 10,
+          border: "1.5px dashed var(--line-strong)", background: "#fff",
+          color: "var(--green-d)", fontWeight: 700, fontSize: 13, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        }}
+      >
+        <Icon name={secondary ? "minus" : "plus"} size={14} color="var(--green-d)" stroke={2.5} />
+        {secondary
+          ? `${primaryKind === "time" ? "용돈" : "게임시간"} 관리 끄기`
+          : `${primaryKind === "time" ? "용돈" : "게임시간"}도 함께 관리`}
+      </button>
+
       <button
         onClick={save}
         disabled={saving}
@@ -674,16 +821,16 @@ export default function SettingsView({
       ) : (
         <>
           <p style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, margin: "0 4px 10px", lineHeight: 1.5 }}>
-            자녀마다 리워드 이름과 단위(예: 분, P)를 따로 설정할 수 있어요.
+            자녀마다 게임시간·용돈을 따로 설정할 수 있어요. 사용 한도를 정하면 통계에서 목표 대비로 볼 수 있어요.
           </p>
           {pairs.filter((p) => p.child_id).map((p) => (
             <RewardSettingCard
               key={p.id}
               pairId={p.id}
+              childId={p.child_id}
               childName={p.childName ?? "자녀"}
               childAvatar={p.childAvatar ?? "🧒"}
-              initialName={p.rewardName}
-              initialUnit={p.rewardUnit}
+              init={p}
               onSaved={() => router.refresh()}
             />
           ))}

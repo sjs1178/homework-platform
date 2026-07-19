@@ -61,12 +61,31 @@ export default async function SettingsPage() {
   const { data: rwSettingsAll } = allPairIds.length
     ? await supabase
         .from("reward_settings")
-        .select("pair_id, point_reward_name, point_reward_unit")
+        .select("pair_id, primary_kind, secondary_enabled, time_reward_name, time_reward_unit, point_reward_name, point_reward_unit")
         .in("pair_id", allPairIds)
     : { data: [] };
   const rwMap = Object.fromEntries(
     (rwSettingsAll ?? []).map((s) => [s.pair_id, s])
   );
+
+  // 자녀별 습관 목표 (child_id 기준)
+  const { data: goalsAll } = childIds.length
+    ? await supabase
+        .from("habit_goals")
+        .select("child_id, kind, daily_limit, weekly_limit, monthly_budget, saving_goal")
+        .in("child_id", childIds)
+    : { data: [] };
+  const goalMap: Record<string, Record<string, {
+    daily_limit: number | null; weekly_limit: number | null;
+    monthly_budget: number | null; saving_goal: number | null;
+  }>> = {};
+  for (const g of goalsAll ?? []) {
+    if (!goalMap[g.child_id]) goalMap[g.child_id] = {};
+    goalMap[g.child_id][g.kind] = {
+      daily_limit: g.daily_limit, weekly_limit: g.weekly_limit,
+      monthly_budget: g.monthly_budget, saving_goal: g.saving_goal,
+    };
+  }
 
   const pairsWithChild = (pairs ?? []).map((p) => ({
     id: p.id,
@@ -76,8 +95,13 @@ export default async function SettingsPage() {
     childName: p.child_id ? (childProfiles[p.child_id]?.name ?? "자녀") : null,
     childAvatar: p.child_id ? (childProfiles[p.child_id]?.avatarEmoji ?? "🧒") : null,
     childGrade: p.child_id ? (childProfiles[p.child_id]?.gradeLabel ?? "") : "",
-    rewardName: rwMap[p.id]?.point_reward_name ?? "리워드",
-    rewardUnit: rwMap[p.id]?.point_reward_unit ?? "P",
+    primaryKind: (rwMap[p.id]?.primary_kind === "time" ? "time" : "money") as "time" | "money",
+    secondaryEnabled: !!rwMap[p.id]?.secondary_enabled,
+    timeName: rwMap[p.id]?.time_reward_name ?? "게임시간",
+    timeUnit: rwMap[p.id]?.time_reward_unit ?? "분",
+    moneyName: rwMap[p.id]?.point_reward_name ?? "리워드",
+    moneyUnit: rwMap[p.id]?.point_reward_unit ?? "P",
+    goals: p.child_id ? (goalMap[p.child_id] ?? {}) : {},
   }));
 
   const pairId = pairsWithChild[0]?.id ?? null;

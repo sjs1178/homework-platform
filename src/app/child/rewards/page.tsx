@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
 import RewardBody from "./RewardBody";
+import { currenciesFrom } from "@/lib/reward";
 
 export const dynamic = "force-dynamic";
 
@@ -28,15 +29,22 @@ export default async function ChildRewardsPage() {
 
   const { data: logs } = await supabase
     .from("reward_logs")
-    .select("*")
+    .select("id, type, reward_type, entry_kind, category, amount, note, created_at")
     .eq("child_id", user.id)
     .order("created_at", { ascending: false });
 
   const { data: settings } = await supabase
     .from("reward_settings")
-    .select("*")
+    .select("primary_kind, secondary_enabled, time_reward_name, time_reward_unit, point_reward_name, point_reward_unit")
     .eq("pair_id", profile.pair_id)
-    .single();
+    .maybeSingle();
+
+  const { data: goalRows } = await supabase
+    .from("habit_goals")
+    .select("kind, daily_limit, weekly_limit, monthly_budget, saving_goal")
+    .eq("child_id", user.id);
+
+  const goals = Object.fromEntries((goalRows ?? []).map((g) => [g.kind, g]));
 
   const { data: catalogRaw } = await supabase
     .from("reward_catalog")
@@ -50,10 +58,6 @@ export default async function ChildRewardsPage() {
     .eq("child_id", user.id)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
-
-  const totalEarned = (logs ?? []).filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
-  const totalSpent = (logs ?? []).filter((l) => l.type === "spend").reduce((s, l) => s + l.amount, 0);
-  const balance = totalEarned - totalSpent;
 
   return (
     <div
@@ -69,14 +73,11 @@ export default async function ChildRewardsPage() {
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 80px" }}>
         <RewardBody
           childName={profile.display_name ?? "자녀"}
-          balance={balance}
-          totalEarned={totalEarned}
-          totalSpent={totalSpent}
-          logs={logs ?? []}
-          catalog={catalogRaw ?? []}
           pairId={profile.pair_id}
-          unit={settings?.point_reward_unit ?? "P"}
-          rewardName={settings?.point_reward_name ?? "리워드"}
+          currencies={currenciesFrom(settings)}
+          logs={logs ?? []}
+          goals={goals}
+          catalog={catalogRaw ?? []}
           pendingRequests={(pendingReqs ?? []).map((r) => ({
             id: r.id,
             amount: r.amount,

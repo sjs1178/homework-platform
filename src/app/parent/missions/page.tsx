@@ -64,10 +64,20 @@ export default async function ParentMissionsPage() {
     admin.from("homeworks").select("id, is_completed").eq("pair_id", pairId).gte("due_date", monthFrom).lte("due_date", monthTo),
   ]);
 
+  // 미션 달성 조건 = 검사 완료
+  const allHwIds = [...new Set([
+    ...(dailyRes.data ?? []), ...(weeklyRes.data ?? []), ...(monthlyRes.data ?? []),
+  ].map((h) => h.id))];
+  const { data: mChecks } = allHwIds.length
+    ? await admin.from("homework_checks").select("homework_id").in("homework_id", allHwIds)
+    : { data: [] };
+  const mCheckedIds = new Set((mChecks ?? []).map((c) => c.homework_id));
+  const doneCount = (hws: { id: string }[]) => hws.filter((h) => mCheckedIds.has(h.id)).length;
+
   const progress = {
-    daily: { total: (dailyRes.data ?? []).length, done: (dailyRes.data ?? []).filter((h) => h.is_completed).length },
-    weekly: { total: (weeklyRes.data ?? []).length, done: (weeklyRes.data ?? []).filter((h) => h.is_completed).length },
-    monthly: { total: (monthlyRes.data ?? []).length, done: (monthlyRes.data ?? []).filter((h) => h.is_completed).length },
+    daily: { total: (dailyRes.data ?? []).length, done: doneCount(dailyRes.data ?? []) },
+    weekly: { total: (weeklyRes.data ?? []).length, done: doneCount(weeklyRes.data ?? []) },
+    monthly: { total: (monthlyRes.data ?? []).length, done: doneCount(monthlyRes.data ?? []) },
   };
 
   return (

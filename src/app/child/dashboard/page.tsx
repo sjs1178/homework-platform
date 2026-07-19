@@ -401,6 +401,7 @@ export default async function ChildDashboard() {
               {([
                 ["calendar", "숙제 캘린더", "linear-gradient(140deg,#34D399,#16A34A)", "/child/calendar"],
                 ["gift", "내 리워드", "linear-gradient(140deg,#FBBF24,#F59E0B)", "/child/rewards"],
+                ["bar-chart-3", "내 통계", "linear-gradient(140deg,#60A5FA,#2563EB)", "/child/stats"],
               ] as const).map(([icon, label, grad, href]) => (
                 <Link
                   key={label}
