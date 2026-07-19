@@ -369,24 +369,6 @@ export default function RewardBody({
         </>
       )}
 
-      {catalog.length === 0 && (
-        <div style={{
-          background: "#fff", borderRadius: "var(--r-card)",
-          padding: "32px 16px", textAlign: "center", boxShadow: "var(--sh-sm)", marginBottom: 14,
-        }}>
-          <div style={{
-            width: 88, height: 88, borderRadius: 26, background: "#E9F4EC",
-            display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px",
-          }}>
-            <Icon name="gift" size={46} color="#9DB3A6" stroke={1.9} />
-          </div>
-          <p style={{ fontSize: 17, fontWeight: 800, color: "#13241B" }}>리워드가 아직 없어요</p>
-          <p style={{ fontSize: 13.5, color: "#7B8A81", marginTop: 6, lineHeight: 1.6 }}>
-            부모님이 리워드를 등록하면 여기서 포인트로 교환할 수 있어요
-          </p>
-        </div>
-      )}
-
       {/* 적립/사용 내역 */}
       <div style={{
         background: "#fff", borderRadius: "var(--r-card)",
